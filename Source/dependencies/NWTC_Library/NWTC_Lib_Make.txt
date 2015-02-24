@@ -1,0 +1,97 @@
+# This file is designed to show what the portions of makefiles that depend on the NWTC_Library should contain.
+# >> we should add some text that says when it was last updated...
+
+
+   # Precision.
+# Use "SingPrec" for single precision and "DoubPrec" for double precision.  You may also need to change an option switch to make constants DP.
+PREC = SingPrec
+#PREC = DoubPrec
+
+
+
+   # System-specific settings.
+ifeq ($(OS),Windows_NT)
+      # Windows
+   SYS_FILE  = SysGnuWin
+else
+      # Linux
+   SYS_FILE  = SysGnuLinux
+endif
+
+
+#-------------------------------
+# if compiling without ModMesh_Mapping (or LAPACK), use this:
+#-------------------------------
+
+LIB_SOURCES =             \
+	$(PREC).f90            \
+	NWTC_Base.f90          \
+	$(SYS_FILE).f90        \
+	NWTC_Library_Types.f90 \
+	NWTC_IO.f90            \
+	NWTC_Num.f90           \
+	ModMesh_Types.f90      \
+	ModMesh.f90            \
+	NWTC_Library.f90
+
+
+    #  Dependency rules.
+NWTC_Base.obj:           $(PREC).obj
+$(SYS_FILE).obj:         NWTC_Base.obj
+NWTC_Library_Types.obj:  $(SYS_FILE).obj
+NWTC_IO.obj:             NWTC_Library_Types.obj
+NWTC_Num.obj:            NWTC_IO.obj
+ModMesh_Types.obj:       NWTC_Num.obj
+ModMesh.obj:             ModMesh_Types.obj
+NWTC_Library.obj:        ModMesh.obj  NWTC_Num.obj
+
+
+
+#else
+#-------------------------------
+# if compiling WITH ModMesh_Mapping (and LAPACK), use this:
+#-------------------------------
+
+
+   # Source files.
+LIB_SOURCES =             \
+	$(PREC).f90            \
+	NWTC_Base.f90          \
+	$(SYS_FILE).f90        \
+	NWTC_Library_Types.f90 \
+	NWTC_IO.f90            \
+	NWTC_Num.f90           \
+	ModMesh_Types.f90      \
+	ModMesh.f90            \
+	ModMesh_Mapping.f90    \
+	NWTC_Library.f90
+
+NETLIB_SOURCES=            \
+	NWTC_ScaLAPACK.f90      \
+	NWTC_LAPACK.f90         \
+	dlasrt2.f               \
+	slasrt2.f
+
+
+   #  Dependency rules.
+NWTC_Base.obj:           $(PREC).obj
+$(SYS_FILE).obj:         NWTC_Base.obj
+NWTC_Library_Types.obj:  $(SYS_FILE).obj
+NWTC_IO.obj:             NWTC_Library_Types.obj
+NWTC_Num.obj:            NWTC_IO.obj
+ModMesh_Types.obj:       NWTC_Num.obj
+ModMesh.obj:             ModMesh_Types.obj
+NWTC_Library.obj:        ModMesh.obj  NWTC_Num.obj
+
+NWTC_LAPACK.obj:         NWTC_Base.obj
+NWTC_ScaLAPACK.obj:      NWTC_Base.obj dlasrt2.obj slasrt2.obj
+
+ModMesh_Mapping.obj:     ModMesh.obj NWTC_LAPACK.obj
+
+#endif
+
+
+
+
+
+

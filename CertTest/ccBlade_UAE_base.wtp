@@ -1,0 +1,73 @@
+-----  WT_Perf Input File  -----------------------------------------------------
+WT_Perf BEMT input file.  UAE Phase 3 turbine (Non-dimen, English, Space, BEM).
+Compatible with WT_Perf v4.xx
+-----  Input Configuration  ----------------------------------------------------
+False                Echo:                      Echo input parameters to "<rootname>.ech"?
+True                 DimenInp:                  Turbine parameters are dimensional?
+True                 Metric:                    Turbine parameters are Metric (MKS vs FPS)?
+-----  Model Configuration  ----------------------------------------------------
+16                   NumSect:                   Number of circumferential sectors.
+5                    MaxIter:                   Max number of iterations for induction factor.
+1.0e-5               ATol:                      Error tolerance for induction iteration.
+1.0e-5               SWTol:                     Error tolerance for skewed-wake iteration.
+-----  Algorithm Configuration  ------------------------------------------------
+True                  TipLoss:                   Use the Prandtl tip-loss model?
+True                  HubLoss:                   Use the Prandtl hub-loss model?
+True                  Swirl:                     Include Swirl effects?
+True                  SkewWake:                  Apply skewed-wake correction?
+True                  IndType:                   Use BEM induction algorithm?
+True                  AIDrag:                    Use the drag term in the axial induction calculation?
+True                  TIDrag:                    Use the drag term in the tangential induction calculation?
+False                 TISingularity:             Use the singularity avoidance method in the tangential-induction calculation?
+-----  Turbine Data  -----------------------------------------------------------
+2                    NumBlade:                  Number of blades.
+5.029                RotorRad:                  Rotor radius [length].
+.508                 HubRad:                    Hub radius [length or div by radius].
+.02264   .0226     .028        PreCone:                   Precone angle, positive downwind [deg].    ! Need to get the mean from UAE experimental data
+0.0                  Tilt:                      Shaft tilt [deg].
+0.0                  Yaw:                       Yaw error [deg].
+12.192               HubHt:                     Hub height [length or div by radius].
+1                   NumSeg:                    Number of blade segments (entire rotor radius).
+   RElm      Twist      Chord  AFfile  PrntElem 
+  5.000      -1.775    0.358     8    True   
+-----  Aerodynamic Data  -------------------------------------------------------
+1.2254            1.2265     1.229                   Rho:                 Air density [mass/volume].   ! Need to get the mean form the experimental UAE data
+1.81206e-5                               KinVisc:             Kinematic air viscosity
+0.0                                      ShearExp:            Wind shear exponent (1/7 law = 0.143).
+True                                     UseCm:               Are Cm data included in the airfoil tables?
+False                                    UseCpmin:            Are Cp,min data included in the airfoil tables?
+8                                        NumAF:               Number of airfoil files.
+"af_files2/cylinder.dat"                  AF_File:             List of NumAF airfoil files.
+"af_files2/S809_CLN_129.dat"
+"af_files2/S809_CLN_185.dat"
+"af_files2/S809_CLN_242.dat"
+"af_files2/S809_CLN_298.dat"
+"af_files2/S809_CLN_354.dat"
+"af_files2/S809_CLN_410.dat"
+"af_files2/S809_CLN_Outboard.dat"  
+-----  I/O Settings  -----------------------------------------------------------
+False                UnfPower:                  Write parametric power to an unformatted file?
+True                 TabDel:                    When generating formatted output (OutForm=True), make output tab-delimited (fixed-width otherwise).
+True                 OutNines:                  Output nines if the solution doesn't fully converge to the specified tolerences.
+True                 Beep:                      Beep on exit.
+False                KFact:                     Output dimensional parameters in K (e.g., kN instead on N)
+True                 WriteBED:                  Write out blade element data to "<rootname>.bed"?
+False                InputTSR:                  Input speeds as TSRs?
+True                 OutMaxCp:                  Output conditions for the maximum Cp?
+"fps"                SpdUnits:                  Wind-speed units (mps, fps, mph).
+-----  Combined-Case Analysis  -------------------------------------------------
+1                   NumCases:                  Number of cases to run.  Enter zero for parametric analysis.
+WS or TSR   RotSpd   Pitch      Yaw                     Remove following block of lines if NumCases is zero. 
+5            71.545     3.0       75.0 
+-----  Parametric Analysis (Ignored if NumCases > 0)  --------------------------
+3                    ParRow:                    Row parameter    (1-rpm, 2-pitch, 3-tsr/speed).
+2                    ParCol:                    Column parameter (1-rpm, 2-pitch, 3-tsr/speed).
+1                    ParTab:                    Table parameter  (1-rpm, 2-pitch, 3-tsr/speed).
+True                 OutPwr:                    Request output of rotor power for formatted output?
+True                 OutCp:                     Request output of Cp for formatted output?
+True                 OutTrq:                    Request output of shaft torque for formatted output?
+True                 OutFlp:                    Request output of flap bending moment for formatted output?
+True                 OutThr:                    Request output of rotor thrust for formatted output?
+3, 4, 1              PitSt, PitEnd, PitDel:     First, last, delta blade pitch (deg).
+72, 73, 1            OmgSt, OmgEnd, OmgDel:     First, last, delta rotor speed (rpm).
+15, 75, 1            SpdSt, SpdEnd, SpdDel:     First, last, delta speeds.

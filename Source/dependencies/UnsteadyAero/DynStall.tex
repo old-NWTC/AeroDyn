@@ -1,0 +1,778 @@
+\documentclass[10pt,letterpaper,twoside]{report}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{units}
+
+\usepackage[
+nonumberlist, %do not show page numbers
+acronym,      %generate acronym listing
+toc,          %show listings as entries in table of contents
+section,      %use section level for toc entries
+nomain]       %No main glossary 
+{glossaries}
+
+\usepackage{hyperref}
+
+\usepackage[square]{natbib} %RRD
+\bibliographystyle{abbrvnat}
+%\setcitestyle{authoryear, open={[(},close={)]}}
+
+
+%Generate a list of symbols (acronyms are a default glossary)
+%            log    name        in  out   title
+\newglossary[syl]{symbolslist}{syi}{syo}{List of Symbols}
+\newglossary[gkl]{greek}{kls}{klo}{Greek Symbols}
+
+%Remove the dot at the end of glossary descriptions
+\renewcommand*{\glspostdescription}{}
+
+%Activate glossary commands
+\makeglossaries
+
+%These commands sort the lists
+%makeindex -s DynStall.ist -t DynStall.alg -o DynStall.acr DynStall.acn
+%makeindex -s DynStall.ist -t DynStall.glg -o DynStall.gls DynStall.glo
+%makeindex -s DynStall.ist -t DynStall.syl -o DynStall.syi DynStall.syo
+\usepackage{glossary-mcols}
+\setglossarystyle{mcolindex}
+
+\makeglossaries
+% \makenoidxglossaries
+
+\def\ie{i.e.,}
+\def\eg{e.g.,}
+\def\cosa{\ensuremath{\cos{\alpha}}}
+\def\sina{\ensuremath{\sin{\alpha}}}
+
+\author{Rick Damiani}
+\title{The Dynamic Stall Module for FAST 8}
+
+\loadglsentries{glossary}
+
+
+\begin{document}
+	\maketitle
+	
+	\begin{abstract}
+		The new modularization framework of FAST v.8 \citep{jonkman2013} required a complete overhaul of the aerodynamics routines.
+		AeroDyn is an aerodynamics module that can then utilize either \gls{bemt} or \gls{gdw} to calculate aerodynamic forces on blade elements. Under asymmetric conditions, such as wind shear, yawed and tilted flow, the individual blade elements undergo variations in \gls{aoa} that lead to unsteady aerodynamics phenomena, which can no longer be captured through the static airfoil lift and drag look-up tables. This study lays out the main theory and the organization into the modularization framework of the \gls{ds} module, which includes unsteady aerodynamics under attached flow conditions and \gls{ds}. \gls{ds} can be called by either \gls{bemt} or \gls{gdw}.  		
+	\end{abstract}
+
+	%Print the glossary
+	%\printglossary[style=long,title=Glossary]
+	
+	%Print list of acronyms
+	%\deftranslation[to=German]{Acronyms}{Abkürzungsverzeichnis}
+	%\renewcommand{\glsnamefont}[1]{\MakeUppercase{#1}}
+	\printglossary[type=\acronymtype,style=long]
+	
+	%Print list of symbols
+%	\renewcommand{\glsnamefont}[1]{\makefirstuc{#1}}
+	\printglossary[type=symbolslist,style=long]
+	%Print list of symbols
+	\printglossary[type=greek,style=long]
+		
+	
+	\chapter{Overview}	
+	The main theory follows the work by \cite{leishman1986, leishman1989, pierce1995, pierce1996, leishman2011, damiani2011}. Dynamic stall is a well-known phenomenon that can affect wind turbine performance and loading especially during yawed operations, and that can result in large unsteady stresses on the structures. 
+	
+	Dynamic stall manifests as a delay in the onset of flow separation to higher \glspl{aoa} that would otherwise occur under static (steady) conditions, followed by an abrupt flow separation from the \gls{le} of the airfoil \cite{leishman2011}. The \gls{le} separation is the fundamental characteristic of the \gls{ds} of an airfoil; in contrast, quasi-steady stall would start from the airfoil \gls{te}.
+	
+	\gls{ds} occurs for reduced frequencies above 0.02.
+	\begin{equation}
+	\gls{k}=\frac{\gls{omg} \gls{c}}{2 \gls{u}}
+	\end{equation}
+	
+	The five stages of \gls{ds} are as follows and shown in Fig. \ref{fig:dstall01} and Fig. \ref{fig:dstall02}:
+	\begin{enumerate}
+		\item Onset of flow reversal
+		\item Flow separation and vorticity accumulation at the \gls{le}
+		\item Shedding of the vortex and convection along the suction surface of the airfoil (lift increases)
+		\item Lift Stall: vortex is shed in the wake and lift abrupt drop-off
+		\item Re-attachment of the flow at \glspl{aoa} considerably lower than static \glspl{aoa} (hysteresis)
+	\end{enumerate}
+	\begin{figure}	\label{fig:dstall01}
+		\centering
+		\includegraphics[width=0.7\linewidth]{./PICS/dstall01}
+		\caption{Conventional stages of \gls{ds}, from \cite{leishman2006}.}
+	\end{figure}
+	\begin{figure}		\label{fig:dstall02}
+		\centering
+		\includegraphics[width=0.7\linewidth]{PICS/dstall02}
+		\caption{Conventional stages of \gls{ds} and associated \gls{cl}, \gls{cd}, \gls{cm}  as functions of \gls{aoa} from \cite{leishman2006}.}
+	\end{figure}
+	
+	The model chosen to represent unsteady aerodynamics and dynamic stall is the \gls{lbm}, because it is the most widely used and has the most available support throughout the community and it has shown reasonable success when compared to experimental data. The \gls{lbm} is a postdictive model, and as such it will not solve equations of motion, though the principles are fully rooted in the physics of unsteady flow.
+	
+	In the \gls{lbm}, the different processes are modeled as first-order subsystems with differential equations with pre-determined constants to match experimental results. Therefore, knowledge of the airfoil characteristics under unsteady aerodynamics is a prerogative of the \gls{lbm}. The \gls{lbm} may also be described as an indicial response (\ie response to a series of small disturbances) model for attached flow, extended to account for separated flow effects and vortex lift. Forces are computed as normal and tangential (to chord) and pitching moment about the $1/4$-chord location, see also Fig. \ref{fig:ds_refsystem} and Eq. \eqref{eq:clcd}. 
+	\begin{figure}\label{fig:ds_refsystem}
+		\centering
+		\includegraphics[width=0.7\linewidth]{PICS/ds_refsystem}
+		\caption{Main definitions of \gls{be} forces (denoted via their normalized coefficients) for the unsteady aerodynamics treatment, from \cite{damiani2011}.}
+	\end{figure}
+	
+	\begin{equation}\label{eq:clcd}
+		\begin{array}{rcl}
+			\gls{cl} &=& \gls{cn} \cosa + \gls{cc} \sina \\
+			\gls{cd} &=& \gls{cn} \sina - \gls{cc} \cosa + \gls{cd0} 
+		\end{array}
+	\end{equation}
+	
+	\begin{equation}\label{eq:cncc}
+	\begin{array}{rcl}
+		\gls{cn} &=& \gls{cl} \cosa + (\gls{cd}-\gls{cd0}) \sina \\
+		\gls{cc} &=& \gls{cl} \sina - (\gls{cd}-\gls{cd0}) \cosa  
+	\end{array}
+	\end{equation}
+	
+	The original model was developed for helicopters, but it has been successfully applied to wind turbines (see \cite{pierce1996, gupta2006}). Yawed flowed conditions, Coriolis and centrifugal forces that lead to three-dimensional effects were not included in the original model.
+	
+	Unsteady aerodynamics is mostly driven by 2D flow aspects, where the time scale is on the order of tenths of seconds, or $\sim \gls{c} / \gls{omg}\gls{R}$. 
+
+	The \gls{lbm} considers a number of unsteady aerodynamics conditions, namely: attached flow conditions and \gls{te} separation before stall; delays and lags associated with the unsteady onset of dynamic stall and accompanying boundary layer development; advection of the \gls{le} vortex, shedding in the wake, and suppression of \gls{te} separation in favor of \gls{le} separation.
+	The \gls{lbm} can be subdivided into three main submodules:
+	\begin{enumerate}
+		\item Unsteady, Attached Flow Solution via Indicial Treatment (potential flow)
+		\item \gls{te} Flow Separation
+		\item \gls{ds} and Vorticity Advection
+	\end{enumerate}
+
+	\section{Unsteady Attached Flow and Its Indicial Treatment}\label{sec:attachedflow}
+	The advantage of the indicial treatment is that a response to an arbitrary forcing can be obtained through superposition of response-functions to a step variation in \gls{aoa}, in pitch rate, or in heave (plunging) motion. The superposition is carried out via the so-called Duhamel \index{Duhamel} Integral \cite{leishman2006}, which for the generic response \gls{frt} to a generic disturbance \gls{epst} can be written as in Eq. \eqref{eq:duhamel}:
+
+	\begin{equation} \label{eq:duhamel}
+	  \begin{array}{lrcl}
+          & \gls{frt} &=& \epsilon(0) \gls{phitm} +\int_{0}^{t} \frac{\mathrm{d} \epsilon} {\mathrm{d} \gls{sigt} } \left(\gls{sigt}\right) \phi(t-\gls{sigt}, M) \mathrm{d}\gls{sigt} \\ 
+          \text{or} \\
+          & \gls{frs} &=& \epsilon(0) \gls{phism} +\int_{0}^{s} \frac{\mathrm{d} \epsilon} {\mathrm{d} \gls{sigs} } \left(\gls{sigs}\right) \phi(s-\gls{sigs}, M) \mathrm{d}\gls{sigs}
+	  \end{array}
+	\end{equation}
+		
+	where the non-dimensional distance, \gls{s}, is defined as:
+	\begin{equation}
+    	\gls{s} = \frac{2}{\gls{c}} \int_{0}^{t} \gls{u}(\gls{t}) dt
+	\end{equation}
+	where the airfoil half chord is considered as the non-dimensionalizing factor (\gls{c}/2).
+	
+	The indicial functions are surmised into two components: the first is related to the non-circulatory\index{non-circulatory} loading (piston theory and acoustic wave theory); the second originates from the development of circulation about the airfoil. 
+	
+	The non-circulatory	part depends on the instantaneous airfoil motion, but also on the time history of the prior motion.		
+	The circulatory\index{circulatory} response can be calculated via the 'lumped approach'\index{lumped approach}, where the effects of step changes in \gls{aoa}, pitch rate, heave motion, etc., are combined into an effective \gls{aoa} at the $\nicefrac{3}{4}$-chord station.   
+	
+	The normal force coefficient response to a step-change in non-dimensional pitch rate \gls{q} and a step-change in \gls{aoa} can be written as a function of the indicial functions as shown in Eq. \eqref{eq:cn_aq}:
+	\begin{equation} \label{eq:cn_aq}
+		\begin{array}{lcr}
+		\gls{cn_aq} &=& \gls{cn_a} +\gls{cn_q}  = \gls{cna} \gls{alpha} + \gls{cnq} \gls{q}\\ 
+        \gls{cn_a} &=& \frac{4}{M} \gls{phianc} + \frac{\gls{cna}}{\gls{betam}}\gls{phiac}\\ 
+        \gls{cn_q} &=& \frac{1}{M} \gls{phiqnc} + \frac{\gls{cna}}{2\gls{betam}}\gls{phiqc}\\ 
+    	\end{array}
+	\end{equation}
+	
+	Analogously the pitching moment coefficient about the \nicefrac{1}{4}-chord can be derived via indicial response as shown in Eq.\eqref{eq:cm_aq}:
+	\begin{equation} \label{eq:cm_aq}
+		\begin{array}{lcr}
+		\gls{cm_aq} &=& \gls{cm_a} +\gls{cm_q}  = \gls{cma} \gls{alpha} + \gls{cmq} \gls{q}\\ [1.5ex]
+		\gls{cm_a} &=& -\frac{1}{M} \gls{phimanc} - \frac{\gls{cna}}{\gls{betam}}\gls{phiac} \left(\gls{xac}-0.25 \right) +\gls{cm0}\\ 
+		\gls{cm_q} &=& -\frac{7}{12 M} \gls{phimqnc} - \frac{\gls{cna}}{16 \gls{betam}}\gls{phimqc}\\ 
+		\end{array}
+	\end{equation}
+	where \gls{cm0}	is positive if causes a pitch up of the airfoil, as seen in Fig. \ref{fig:ds_refsystem}. Also note that the circulatory component of the pitching moment response to a step-change in \gls{alpha} is a function of the \gls{cn_ac}.
+	
+	The non-dimensional pitch-rate \gls{q} is given by:
+	\begin{equation}\label{eq:pitchrate}
+		\begin{array}{llcl}
+			               &\gls{q} & = & \nicefrac{\dot{\gls{alpha}} \gls{c}}{\gls{u}} \simeq \nicefrac{{\gls{Kalpha}}_t \gls{c}}{\gls{u}} \\
+			\mathrm{with:} & {\gls{Kalpha}}_t  & = &\frac{\gls{alpha}_t - \gls{alpha}_{t-1}}{\Delta t} 
+		\end{array}
+	\end{equation}
+	
+	The indicial responses can then be approximated as in Eq. \eqref{eq:phis} \citep{leishman1989, johansen1999}: 	
+	\begin{equation} \label{eq:phis}
+	\renewcommand*{\arraystretch}{2}
+	\begin{array}{lcl}
+	\gls{phiac} &=& \gls{phiqc} = 1- \gls{a1} \exp{\left(-\gls{b1} \gls{betam}[^2] \gls{s} \right)} -
+                                     \gls{a2} \exp{\left(-\gls{b2} \gls{betam}[^2] \gls{s} \right) }  \\
+	\gls{phianc} &=& \exp{\left( -\frac{\gls{s}}{\gls{tap}} \right)} \\ 
+	\gls{phiqnc} &=& \exp{\left(-\frac{\gls{s}}{\gls{tqp}}  \right)} \\ 
+
+	\gls{phimqnc} &=& \exp{\left(-\frac{\gls{s}}{\gls{tmqp}}  \right)} \\ 
+	\end{array}
+	\end{equation}
+	
+	One could find analogous expressions for \gls{phimqc},\gls{phimanc}, but they are not shown here because further simplified expressions will be derived below. 
+
+	By making use of exact results for short times $0 \le \gls{s} \le 2 \gls{M}/(M+1)$ \citep{lomax1952}, \cite{leishman2011} shows that:
+	
+	\begin{equation} \label{eq:tam}
+	\renewcommand*{\arraystretch}{2}
+ 	\begin{array}{lcr}
+		\gls{tam} &=& \frac{\gls{c}}{2\gls{u}} \gls{tap} = \dfrac{\gls{c}}{2\gls{M}\gls{as}} \gls{tap} = \gls{kam}\gls{ti} \\
+
+		\gls{tqm} &=& \frac{\gls{c}}{2\gls{u}} \gls{tqp} = \dfrac{\gls{c}}{2\gls{M}\gls{as}} \gls{tqp} = \gls{kqm}\gls{ti}
+	\end{array}
+	\end{equation}
+
+where:						
+	\begin{equation} \label{eq:kam}
+	\renewcommand*{\arraystretch}{2}
+	\begin{array}{lll}
+	\gls{kam} &=& \left[ \left(1-M\right) +\frac{\gls{cna}}{2} M^2 \gls{betam} \left( \gls{a1}\gls{b1}+\gls{a2}\gls{b2} \right) \right]^{-1}=\left[ \left(1-M\right) +\frac{\gls{cna}}{2} M^2 \gls{betam} 0.413 \right]^{-1}\\
+	
+	\gls{kqm} &=& \left[ \left(1-M\right) + \gls{cna} M^2 \gls{betam} \left( \gls{a1}\gls{b1}+\gls{a2}\gls{b2} \right) \right]^{-1}=\left[ \left(1-M\right) + \gls{cna} M^2 \gls{betam} 0.413 \right]^{-1}\\
+	
+	\gls{ti} &=& \frac{\gls{c}}{\gls{as}}
+	\end{array}
+	\end{equation}
+
+	Note that \cite{leishman2011} recommends the use of $0.75 \gls{tam}$ in place of \gls{tam} to account for three-dimensional effects not included in piston theory.
+	
+	The values of the \gls{a1}-\gls{b2} constants are independent of \gls{M} and are determined from experimental data on oscillating airfoils in wind tunnels.		
+	
+	For the circulatory component of the aerodynamic force response, the lumped approach can lead to a direct solution of \gls{cn_aqc}.  considering the circulatory part \gls{cn_ac} of Eq. \eqref{eq:cn_aq} for the response to the step in \gls{alpha}, one can write:
+	
+	\begin{equation}\label{eq:cn_ac}
+    	\gls{cn_ac} = \int_{s_0}^{s} \frac{\gls{cna}}{\gls{betam}}\gls{phiac} \gls{alpha}(s) \mathrm{d}s \simeq \gls{cnac} \Delta\gls{alpha}
+	\end{equation}
+	
+	By using Eq. \eqref{eq:duhamel} with \gls{phism} replaced by \gls{phiac} and \gls{epss} by \gls{alpha}, Eq. \eqref{eq:cn_ac} rewrites:
+	%
+	\begin{equation}\label{eq:alphae1}
+		\gls{cn_aqc} = \gls{cnac} \left[ \gls{alpha}(s_0) \gls{phiac}(s) +
+		\int_{s_0}^{s}   \frac{\mathrm{d} \gls{alpha}} {\mathrm{d} \gls{sigs} } \left(\gls{sigs}\right) \gls{phiac}(s-\gls{sigs}, M) \mathrm{d}\gls{sigs} \right] = \gls{cnac}  \gls{alphae}  
+	\end{equation}
+	%	
+	where \gls{alphae} is an effective angle of attack at \nicefrac{3}{4}-chord accounting for a step variation in \gls{alpha}, pitching rate, heave, and velocity (lumped approach).
+	By applying the first of Eq. \eqref{eq:phis}, and setting $s_0=0$, Eq. \eqref{eq:alphae1} can be simplified to arrive at an expression for \gls{alphae} at the n-th time step, \ie  $\alpha_{e_n}$:
+	
+	\begin{equation}\label{eq:alphae}
+		\alpha_{e_n} (s,M) = \left( \gls{alpha}[_n] -\gls{alpha}[_0] \right) -X_{1_n} (\Delta s) -X_{2_n} (\Delta s)
+	\end{equation}
+	%
+	where the $\int_{s_0}^{s} [...] \mathrm{d}\gls{sigs}$ was divided into two steps considering a distance interval $\Delta s$, \ie $\int_{0}^{s} [...] \mathrm{d}\gls{sigs}$ and $\int_{s}^{s+\Delta s} [...] \mathrm{d}\gls{sigs}$, by carrying out the algebra a recursive expression for \gls{X1} and \gls{X2} can be found:
+	
+	\begin{equation}\label{eq:X1X2}
+		\renewcommand*{\arraystretch}{2}
+		\begin{array}{lll}
+		
+		X_{1_n} & = & X_{1_{n-1}} \exp{\left(-\gls{b1}\gls{betam}[^2] \Delta s \right)} +\gls{a1} \exp{\left(-\gls{b1}\gls{betam}[^2] \frac{\Delta s}{2} \right)} \Delta \alpha_n \\
+
+    	X_{2_n} & = & X_{2_{n-1}} \exp{\left(-\gls{b2}\gls{betam}[^2] \Delta s \right)} +\gls{a2} \exp{\left(-\gls{b2}\gls{betam}[^2] \frac{\Delta s}{2} \right)} \Delta \alpha_n 
+    	\end{array}
+	\end{equation}
+		
+	Note that \gls{alpha0} was introduced into Eq.\eqref{eq:alphae}, because \gls{alphae} is an effective \gls{aoi} and not \gls{aoa}.
+	
+	Similarly to the above development, the circulatory contribution to \gls{cn_aqc} from a step change in \gls{q} can be derived as:
+	
+	%
+	\begin{equation}\label{eq:qe1}
+		\gls{cn_qc} = \frac{\gls{cnac}}{2}  \left( \gls{q}[_n] -\gls{q}[_0] \right) -X_{3_n} (\Delta s) -X_{4_n} (\Delta s)
+	\end{equation}
+	%	
+	However, the lumped approach can account for any effect to \gls{alpha}, including step changes in \gls{q}, so Eq. \eqref{eq:qe1} is not necessary, and it is virtually included via Eq. \eqref{eq:alphae1} and \eqref{eq:alphae}.
+	
+	The non-circulatory part cannot be handled via the  superposition (lumped approach), therefore the contribution from step changes in \gls{alpha} and \gls{q} need to be kept separate:
+	
+	\begin{equation}\label{eq:cn_aqnc}
+		\gls{cn_aqnc} = \gls{cn_anc} + \gls{cn_qnc}
+	\end{equation}
+	%	
+	Now, using Duhamel's integral \eqref{eq:duhamel} on the non-circulatory component \gls{cn_anc} (see Eq.\eqref{eq:cn_aqnc}) with the \gls{phianc} from Eq.\eqref{eq:phis}, one can arrive at:
+	
+	\begin{equation}\label{eq:cn_anc}
+	\renewcommand*{\arraystretch}{2}
+	\begin{array}{lll}
+		
+	 \gls{cn_anc} & = & \frac{4 \gls{tam}}{M} \left( {\gls{Kalpha}}_t -{\gls{Kalphap}}_t \right) \\
+		
+	 {\gls{Kalpha}}_t & = & \frac{\gls{alpha}_t - \gls{alpha}_{t-1}}{\Delta t} \\
+	
+	 {\gls{Kalphap}}_t &=& {\gls{Kalphap}}_{t-1} \exp{\left(-\frac{\Delta t}{\gls{tam}} \right)} + \left(  {\gls{Kalpha}}_t -{\gls{Kalpha}}_{t-1} \right) \exp{\left(-\frac{\Delta t}{2\gls{tam}}\right)}
+	
+	\end{array}
+	\end{equation}
+			
+	Note that in Eq. \eqref{eq:cn_anc}, \gls{Kalphap} is the deficiency function for \gls{cn_anc}.
+	
+	For \gls{cn_qnc}, an analogous procedure leads to:
+	\begin{equation}\label{eq:cn_qnc}
+	\renewcommand*{\arraystretch}{2}
+	\begin{array}{lll}
+	
+	\gls{cn_qnc} & = & \frac{\gls{tqm}}{M} \left( {\gls{Kq}}_t -{\gls{Kqp}}_t \right) \\
+	
+	{\gls{Kq}}_t & = & \frac{\gls{q}_t - \gls{q}_{t-1}}{\Delta t} \\
+	
+	{\gls{Kqp}}_t &=& {\gls{Kqp}}_{t-1} \exp{\left( -\frac{\Delta t}{\gls{tqm}}\right)} + \left(  {\gls{Kq}}_t -{\gls{Kq}}_{t-1} \right) \exp{\left( -\frac{\Delta t}{2\gls{tqm}} \right)}
+	
+	\end{array}
+	\end{equation}
+	
+	So finally, the expression for the total normal force under attached conditions can be expressed as:
+		
+	\begin{equation}\label{eq:cnattached}
+	\gls{cnpot} = \gls{cn_aqc} + \gls{cn_aqnc} = \gls{cnac}  \gls{alphae} + \frac{4 \gls{tam}}{M} \left( {\gls{Kalpha}}_t -{\gls{Kalphap}}_t \right) + \frac{\gls{tqm}}{M} \left( {\gls{Kq}}_t -{\gls{Kqp}}_t \right)
+	\end{equation}
+	
+	Now turning back to the pitching moment, following \cite{johansen1999} the circulatory component \gls{cm_qc} can be written as:
+	
+	\begin{equation}\label{eq:cm_qc}
+	  \gls{cm_qc} = -\frac{\gls{cna}}{16 \gls{betam}} \left( \gls{q} -\gls{Kqppp} \right) \frac{c}{\gls{u}}
+	\end{equation}
+	 where
+	
+	\begin{equation}\label{eq:kqppp}
+		{\gls{Kqppp}}_t = {\gls{Kqppp}}_{t-1} \exp{\left( -\gls{b5}\gls{betam}^2 \Delta s \right)} + \gls{a5} \Delta q_t \exp{\left( -\gls{b5} \gls{betam}^2 \frac{\Delta s}{2} \right)}
+	\end{equation}
+	 	
+	The non-circulatory component of the pitching moment response to step-change in \gls{alpha}, \gls{cm_anc}, writes \citep{leishman1986, johansen1999}:
+	
+	\begin{equation}\label{eq:cm_anc}
+		\gls{cm_anc} = -\frac{1}{M} \gls{phimanc} = -\frac{\gls{cn_anc}}{4} 
+	\end{equation}
+	
+	which implies
+	
+	\begin{equation}\label{eq:phimanc}
+		\gls{phimanc} =  \gls{phianc}  
+	\end{equation}
+	
+	The other component \gls{cm_qnc} writes \citep{leishman2006}:
+	
+	\begin{equation}\label{eq:cm_qnc}
+		\renewcommand*{\arraystretch}{2}
+		\begin{array}{lll}
+		
+		\gls{cm_qnc} &=& -\frac{7}{12 M} \gls{phimqnc} = -\frac{7 \gls{kmqm}^2 \gls{ti}}{12 M} \left( \gls{Kq}-\gls{Kqpp} \right) \\
+	
+		\textrm{with:} \\
+	
+		\gls{kmqm} &=& \frac{7}{15(1-M) +1.5 \gls{cna} \gls{a5}\gls{b5} \gls{betam} M^2} \\
+		
+		\gls{tmqm} &=& \gls{kmqm} \gls{ti} \\
+
+	   {\gls{Kqpp}}_t &=& {\gls{Kqpp}}_{t-1} \exp{\left( -\frac{\Delta t}{\gls{kmqm}^2 \gls{ti} }\right)} +\left( {\gls{Kq}}_t -{\gls{Kq}}_{t-1} \right) \exp{\left( -\frac{\Delta t}{2\gls{kmqm}^2 \gls{ti}} \right) }
+	
+		\end{array}
+	\end{equation}
+	
+	where the same procedure as before was used to arrive at a deficiency function using Duhamel's integral (Eq. \eqref{eq:duhamel}) and equating the expressions of the \gls{cm_aq} at $s \to 0$ (see \cite{leishman2006}).
+
+	
+	Finally, the expression for the total pitching moment at \nicefrac{1}{4}-chord under attached conditions can be expressed as:
+	\begin{equation}\label{eq:cmattached}
+		\renewcommand*{\arraystretch}{2}
+		\begin{array}{lll}
+	    \gls{cmpot} = \gls{cm_aqc} + \gls{cm_aqnc} =\\
+	    \gls{cm0} - \frac{\gls{cna}}{\gls{betam}}\gls{phiac} \left( \gls{xac} - 0.25\right) + \\    %cm_ac
+         - \frac{\gls{cna}}{16 \gls{betam}} \left( \gls{q} -\gls{Kqppp} \right) \frac{c} {\gls{u}} +\\  %cm_qc
+         - \frac{\gls{tam}}{M} \left( {\gls{Kalpha}}_t -{\gls{Kalphap}}_t \right) + \\%cm_anc
+         - \frac{7 \gls{kmqm}^2 \gls{ti}}{12 M} \left( \gls{Kq}-\gls{Kqpp} \right)   %cm_qnc
+		\end{array}
+	\end{equation}
+		
+	Note that the pitching moment treatment is slightly different from what is in AeroDyn v13 and \cite{damiani2011}, and it is more in line with \cite{leishman2006} and \cite{johansen1999}.  If \cite{minnema1998} suggestions is used, then the \gls{cm_qnc} (last term in Eq. \eqref{eq:cmattached}) is to be replaced by:
+	\begin{equation}\label{eq:cm_qnc_minemma}
+		\gls{cm_qnc} = -\frac{7}{12 M} \gls{phimqnc} = -\frac{\gls{cn_qnc}}{4} - \frac{\gls{kam}[^2]\gls{ti}}{3M} \left( \gls{Kq}-\gls{Kqpp} \right)
+	\end{equation}
+		
+	%___________________________________________________________________________ %
+	\subsection{Tangential Force}		
+			
+	The tangential force along the chord can be written as in Eq. \eqref{eq:cc_attached} from \cite{leishman2011}:
+		
+	\begin{equation}\label{eq:cc_attached}
+		\gls{ccpot} = \gls{cnpot} \tan{\left( \gls{alphae}+ \gls{alpha0} \right)}
+	\end{equation}
+
+    In potential flow, D'Alambert's paradox leads to the absence of drag; therefore, from Eq. \eqref{eq:cncc}, $\gls{cl} \cos{\gls{alpha}}= \gls{cn}$, and $\gls{cc}=\gls{cl} \sin{\gls{alpha}}$ which bring forth Eq.\eqref{eq:cc_attached}. Since \gls{alphae} is a virtual \gls{aoi} at \nicefrac{3}{4}-chord, we needed to add the \gls{alpha0}.		
+	
+	%___________________________________________________________________________ %
+	\section{\glstext{te} Flow Separation}\label{sec:teseparation}
+	The base of this dynamic system is Kirchoff's theory, which can be expressed as follows \citep{leishman2006}:
+	\begin{equation}\label{eq:cnccsep}
+		\renewcommand*{\arraystretch}{2}
+		\begin{array}{lll}
+		
+		\gls{cn} \left(\gls{alpha},\gls{f}\right) = \gls{cna} \left(\gls{alpha}-\gls{alpha0}\right) \left(\frac{1+\sqrt{\gls{f}}}{2}\right)^2\\
+			
+		\gls{cc} \left(\gls{alpha},\gls{f}\right) = \gls{etae} \gls{cna} \left(\gls{alpha}-\gls{alpha0}\right) \sqrt{\gls{f}} \tan{(\gls{alpha})}	
+		
+		\end{array}
+	\end{equation}
+	
+	with \gls{f} the \glsentrydesc{f}, and \gls{etae} the \glsentrydesc{etae}. 
+	
+	If the airfoil's \gls{cl},\gls{cd}, and \gls{cm} characteristics are known, then  Eq.\ref{eq:cnccsep} may be solved for \gls{f}.  \cite{leishman2011} suggests the use of best-fit curves obtained from static measurements on airfoils, of the type:
+	\begin{equation}\label{eq:fbestfits}
+	\gls{f} = \left\{
+	\renewcommand*{\arraystretch}{2}
+	\begin{array}{lll}
+	 1-0.3 \exp{\left(\frac{|\gls{alpha}|-\gls{alpha1}}{\gls{s1}} \right)} ,\textrm{if |\gls{alpha}| $<$ \gls{alpha1}}\\
+	 	
+     0.04+0.66 \exp{\left(\frac{\gls{alpha1}-|\gls{alpha}|}{\gls{s2}} \right)} ,\textrm{if |\gls{alpha}| $\geq$ \gls{alpha1}}
+	
+	\end{array}\right.
+	\end{equation}
+
+	\gls{s1} and \gls{s2} are best-fit constants that define the abruptness of the static stall.
+	\gls{alpha1} is the \glsentrydesc{alpha1}.
+	
+	Now accounting for unsteady conditions, the TE separation point gets modified due to temporal effects on airfoil pressure distribution and boundary layer response. \gls{le} separation occurs when a critical pressure at the \gls{le}, corresponding to a critical value of the normal force \gls{cn1}, is reached. The circulatory normal force needs to be modified to account for the lagged boundary layer response. In order to arrive at a new expression for \gls{cn}, we start by accounting for the separation point location under unsteady conditions, which can be calculated starting from an effective \gls{aoi}, \gls{alphaf}:
+	%
+	\begin{equation}\label{eq:alphaf}
+		\gls{alphaf}=\frac{\gls{cnp}}{\gls{cna}} +\gls{alpha0}
+	\end{equation}
+	%	
+	where an effective \gls{cnp} is used, calculated as in Eq. \eqref{eq:cnp}:
+	%
+	\begin{equation}\label{eq:cnp}
+	\renewcommand*{\arraystretch}{2}
+	\begin{array}{lll}
+		\gls{cnp} = \gls{cnpot} -\gls{Dp} \\
+		{\gls{Dp}}_t ={\gls{Dp}}_{t-1} \exp{\left(-\frac{\Delta s}{\gls{tp}} \right)} + \left({\gls{cnpot}}_t-{\gls{cnpot}}_{t-1}\right) \exp{\left(-\frac{\Delta s}{2\gls{tp}} \right)} 
+		\end{array}
+	\end{equation}
+	
+	Note \gls{tp} is \glsentrydesc{tp} and is an empirically based quantity that should be tuned from experimental data.
+	\cite{johansen1999} employs two time constants $T_{p\alpha}$ and $T_{pq}$ as the \gls{cnp} is separated into two contributions, one from \gls{alpha} and from \gls{q}.
+	
+	Given the new \gls{cnp}, one can attain a new formulation for \gls{f}, \ie \gls{fpp}, which accounts for delays in the boundary layer, and that will be used via Kirchoff's treatment to arrive at the new \gls{cn}:
+	
+	\begin{equation}\label{eq:fpp}
+		\renewcommand*{\arraystretch}{2}
+		\begin{array}{lll}
+		\gls{fpp}=\gls{fp}-\gls{Df} \\
+		{\gls{Df}}_t ={\gls{Df}}_{t-1} \exp{\left(-\frac{\Delta s}{\gls{tf}} \right)} + \left({\gls{fp}}_t-{\gls{fp}}_{t-1}\right) \exp{\left(-\frac{\Delta s}{2\gls{tf}} \right)} 
+		\end{array}
+	\end{equation}
+
+	where \gls{fp} is the \glsentrydesc{fp} that can be obtained from the best-fit in Eq. \eqref{eq:fbestfits} replacing \gls{alpha} with \gls{alphaf}. Alternatively, \gls{fp} can be derived from a direct lookup table of static airfoil data reversing Eq. \eqref{eq:cnccsep}. In fact, two values of \gls{fp} could be calculated: one for \gls{cn} and one for \gls{cc}.  
+	
+	Also note that \gls{tf} is a Mach, \gls{Re} nad airfoil dependent time constant associated with the motion of the separation point along the suction surface of the airfoil. \glsentrydesc{tf} gets modified via multipliers (\gls{sig1}) depending on the phase of the separation or reattachment as discussed later; here it suffices noting that \gls{tf} can be written as a modified version of the initial value \gls{tf0}:
+
+	\begin{equation}\label{eq:tf}
+		\gls{tf}=\gls{tf0}/\gls{sig1}
+	\end{equation}
+		
+	Finally, the normal force coefficient \gls{cnfs}, after accounting for separated flow from the \gls{te} becomes:
+	
+	\begin{equation}\label{eq:cnsep}
+		\gls{cnfs}=\gls{cn_aqnc} + \gls{cn_aqc}\left(\frac{1+\sqrt{\gls{fpp}}}{2}\right)^2 =\gls{cn_aqnc} + \gls{cnac}\gls{alphae}\left(\frac{1+\sqrt{\gls{fpp}}}{2}\right)^2 
+	\end{equation}
+	%
+	Note that \cite{gonzalez2014, sheng2007} propose the corrective factor to be:
+	\begin{equation}\label{eq:cn_cener}
+         \gls{cnfs}=\gls{cn_aqnc} + \gls{cnac}\gls{alphae}\left(\frac{1+2\sqrt{\gls{fpp}}}{3}\right)^2 
+	\end{equation}
+	to account for lower values of \gls{cn} when \gls{f}=0 that were seen from experimental data.
+
+		%___________________________________________________________________________ %
+	\subsection{Tangential Force}		
+	The along-chord force coefficient analogously becomes:
+    %	
+	\begin{equation}\label{eq:ccsep}
+		\gls{cc}=\gls{cnpot} \tan{\left(\gls{alphae}+\gls{alpha0}\right)} \gls{etae} \sqrt{\gls{fpp}}= \gls{cnac}\gls{alphae}\tan{\left(\gls{alphae}+\gls{alpha0}\right)} \gls{etae} \sqrt{\gls{fpp}}
+	\end{equation}
+	
+	\cite{gonzalez2014} proposes a slightly different formulation:
+	\begin{equation}\label{eq:cc-cener}
+		\gls{cc}= \gls{cnac}\gls{alphae}\tan{\left(\gls{alphae}+\gls{alpha0}\right)} \gls{etae} \left(\sqrt{\gls{fpp}} -0.2 \right)
+		\end{equation}
+	This modification is to account for negative values seen at \gls{f}=0.
+		
+	%___________________________________________________________________________ %
+	\subsection{Pitching Moment}		
+			
+	Now turning to the pitching moment, the contribution due to unsteady separated flow is on the circulatory component alone. \cite{leishman2011} suggests using this formulation that modified  \gls{cmpot} for the \gls{cm_ac} component: 
+
+	\begin{equation}\label{eq:cmsep}
+		\gls{cm}=\gls{cm0}-\gls{cn_aqc} (\gls{xcp}-0.25) +\gls{cm_qc}+ \gls{cm_anc}+\gls{cm_qnc}
+	\end{equation}
+%
+	where \gls{xcp} is \glsentrydesc{xcp} and can be approximated by \citep{leishman2011}:
+	\begin{equation}\label{eq:xcp}
+		\gls{xcp}=\gls{k0}+\gls{k1} \left(1-\gls{fpp} \right) +
+		\gls{k2} \sin{\left(\pi {\gls{fpp}}^{\gls{k3}} \right) }
+	\end{equation}
+	where \gls{k0}=0.25-\gls{xac}, and the \gls{k1}-\gls{k3} constants are calculated via best-fits of experimental data. Other expressions could be used to perform the best fit of \gls{xcp} vs. \gls{f} from static \gls{cm} airfoil data.
+	
+
+	\cite{minnema1998} suggests a different approach where an effective lagged \gls{aoi} is calculated as follows:
+	\begin{equation}\label{eq:alphafp}
+		\renewcommand*{\arraystretch}{2}
+		\begin{array}{lll}
+		\gls{alphafp}=\gls{alphaf}-\gls{Dalphaf} \\
+		{\gls{Dalphaf}}_t ={\gls{Dalphaf}}_{t-1} \exp{\left(-\frac{\Delta s}{\gls{tf}} \right)} + \left({\gls{fp}}_t-{\gls{fp}}_{t-1}\right) \exp{\left(-\frac{\Delta s}{2\gls{tf}} \right)} 
+	\end{array}
+	\end{equation}
+	%
+	then the new \gls{aoi} is used to derive the contribution to the circulatory component of the pitching moment, which is extracted from a look-up table of static coefficients \gls{cm} vs. \gls{alpha}. 
+	\begin{equation}\label{eq:cm_minemma}
+		\gls{cm}=\gls{cm}\left(\gls{alphaf}\right) +\gls{cm_qc}+ \gls{cm_anc}+\gls{cm_qnc}
+	\end{equation}
+	
+
+	The method proposed by \cite{gonzalez2014} uses a third value of \gls{fpp} extracted from a static data table where it is assumed that $\gls{cm}=\gls{fm} \gls{cn}$ (loosely correlating \gls{f} to \gls{xcp}). Therefore, the method uses the full \gls{cn} from Eq. \eqref{eq:cn_cener} and \gls{fpp} (calculated from the mentioned static lookup table), to resolve the contribution to \gls{cm} from the unsteady \gls{te} separation. 
+	\begin{equation}\label{eq:cm_cener}
+    	\gls{cm}=\gls{cn}\gls{fm}[''] +\gls{cm_qc}+ \gls{cm_anc}+\gls{cm_qnc}
+	\end{equation}
+
+	In this case, the two treatments \citep{minnema1998,gonzalez2014} seem somewhat equivalent, with the exception that \cite{gonzalez2014} proposes 21 (7 for each \gls{fpp} related to \gls{cn}, \gls{cc}, and \gls{cm})different multipliers for \gls{tf} depending on the state of the airfoil aerodynamics (\eg increasing \gls{aoa} and above a critical \gls{cn1}, increasing \gls{aoa} and below a critical \gls{cn1}).		 
+   %___________________________________________________________________________ %
+	\section{Dynamic Stall}\label{sec:dynstall}
+
+	During \gls{ds} there is shear layer roll-up at the \gls{le}, vortex formation, and vortex travel over the upper surface of the airfoil to be subsequently shed in the wake.  The main condition to be met for the shear layer roll up is:
+	\begin{equation}\label{eq:cn1}
+	\begin{array}{lcr}
+		\gls{cnp} > \gls{cn1} & \textrm{for} &  \gls{alpha} \ge \gls{alpha0}\\
+
+		\gls{cnp} < \gls{cn2} & \textrm{for} &  \gls{alpha} < \gls{alpha0}
+	\end{array}
+	\end{equation}
+	The normal force coefficient contribution from the additional lift associated with the low pressure \gls{le} vortex can be written as \cite{leishman2011}:
+	\begin{equation}\label{eq:cnv}
+		{\gls{cnv}}_t  ={\gls{cnv}}_{t-1} \exp{ \left(-\frac{\Delta s}{\gls{tv}} \right)} +
+		\left({\gls{cv}}_t-{\gls{cv}}_{t-1}\right) \exp{ \left(-\frac{\Delta s}{2\gls{tv}} \right)} 
+	\end{equation}
+	\gls{tv} is the \glsentrydesc{tv}.  
+	\gls{tv} gets modified via a multiplier \gls{sig3} to account for various stages of the process as discussed later, here suffice to say that:
+	\begin{equation}\label{eq:tv}
+		\gls{tv}=\gls{tv0}/\gls{sig3}
+	\end{equation}
+	
+	\gls{cv} represents the \glsentrydesc{cv}. \gls{cv} is modeled proportionally to the difference between the attached and separated circulatory contributions to \gls{cn}:
+	\begin{equation}\label{eq:cv}
+		\gls{cv} = \gls{cn_aqc}-\gls{cn_aqc}\left(\frac{1+\sqrt{\gls{fpp}}}{2}\right)^2 =
+		\gls{cnac}\gls{alphae}\left(1-\frac{1+\sqrt{\gls{fpp}}}{2}\right)^2
+	\end{equation}
+	
+	If \cite{gonzalez2014} is used, then \gls{cv} writes as:
+	\begin{equation}\label{eq:cv_cener}
+		\gls{cv} = \gls{cnac}\gls{alphae}\left(1-\frac{1+2\sqrt{\gls{fpp}}}{3}\right)^2
+	\end{equation}
+
+	If $\gls{tauv} > \gls{tvl}$ and if \gls{alphaf} is not moving away from stall (\ie $[(\gls{alphaf}-\gls{alpha0})*({\gls{alphaf}}_t -{\gls{alphaf}}_{t-1})]>0$) , then the vorticity is no longer allowed to accumulate, in which cases Eq.\eqref{eq:cnv} rewrites as:
+	\begin{equation}\label{eq:cnv2}
+		\begin{array}{lll}
+	    & {\gls{cnv}}_t  &= {\gls{cnv}}_{t-1}  \exp{ \left(-\frac{\Delta s}{\gls{tv0}/\gls{sig3}} \right)} \\
+		\mathrm{with  } &  \gls{sig3} &= 2
+		\end{array}
+	\end{equation}
+	where the decay of the normal force (due to vorticity at the \gls{le}) is accelerated at twice the original rate and no further accretion of vorticity is allowed. Eq. \eqref{eq:cnv2} should also be used when conditions in Eq. \eqref{eq:cn1} are not met. Note that \gls{tvl} represents the \glsentrydesc{tvl}
+	
+	Finally the total normal force can be written as:
+	\begin{equation}\label{eq:cn_ds}
+		\gls{cn} = \gls{cnfs} + \gls{cnv}=  \gls{cnac}\gls{alphae} \left(\frac{1+\sqrt{\gls{fpp}}}{2}\right)^2 + \gls{cn_aqnc}+\gls{cnv}
+	\end{equation}
+	Again, if \cite{gonzalez2014} is used, then the correction factor for the separated flow treatment is slightly modified as in Eq.\eqref{eq:cv_cener}.	
+	
+	Note that multiple vortices can be shed at a given shedding frequency corresponding to:
+	\begin{equation}
+		\gls{tsh}=2\dfrac{1-\gls{fpp}}{\gls{stsh}}
+	\end{equation}
+	Therefore \gls{tauv} is reset to 0 if $\gls{tauv}=1+\dfrac{\gls{tsh}}{\gls{tvl}}$.
+	
+		%___________________________________________________________________________ %
+	\subsection{Tangential Force}		
+	The along-chord force coefficient gets modified by the presence of the \gls{le} vortex as \citep{pierce1996}:
+		%	
+	\begin{equation}\label{eq:cc_ds}
+		\gls{cc}=\gls{etae}\gls{ccpot} \sqrt{\gls{fpp}} +\gls{cnv} \tan{\left(\gls{alphae}\right)} \left(1 - \gls{tauv} \right) 
+	\end{equation}
+	Note: \cite{gonzalez2014} does not contain the vortex contribution to \gls{cc} based on experimental validation.
+			
+	The original \citep{leishman1989} model had \gls{cc} written as:
+	\begin{equation}\label{eq:cc_ds_lbm}
+		\gls{cc}=\left\lbrace 
+		\begin{array}{lcr}
+		\gls{etae}\gls{ccpot} \sqrt{\gls{fpp}} \sin{\left(\gls{alphae} +\gls{alpha0}\right)} &,&  \gls{cnp} \le \gls{cn1} \\
+
+		\gls{k1h} +\gls{ccpot} \sqrt{\gls{fpp}} {\gls{fpp}}^{\gls{k2h}} \sin{\left(\gls{alphae} +\gls{alpha0}\right)} &,&  \gls{cnp} > \gls{cn1} 		
+		\end{array} \right.
+	\end{equation}
+		
+		
+		%___________________________________________________________________________ %
+	\subsection{Pitching Moment}		
+	\cite{leishman2011} offers a form for the \gls{xcpv}, which is the \glsentrydesc{xcpv}:
+	\begin{equation}\label{eq:cmv}
+	\begin{array}{lcr}
+	\gls{cmv}=-\gls{xcpv} \gls{cnv} \\
+	
+	\gls{xcpv} (\gls{tauv}) = \gls{xcpbb} \left(1-\cos{\left( \frac{\pi \gls{tauv}}{\gls{tvl}}\right)}\right) 
+	\end{array} 
+	\end{equation}
+		
+	Finally, the final expression for the total pitching moment can ve written as:
+	\begin{equation}\label{eq:cmtotal}
+		\gls{cm}=\gls{cm0}-\gls{cn_aqc} (\gls{xcp}-0.25) +\gls{cm_qc}+ \gls{cm_anc}+\gls{cm_qnc} +\gls{cmv}
+	\end{equation}
+	If \cite{minnema1998}'s approach is used then Eq.\eqref{eq:cmtotal} rewrites as:	
+	\begin{equation}\label{eq:cmtotalminemma}
+		\gls{cm}=\gls{cm}\left(\gls{alphaf}\right) +\gls{cm_qc}+ \gls{cm_anc}+\gls{cm_qnc} +\gls{cmv}
+	\end{equation}
+	and if \cite{gonzalez2014}'s treatment is used then the total moment becomes:
+	\begin{equation}\label{eq:cmtotalcenter}
+		\gls{cm}=\gls{cn}\gls{fm}[''] +\gls{cm_qc}+ \gls{cm_anc}+\gls{cm_qnc} +\gls{cmv}
+	\end{equation}
+	
+	
+	
+	\chapter{Inputs, Outputs, Parameters, and States}
+
+	\section{Init\_Inputs}\label{sec:init_inputs}
+	The Init\_Inputs to the \gls{lbm} are:
+	\begin{itemize}
+		\item Airfoil static tables of \gls{cl} \gls{cd} \gls{cm}
+		\item \gls{f} values as a function of \gls{alpha} extracted from the airfoil tables using Kirchoff's Eq.\eqref{eq:cnccsep}; optionally, if CENER's treatment is used, a third value for \gls{f} extracted from CENER's approximation $\gls{cm}=\gls{fm} \gls{cn}$ and the \gls{cn} \gls{cm} values.
+		\item bbb
+		\item ccc
+	\end{itemize}
+	
+	\section{Inputs u}\label{sec:inputs}
+	The Inputs to the \gls{lbm} are:
+	\begin{itemize}
+		\item \gls{alpha}
+		\item \gls{Re}
+		\item \gls{q}
+		\item \gls{M}
+	\end{itemize}
+		
+	\section{Outputs y}\label{sec:outputs}
+	The Outputs from the \gls{lbm} are:
+	\begin{itemize}
+		\item \gls{cn}
+		\item \gls{cc}
+		\item \gls{cm}
+	\end{itemize}
+	
+	\section{States x}\label{sec:states}
+	The States from the \gls{lbm} are:
+	\begin{itemize}
+		\item \gls{alphae}
+		\item \gls{alphaf}
+		\item \gls{s}
+		\item $\dot{\alpha}$ or \gls{Kalpha}
+		\item $\dot{\gls{q}}$ or \gls{Kq}
+		\item \gls{Kalphap}
+		\item \gls{Kqp}
+		\item \gls{Kqpp}
+		\item \gls{Kqppp}
+		\item \gls{Dp}
+		\item \gls{Df}
+		\item \gls{kmqm}, \gls{kam}, \gls{kqm}
+		\item \gls{ti}
+		\item \gls{fp}
+		\item \gls{fpp}
+		\item \gls{xcp}
+		
+		\item \gls{cnv}
+		\item \gls{cv}
+		\item \gls{alphafp} \gls{Dalphaf} - (only if \cite{minnema1998} treatment is used)
+	\end{itemize}
+		
+	\section{Parameters p}\label{sec:parameters}
+	The Parameters from the \gls{lbm} are \underline{airfoil specific quantities}:
+	\begin{itemize}
+		\item \gls{a1}\gls{b1}\gls{a2}\gls{b2}\gls{a5}\gls{b5}
+		\item \gls{tp}, fairly independent of airfoil type
+		\item \gls{tf}
+		\item \gls{tv}
+		\item \gls{tvl}
+		\item \gls{alpha0}
+		\item \gls{cna}
+		\item \gls{k0}, \gls{k1}, \gls{k2}, \gls{k3}
+		\item \gls{cn1}, \gls{cn2}
+		\item \gls{xcpbb}
+		\item \gls{stsh}
+				
+	\end{itemize}
+		
+	
+	\section{\Acrlong{ds} Implementation}
+	\subsection{\glstext{ds}\_Init}
+	
+	\subsection{\glstext{ds}\_UpdateStates}
+	The model is of the parsimonius, open loop, Kelvin-chain kind. Outputs of one subsystems go into inputs of the next subsystems. There are no differential equations to solve. There is no solver per se, for this reason states are discrete states only.
+	\subsubsection{Main Logical Flags} \label{sec:logicals}
+	\begin{itemize}
+	\item 	IF $\gls{cnp}>\gls{cn1}$ ($\gls{cnp}<\gls{cn2}$ for $\gls{alpha}<\gls{alpha0}$) THEN\\
+	        \hspace{4cm} \gls{LESF}=TRUE: this means \gls{le} separation can occur. \\
+         	ELSE \gls{LESF}=False: this means reattachment can occur.
+
+	\item 	IF ${\gls{fpp}}_t<{\gls{fpp}}_{t-1}$ THEN\\
+	         \gls{TESF}=True: this means \gls{te} separation is in progress. \\
+         	ELSE     \gls{TESF}=False: this means \gls{te} reattachment is in progress.
+         	
+	\item 	IF $0< \gls{tauv} \le 2\gls{tvl}$	THEN\\
+			\gls{VRTX}=True: this means vortex advection is in progress.	\\
+			ELSE \gls{VRTX}=False: this means vortex is in wake.		
+	
+	\item IF $\gls{tauv} \ge 1+\dfrac{\gls{tsh}}{\gls{tvl}}$ THEN \\
+		\gls{tauv} is reset to 0.
+	\end{itemize}	
+
+	\subsubsection{\glsentryname{tf} modifications} \label{sec:Tf_sigma1}
+
+	The following conditional statements operate on a multiplier \gls{sig1} that affects \gls{tf}, \ie the actual \gls{tf} is given by Eq.\eqref{eq:tf}.
+	
+	\begin{equation}
+		\gls{tf}=\gls{tf0}/\gls{sig1}  \tag{\ref{eq:tf} revisited}
+	\end{equation}
+	where \gls{tf0} is the \glsentrydesc{tf0}.\\
+	
+	\gls{sig1} = 1 (initialization default value)\\
+	
+	$\Delta_{\alpha0}$ = \gls{alpha}-\gls{alpha0}\\
+	
+	
+	\noindent IF \gls{TESF}=True THEN: (separation) \\
+	
+	            IF $\gls{Kalpha} \gls{deltaa0}<0$ THEN \gls{sig1} = 2 (accelerate separation point movement) \\
+		
+                ELSEIF \gls{LESF}=False THEN \gls{sig1} = 1 (default value, \gls{le} separation can occur)\\
+  		
+                ELSEIF $\gls{fpp}_{n-1} \le 0.7$ THEN \gls{sig1} = 2 (accelerate separation point movement if separation is occurring)  \\
+		
+                ELSE \gls{sig1} =1.75 (accelerate separation point movement)\\
+
+   \noindent ELSE: (reattachment, this means \gls{TESF}=False)\\
+	
+            IF \gls{LESF} = False THEN \gls{sig1} = 0.5 (default: slow down reattachment)\\
+
+			IF \gls{VRTX}=True AND $0 \le \gls{tauv} \le \gls{tvl}$ THEN \\
+			\indent \hspace{0.5cm} \gls{sig1} = 0.25 - No flow reattachment if vortex shedding in progress\\
+	
+			IF $\gls{Kalpha}\gls{deltaa0}>0$ THEN \gls{sig1} = 0.75 \\
+	
+		Note the last three conditional statements are separate IFs.
+		
+	\subsubsection{\glsentryname{tv} modifications} \label{sec:Tv_sigma3}
+		
+	For \gls{tv}, an analogous set of conditions is used to set the proper value of the time constant depending on subsystem stages:
+	
+	\noindent \gls{sig3}=1 (initialization default value)\\
+	
+	\noindent IF $\gls{tvl} \le \gls{tauv} \le 2\gls{tvl}$ THEN \\
+             \indent   	\gls{sig3}=3  (post-shedding) \\
+	         \indent    IF \gls{TESF}=False THEN \\
+             \indent \indent \gls{sig3}=4  (accelerate vortex lift decay) \\
+		     \indent \indent IF \gls{VRTX}=True AND $0 \le \gls{tauv} \le \gls{tvl}$ THEN:\\
+             \indent \indent \indent IF $\gls{Kalpha} \gls{deltaa0}<0$ THEN \gls{sig3}=2  (accelerate vortex lift decay) \\
+             \indent \indent \indent ELSE  \gls{sig3}=1  (default) \\
+			
+    \noindent ELSEIF  $\gls{Kalpha} \gls{deltaa0}<0$ THEN \gls{sig3}=4      (vortex lift must decay fast) \\
+			 
+	\noindent IF \gls{TESF}=False AND $\gls{Kq}\gls{deltaa0}<0$ THEN \gls{sig3}=1  (default) \\
+			 
+			 
+			 		
+	\subsection{\glsentrytext{ds}\_CalcOutput}
+	
+
+	\bibliography{C:/RRD/LITERATURE/references.bib}
+\end{document}

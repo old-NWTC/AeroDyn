@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioProject ProjectCreator="Intel Fortran" Keyword="Console Application" Version="11.0" ProjectIdGuid="{294162F0-48B4-487F-A049-56FE613D68EA}">
+	<Platforms>
+		<Platform Name="Win32"/></Platforms>
+	<Configurations>
+		<Configuration Name="Debug|Win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL" UseMkl="mklSequential"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|Win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
+	<Files>
+		<Filter Name="Header Files" Filter="fi;fd"/>
+		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
+		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
+		<Filter Name="AirfoilInfo">
+		<File RelativePath="..\..\..\..\Source\dependencies\Airfoil_Info\AirfoilInfo.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\Airfoil_Info\AirfoilInfo_Registry.txt">
+			<FileConfiguration Name="Debug|Win32">
+				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat AirfoilInfo" Description="Running Registry for AirfoilInfo" Outputs="..\..\..\..\Source\dependencies\Airfoil_Info\AirfoilInfo_Types.f90"/></FileConfiguration></File>
+		<File RelativePath="..\..\..\..\Source\dependencies\Airfoil_Info\AirfoilInfo_Types.f90"/></Filter>
+		<Filter Name="NWTC_Library">
+		<Filter Name="FitPack">
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\bispev.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpback.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpbisp.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpbspl.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpchec.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpdisc.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpgivs.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpgrre.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpknot.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fprati.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpregr.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fprota.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\Wrappers\NWTC_FitPack.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\regrid.f"/></Filter>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\ModMesh.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\ModMesh_Mapping.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\ModMesh_Types.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_Base.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_IO.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\NWTC_LAPACK.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_Library.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_Library_Types.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_Num.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\SingPrec.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\SysIVF.f90"/></Filter>
+		<Filter Name="Registry">
+		<File RelativePath="..\..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Registry.txt">
+			<FileConfiguration Name="Debug|Win32">
+				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat UnsteadyAero" Description="Running Registry for UnsteadyAero" Outputs="..\..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></FileConfiguration></File>
+		<File RelativePath="..\..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></Filter>
+		<File RelativePath="..\..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero.f90"/>
+		<File RelativePath=".\UnsteadyAeroTest.f90"/></Filter>
+		<File RelativePath=".\ReadMe.txt"/></Files>
+	<Globals/></VisualStudioProject>

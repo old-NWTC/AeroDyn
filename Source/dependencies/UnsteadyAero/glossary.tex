@@ -1,0 +1,220 @@
+%This glossary file needs to be imported from dynstall.tex
+
+\newacronym{gdw}{GDW}{generalized dynamic wake}
+\newacronym{bemt}{BEMT}{blade element momentum theory}
+\newacronym{aoa}{AOA}{angle of attack}
+\newacronym{aoi}{AOI}{angle of incidence}
+\newacronym{ds}{DS}{dynamic stall}
+\newacronym{le}{LE}{leading edge}
+\newacronym{te}{TE}{trailing edge}
+\newacronym{lbm}{LBM}{Leishman-Beddoes model}
+\newacronym{be}{BE}{blade element}
+\newacronym{LESF}{LESF}{leading edge separation flag}
+\newacronym{TESF}{TESF}{trailing edge separation flag}
+\newacronym{VRTX}{VRTX}{vortex advection flag}
+
+%Symbols
+\newglossaryentry{Re}{name={\ensuremath{Re}},sort={Re},description={airfoil-chord Reynolds Number}, type=symbolslist}
+
+\newglossaryentry{cl}{name={\ensuremath{C_l}},sort={Cl},description={2D lift coefficient}, type=symbolslist}
+\newglossaryentry{cla}{name={\ensuremath{C_{l\alpha}}},sort={Cla},description={slope of the 2D lift coefficient curve}, type=symbolslist}
+\newglossaryentry{cna}{name={\ensuremath{C_{n\alpha}}},sort={Cna},description={slope of the 2D normal coefficient curve, should be similar to \gls{cla}}, type=symbolslist}
+\newglossaryentry{cma}{name={\ensuremath{C_{m\alpha}}},sort={Cma},description={slope of the 2D pitching moment coefficient curve}, type=symbolslist}
+\newglossaryentry{cnq}{name={\ensuremath{C_{nq} (s,M)}},sort={Cnq},description={slope of the normal force coefficient vs. \gls{q} curve}, type=symbolslist}
+\newglossaryentry{cmq}{name={\ensuremath{C_{mq} (s,M)}},sort={Cmq},description={slope of the pitching moment coefficient vs. \gls{q} curve}, type=symbolslist}
+
+
+\newglossaryentry{cd}{name={\ensuremath{C_d}},sort={Cd},description={2D drag coefficient}, type=symbolslist}
+\newglossaryentry{cn}{name={\ensuremath{C_n}},sort={Cn},description={2D normal-to-chord force coefficient}, type=symbolslist}
+\newglossaryentry{cm}{name={\ensuremath{C_m}},sort={Cm},description={2D pitching moment coefficient about \nicefrac{1}{4}-chord, positive if nose up}, type=symbolslist}
+\newglossaryentry{cnpot}{name={\ensuremath{C_n^{pot}}},sort={Cnpot},description={2D normal-to-chord force coefficient under attached (potential) flow conditions}, type=symbolslist}
+\newglossaryentry{ccpot}{name={\ensuremath{C_c^{pot}}},sort={Ccpot},description={2D along-chord force coefficient under attached (potential) flow conditions}, type=symbolslist}
+\newglossaryentry{cmpot}{name={\ensuremath{C_m^{pot}}},sort={Cmpot},description={2D moment coefficient under attached (potential) flow conditions about \nicefrac{1}{4}-chord location}, type=symbolslist}
+
+\newglossaryentry{cd0}{name={\ensuremath{C_{d0}}},sort={Cd0},description={2D drag coefficient at 0-lift}, type=symbolslist}
+\newglossaryentry{cm0}{name={\ensuremath{C_{m0}}},sort={Cm0},description={2D pitching moment coefficient at 0-lift, positive if nose up}, type=symbolslist}
+
+
+\newglossaryentry{cn_a}{name={\ensuremath{C_{n_\alpha} (s,M)}},sort={Cn_a},description={normal force coefficient response to step change in \gls{alpha}}, type=symbolslist}
+\newglossaryentry{cn_ac}{name={\ensuremath{C_{n_\alpha}^c (s,M)}},sort={Cn_ac},description={circulatory component of the normal force coefficient response to step change in \gls{alpha}}, see=cn_a, type=symbolslist}
+\newglossaryentry{cn_anc}{name={\ensuremath{C_{n_\alpha}^{nc} (s,M)}},sort={Cn_anc},description={non-circulatory component of the normal force coefficient response to step change in \gls{alpha}}, see=cn_a, type=symbolslist}
+
+
+\newglossaryentry{cn_q}{name={\ensuremath{C_{n_q} (s,M)}},sort={Cn_q},description={normal force coefficient response to step change in \gls{q}}, type=symbolslist}
+\newglossaryentry{cn_qc}{name={\ensuremath{C_{n_q}^c (s,M)}},sort={Cn_qc},description={circulatory component of the normal force coefficient response to step change in \gls{q}}, see=cn_q, type=symbolslist}
+\newglossaryentry{cn_qnc}{name={\ensuremath{C_{n_q}^{nc} (s,M)}},sort={Cn_qnc},description={non-circulatory component of the normal force coefficient response to step change in \gls{q}}, see=cn_q, type=symbolslist}
+
+\newglossaryentry{cm_a}{name={\ensuremath{C_{m_\alpha} (s,M)}},sort={Cm_a},description={pitching moment coefficient response to step change in \gls{alpha}}, type=symbolslist}
+\newglossaryentry{cm_ac}{name={\ensuremath{C_{m_\alpha}^c (s,M)}},sort={Cm_ac},description={circulatory component of the pitching moment coefficient response to step change in \gls{alpha}}, see=cm_a, type=symbolslist}
+\newglossaryentry{cm_anc}{name={\ensuremath{C_{m_\alpha}^{nc} (s,M)}},sort={Cm_anc},description={non-circulatory component of the pitching moment coefficient response to step change in \gls{alpha}}, see=cm_a, type=symbolslist}
+
+\newglossaryentry{cm_q}{name={\ensuremath{C_{m_q} (s,M)}},sort={Cm_q},description={pitching moment coefficient response to step change in \gls{q}}, type=symbolslist}
+\newglossaryentry{cm_qc}{name={\ensuremath{C_{m_q}^c (s,M)}},sort={Cm_qc},description={circulatory component of the pitching moment coefficient response to step change in \gls{q}}, see=cm_q, type=symbolslist}
+\newglossaryentry{cm_qnc}{name={\ensuremath{C_{m_q}^{nc} (s,M)}},sort={Cm_qnc},description={non-circulatory component of the moment coefficient response to step change in \gls{q}}, see=cm_q, type=symbolslist}
+
+\newglossaryentry{cn_aq}{name={\ensuremath{C_{n_{\alpha,q}} (s,M)}}, sort={Cn_aq},description={normal force coefficient response to step change in \gls{alpha} and \gls{q}}, type=symbolslist}
+\newglossaryentry{cm_aq}{name={\ensuremath{C_{m_{\alpha,q}} (s,M)}}, sort={Cm_aq},description={moment coefficient response to step change in \gls{alpha} and \gls{q}}, type=symbolslist}
+
+
+\newglossaryentry{cn_aqc}{name={\ensuremath{C_{n_{\alpha,q}}^c (s,M)}}, sort={Cn_aqc},description={circulatory component of \gls{cn_aq}},see=\gls{cn_aq}, type=symbolslist}
+\newglossaryentry{cn_aqnc}{name={\ensuremath{C_{n_{\alpha,q}}^{nc} (s,M)}}, sort={Cn_aqnc},description={non-circulatory component of \gls{cn_aq}},see=\gls{cn_aq}, type=symbolslist}
+
+\newglossaryentry{cm_aqc}{name={\ensuremath{C_{m_{\alpha,q}}^c (s,M)}}, sort={Cm_aqc},description={circulatory component of \gls{cm_aq}},see=\gls{cm_aq}, type=symbolslist}
+\newglossaryentry{cm_aqnc}{name={\ensuremath{C_{m_{\alpha,q}}^{nc} (s,M)}}, sort={Cm_aqnc},description={non-circulatory component of \gls{cm_aq}},see=\gls{cm_aq}, type=symbolslist}
+
+\newglossaryentry{cnc}{name={\ensuremath{C_n^c (s,M)}}, sort={Cn_c},description={circulatory component of \gls{cn_aq}},see=\gls{cn_aqc}, type=symbolslist}
+
+
+\newglossaryentry{cnac}{name={\ensuremath{C_{n\alpha}^c (s,M)}},sort={Cnac},description={slope of the circulatory normal force coefficient vs. \gls{alpha} curve},see=\gls{cna}, type=symbolslist}
+
+\newglossaryentry{Kalpha}{name={\ensuremath{K_\alpha}},sort={Kalpha},description={backward finite difference of \gls{alpha} at the t-th time step}, type=symbolslist}
+\newglossaryentry{Kalphap}{name={\ensuremath{K_\alpha '}},sort={Kalphap},description={deficiency function for \gls{cn_anc} }, type=symbolslist}
+\newglossaryentry{Kq}{name={\ensuremath{K_q}},sort={Kq},description={backward finite difference of \gls{q} at the t-th time step}, type=symbolslist}
+\newglossaryentry{Kqp}{name={\ensuremath{K_q '}},sort={Kqp},description={deficiency function for \gls{cn_qnc} }, type=symbolslist}
+\newglossaryentry{Kqpp}{name={\ensuremath{K_q''}},sort={Kqpp},description={deficiency function for \gls{cm_qnc} }, type=symbolslist}
+
+\newglossaryentry{Kqppp}{name={\ensuremath{K_q'''}},sort={Kqppp},description={deficiency function for \gls{cm_qc} }, type=symbolslist}
+
+\newglossaryentry{cnp}{name={\ensuremath{C_n'}}, sort={Cnp},description={lagged component of \gls{cn} in the \gls{te} separated treatment}, type=symbolslist}
+\newglossaryentry{cn1}{name={\ensuremath{C_{n1}}}, sort={Cn1},description={critical value of \gls{cnp} at \gls{le} separation. It should be extracted from airfoil data at a given Mach and Reynolds number. It can be calculated from the static value of \gls{cn} at either the break in the pitching moment or the loss of chord force at the onset of stall. It is close to the condition of maximum lift of the airfoil at low Mach numbers.}, type=symbolslist}
+\newglossaryentry{cn2}{name={\ensuremath{C_{n2}}}, sort={Cn2},description={critical value of \gls{cnp} at \gls{le} separation for negative \glspl{aoa}; analogous to \gls{cn1}.},see={cn1}, type=symbolslist}
+
+\newglossaryentry{cnfs}{name={\ensuremath{C_n^{fs}}}, sort={Cnfs},description={normal force coefficient under separated \gls{te} flow separation conditions.}, type=symbolslist}
+
+\newglossaryentry{cnv}{name={\ensuremath{C_n^v}}, sort={Cnv},description={normal force coefficient due to the presence of \gls{le} vortex}, type=symbolslist}
+\newglossaryentry{cv}{name={\ensuremath{C_V}}, sort={Cv},description={contribution to the normal force coefficient due to accumulated vorticity in the \gls{le} vortex}, type=symbolslist}
+\newglossaryentry{cmv}{name={\ensuremath{C_m^v}}, sort={Cmv},description={pitching moment coefficient due to the presence of \gls{le} vortex}, type=symbolslist}
+
+\newglossaryentry{Dp}{name={\ensuremath{D_p}},sort={Dp},description={deficiency function for \gls{cnp} }, type=symbolslist}
+\newglossaryentry{Df}{name={\ensuremath{D_f}},sort={Df},description={deficiency function for \gls{fp} },see=fp, type=symbolslist}
+\newglossaryentry{Dalphaf}{name={\ensuremath{D_{\alpha f}}},sort={Dalphaf},description={deficiency function for \gls{alphaf} },see=fp, type=symbolslist}
+
+\newglossaryentry{cc}{name={\ensuremath{C_c}},sort={Cc},description={2D tangential (along chord) force coefficient}, type=symbolslist}
+
+\newglossaryentry{c}{name={\ensuremath{c}},sort={c},description={chord length}, type=symbolslist}
+\newglossaryentry{u}{name={\ensuremath{U}},sort={U},description={air velocity magnitude relative to the airfoil}, type=symbolslist}
+\newglossaryentry{uoo}{name={\ensuremath{U_\inf}},sort={Uoo},description={Free-stream air velocity magnitude, type=symbolslist}}
+
+\newglossaryentry{f}{name={\ensuremath{f}},sort={f},description={separation point distance from \gls{le} in percent chord}, type=symbolslist}
+\newglossaryentry{fp}{name={\ensuremath{f'}},sort={fp},description={separation point distance from \gls{le} in percent chord under unsteady conditions},see=f, type=symbolslist}
+\newglossaryentry{fpp}{name={\ensuremath{f''}},sort={fpp},description={lagged version of \gls{fp}accounting for unsteady boundary layer response}, see=fp, type=symbolslist}
+\newglossaryentry{fm}{name={\ensuremath{f_m}},sort={fm},description={CENER's proposed version of \gls{f} extracted from the \gls{cm} static tables, assuming $\gls{cm}=\gls{cn} f_m$}, see=f, type=symbolslist}
+
+\newglossaryentry{k}{name={\ensuremath{k}},sort={k},description={reduced frequency}, type=symbolslist}
+
+\newglossaryentry{M}{name={\ensuremath{M}},description={Mach Number}, type=symbolslist}
+\newglossaryentry{R}{name={\ensuremath{R}},description={Rotor Radius}, type=symbolslist}
+\newglossaryentry{D}{name={\ensuremath{D}},description={Rotor Diameter}, type=symbolslist}
+\newglossaryentry{s}{name={\ensuremath{s}},description={non-dimensional Distance}, type=symbolslist}
+\newglossaryentry{t}{name={\ensuremath{t}},description={time}, type=symbolslist}
+\newglossaryentry{frt}{name={\ensuremath{F_R(t)}},description={Response Function to generic disturbance \ensuremath{\epsilon(t)}},type=symbolslist}
+\newglossaryentry{frs}{name={\ensuremath{F_R(s)}},description={Response Function to generic disturbance \ensuremath{\epsilon(s)}}, see=frt,type=symbolslist}
+
+\newglossaryentry{ncsup}{name={\ensuremath{^{nc}}},description={non-circulatory component of the quantity at the base}, see=csup,type=symbolslist}
+\newglossaryentry{csup}{name={\ensuremath{^c}},description={circulatory component of the quantity at the base}, see=ncsup,type=symbolslist}
+\newglossaryentry{qsub}{name={\ensuremath{_q}},description={relative to a step-change in \gls{q}}, see=asub,type=symbolslist}
+\newglossaryentry{asub}{name={\ensuremath{_\alpha}},description={relative to a step-change in \gls{alpha}}, see=qsub,type=symbolslist}
+
+\newglossaryentry{tsub}{name={\ensuremath{_t}},description={relative to the t-th time step}, see=t,type=symbolslist}
+\newglossaryentry{nsub}{name={\ensuremath{_n}},description={relative to the n-th time step}, see=t,type=symbolslist}
+
+\newglossaryentry{q}{name={\ensuremath{q}},description={non-dimensional pitching Rate =\ensuremath{\dot{\alpha}\gls{c}/\gls{u}}},type=symbolslist}
+
+\newglossaryentry{tam}{name={\ensuremath{T_\alpha (M)}},description={Mach-dependent time constant in the expression of \gls{phianc}},type=symbolslist,see=\gls{tap}}
+\newglossaryentry{tqm}{name={\ensuremath{T_q (M)}},description={Mach-dependent time constant in the expression of \gls{phiqnc}},type=symbolslist,see=\gls{tqp}}
+\newglossaryentry{tmqm}{name={\ensuremath{T_{m,q} (M)}},description={Mach-dependent time constant in the expression of \gls{phimqnc}},type=symbolslist,see=tmqp}
+
+
+\newglossaryentry{ti}{name={\ensuremath{T_I}},description={time constant in the expression of \gls{phianc} $=\gls{c}/\gls{as}$},type=symbolslist}
+
+\newglossaryentry{tp}{name={\ensuremath{T_p}},description={boundary-layer,\gls{le} pressure gradient time constant; in the expression of \gls{Dp}. It should be tuned based on airfoil experimental data.},type=symbolslist,see=Dp}
+\newglossaryentry{tf}{name={\ensuremath{T_f}},description={constant dependent on Mach, \gls{Re}, and airfoil shape; it is used in the expression of \gls{Df} and \gls{fpp}}, see=fpp, type=symbolslist}
+\newglossaryentry{tf0}{name={\ensuremath{T_{f0}}},description={initial value of \gls{tf}}, see=tf, type=symbolslist}
+\newglossaryentry{tv}{name={\ensuremath{T_V}},description={time constant associated with the vortex lift decay process; it is used in the expression of \gls{cnv}. It depends on \gls{Re},\gls{M}, and airfoil class.},  type=symbolslist}
+\newglossaryentry{tv0}{name={\ensuremath{T_{V0}}},description={initial value of \gls{tv}.},see=tv,  type=symbolslist}
+
+\newglossaryentry{tvl}{name={\ensuremath{T_{VL}}},description={time constant associated with the vortex advection process; it represents the non-dimensional time in semi-chords, needed for a vortex to travel from \gls{le} to \gls{te}; it is used in the expression of \gls{cnv}. It depends on \gls{Re}, \gls{M} (weakly), and airfoil. Value's range $=[6;13]$.}, see=tauv, type=symbolslist}
+
+\newglossaryentry{tsh}{name={\ensuremath{T_{sh}}},description={time constant associated with the vortex shedding. It allows multiple vortices to be shed at a Strouhal's frequency of 0.19.},see=stsh,  type=symbolslist}
+
+
+\newglossaryentry{as}{name={\ensuremath{a_s}},description={speed of sound},type=symbolslist}
+
+\newglossaryentry{kam}{name={\ensuremath{k_\alpha (M)}},description={Mach-dependent constant in the expression of \gls{tam}},type=symbolslist,see=\gls{tam}}
+
+\newglossaryentry{kqm}{name={\ensuremath{k_q (M)}},description={Mach-dependent constant in the expression of \gls{tqm}},type=symbolslist,see=\gls{tqm}}
+
+\newglossaryentry{kmqm}{name={\ensuremath{k_{m,q} (M)}},description={Mach-dependent constant in the expression of \gls{tmqm} and \gls{cm_qnc}},type=symbolslist,see=tmqm}
+
+\newglossaryentry{tap}{name={\ensuremath{T'_\alpha}},description={Mach-dependent, non-dimensional time constant in the expression of \gls{phianc}; it is equal to $2\gls{u}\gls{tam}/\gls{c}$}, type=symbolslist, see=\gls{tam}}
+\newglossaryentry{tqp}{name={\ensuremath{T'_q}},description={Mach-dependent time constant in the expression of \gls{phiqnc}},type=symbolslist}
+\newglossaryentry{tmqp}{name={\ensuremath{T_{m,q} '}},description={Mach-dependent time constant in the expression of \gls{phimqnc}},type=symbolslist}
+
+\newglossaryentry{xac}{name={\ensuremath{\hat{x}_{AC}}},description={aerodynamic center distance from \gls{le} in percent chord},type=symbolslist}
+\newglossaryentry{xcp}{name={\ensuremath{\hat{x}_{cp}}},description={center-of-pressure distance from \gls{le} in percent chord},type=symbolslist}
+\newglossaryentry{xcpv}{name={\ensuremath{\hat{x}_{cp}^v}},description={center-of-pressure distance from the \nicefrac{1}{4}-chord, in percent chord, during the \gls{le} vortex advection process},type=symbolslist}
+\newglossaryentry{xcpbb}{name={\ensuremath{\bar{\bar{x}}_{cp}}},description={constant in the expression of \gls{xcpv}, usually $=0.2$},see=xcpv,type=symbolslist}
+
+\newglossaryentry{a1}{name={\ensuremath{A_1}},description={constant in the expression of \gls{phiac} and\gls{phiqc}; from \cite{leishman2011} experimental results set it to 0.3. This value is relatively insensitive for thin airfoils, but may be different for turbine airfoils. Generally speaking it should not be tuned by the user.},type=symbolslist}
+\newglossaryentry{a2}{name={\ensuremath{A_2}},description={constant in the expression of \gls{phiac} and\gls{phiqc}; from \cite{leishman2011} experimental results set it to 0.7. This value is relatively insensitive for thin airfoils, but may be different for turbine airfoils. Generally speaking it should not be tuned by the user.},type=symbolslist}
+\newglossaryentry{a5}{name={\ensuremath{A_5}},description={constant in the expression of \gls{Kqppp}, 
+		\gls{cm_qnc}, and \gls{kmqm}; from \cite{leishman2011} experimental results set it to 1},type=symbolslist}
+
+\newglossaryentry{b1}{name={\ensuremath{b_1}},description={constant in the expression of \gls{phiac} and\gls{phiqc}; from \cite{leishman2011} experimental results set it to 0.14. This value is relatively insensitive for thin airfoils, but may be different for turbine airfoils. Generally speaking it should not be tuned by the user.},type=symbolslist}
+\newglossaryentry{b2}{name={\ensuremath{b_2}},description={constant in the expression of \gls{phiac} and\gls{phiqc}; from \cite{leishman2011} experimental results set it to 0.53. This value is relatively insensitive for thin airfoils, but may be different for turbine airfoils. Generally speaking it should not be tuned by the user.},type=symbolslist}
+\newglossaryentry{b5}{name={\ensuremath{b_5}},description={constant in the expression of \gls{Kqppp}, \gls{cm_qnc}, and \gls{kmqm}; from \cite{leishman2011} experimental results set it to 5},type=symbolslist}
+
+\newglossaryentry{X1}{name={\ensuremath{X_1}},description={deficiency function used in the development of \gls{cn_ac}},see=cn_ac,type=symbolslist}
+\newglossaryentry{X2}{name={\ensuremath{X_2}},description={deficiency function used in the development of \gls{cn_ac}},see=cn_ac,type=symbolslist}
+
+\newglossaryentry{s1}{name={\ensuremath{S_1}},description={constant in the \gls{f} curve best-fit; by definition it depends on the airffoil.},type=symbolslist}
+\newglossaryentry{s2}{name={\ensuremath{S_2}},description={constant in the \gls{f} curve best-fit; by definition it depends on the airffoil.},type=symbolslist}
+\newglossaryentry{k0}{name={\ensuremath{k_0}},description={constant in the \gls{xcp} curve best-fit;  $=(\gls{xac}-0.25)$},see=xcp,type=symbolslist}
+
+\newglossaryentry{k1}{name={\ensuremath{k_1}},description={constant in the \gls{xcp} curve best-fit},see=xcp,type=symbolslist}
+\newglossaryentry{k2}{name={\ensuremath{k_2}},description={constant in the \gls{xcp} curve best-fit},see=xcp,type=symbolslist}
+\newglossaryentry{k3}{name={\ensuremath{k_3}},description={constant in the \gls{xcp} curve best-fit},see=xcp,type=symbolslist}
+\newglossaryentry{k1h}{name={\ensuremath{\hat{k}_1}},description={constant in the \gls{cc} expression due to \gls{le} vortex effects},type=symbolslist}
+\newglossaryentry{k2h}{name={\ensuremath{\hat{k}_2}},description={constant in the \gls{cc} expression due to \gls{le} vortex effects, taken equal to $2(\gls{cnp} -\gls{cn1})+(\gls{fpp}-\gls{f})$},type=symbolslist}
+
+\newglossaryentry{stsh}{name={\ensuremath{St_{sh}}},description={Strouhal's shedding frequency constant, commonly taken equal to 0.19},see=tsh,type=symbolslist}
+
+
+%GREEK
+\newglossaryentry{alpha}{name={\ensuremath{\alpha}},sort={alpha},description={angle of attack}, see={aoa}, type=greek}
+\newglossaryentry{alphae}{name={\ensuremath{\alpha_e}},sort={alpha_e},description={effective angle of attack at \nicefrac{3}{4}-chord},  type=greek}
+\newglossaryentry{alpha0}{name={\ensuremath{\alpha_0}},sort={alpha_0},description={0-lift angle of attack},  type=greek}
+\newglossaryentry{alpha1}{name={\ensuremath{\alpha_1}},sort={alpha_1},description={angle of attack at \gls{f}=0.7, approximately the stall angle},  type=greek}
+\newglossaryentry{alphaf}{name={\ensuremath{\alpha_f}},sort={alpha_f},description={effective \gls{aoi} which would give the same unsteady \gls{le} pressure gradient under static conditions; used to calculate \gls{fp}}, see=fp,  type=greek}
+\newglossaryentry{alphafp}{name={\ensuremath{\alpha_f'}},sort={alpha_fp},description={lagged version of \gls{alphaf}; used in \cite{minnema1998} calculation of \gls{cm} under separated conditions}, see=alphaf,  type=greek}
+
+
+\newglossaryentry{betam}{name={\ensuremath{\beta_M}},sort={betam},description={Prandtl-Glauert compressibility correction factor \ensuremath{\sqrt{1-M^2}}}, type=greek}
+\newglossaryentry{Delta}{name={\ensuremath{\Delta}},description={variation, finite difference of quantity},type=greek}
+\newglossaryentry{epst}{name={\ensuremath{\epsilon(t)}},description={generic disturbance},type=greek}
+\newglossaryentry{epss}{name={\ensuremath{\epsilon(s)}},description={generic disturbance},see=epst, type=greek}
+
+\newglossaryentry{phitm}{name={\ensuremath{\phi(t,M)}},description={indicial response function},type=greek}
+\newglossaryentry{phism}{name={\ensuremath{\phi(s,M)}},description={indicial response function},type=greek}
+
+\newglossaryentry{etae}{name={\ensuremath{\eta_e}},description={recovery factor $\simeq [0.85-0.95]$ to account for viscous effects at limited or no separation on \gls{cc}},type=greek}
+
+\newglossaryentry{phianc}{name={\ensuremath{\phi_\alpha^{nc}}},description={normal force coefficient, non-circulatory indicial response function to a step change in \gls{alpha} },type=greek}
+\newglossaryentry{phiac}{name={\ensuremath{\phi_\alpha^{c}}},description={normal force coefficient, circulatory indicial response function  to a step change in \gls{alpha}},type=greek}
+\newglossaryentry{phiqnc}{name={\ensuremath{\phi_q^{nc}}},description={normal force coefficient, non-circulatory indicial response Function to a step change in \gls{q} },type=greek}
+\newglossaryentry{phiqc}{name={\ensuremath{\phi_q^c}},description={normal force coefficient, circulatory indicial response function to a step change in \gls{q} },type=greek}
+
+\newglossaryentry{phimac}{name={\ensuremath{\phi_{m,\alpha}^{c}}},description={pitching moment coefficient, circulatory indicial response function  to a step change in \gls{alpha}},type=greek}
+\newglossaryentry{phimanc}{name={\ensuremath{\phi_{m,\alpha}^{nc}}},description={pitching moment coefficient, non-circulatory indicial response function  to a step change in \gls{alpha}},type=greek}
+\newglossaryentry{phimqnc}{name={\ensuremath{\phi_{m,q}^{nc}}},description={pitching moment coefficient, non-circulatory indicial response function  to a step change in \gls{q}},type=greek}
+\newglossaryentry{phimqc}{name={\ensuremath{\phi_{m,q}^c}},description={pitching moment coefficient, circulatory indicial response function  to a step change in \gls{q}},type=greek}
+
+\newglossaryentry{deltaa0}{name={\ensuremath{\Delta_{\alpha0}}},description={\gls{alpha}-\gls{alpha0}},type=greek}
+
+\newglossaryentry{sigt}{name={\ensuremath{\sigma_t}},description={generic integrand coordinate},type=greek}
+\newglossaryentry{sigs}{name={\ensuremath{\sigma_s}},description={generic integrand coordinate}, see=sigt,type=greek}
+\newglossaryentry{sig1}{name={\ensuremath{\sigma_1}},description={generic multiplier for \gls{tf}}, see=tf, type=greek}
+\newglossaryentry{sig3}{name={\ensuremath{\sigma_3}},description={generic multiplier for \gls{tv}}, see=tv, type=greek}
+\newglossaryentry{tauv}{name={\ensuremath{\tau_V}},description={time variable, tracking the travel of the \gls{le} vortex over the airfoil suction surface. It is made dimensionless via the semi-chord: $\tau_V = t*2 \gls{u}/\gls{c}$. If less than $2\gls{tvl}$, it renders \gls{VRTX}=True; if less than \gls{tvl} then the vortex is still on the airfoil.}, type=greek}
+\newglossaryentry{omg}{name={\ensuremath{\omega}},description={generic frequency}, type=greek}
+\newglossaryentry{Omg}{name={\ensuremath{\Omega}},description={rotor rotational speed}, type=greek}

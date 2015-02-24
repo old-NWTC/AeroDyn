@@ -1,0 +1,20 @@
+!Title or comment line number 1
+!Title or comment line number 2
+!	
+
+NonDimAreA     1.0         ! The non-dimensional area of the airfoil (area/chord^2) (set to 1.0 if unsure or unneeded)
+NumCoords      0           ! The number of coordinates in the airfoil shape file.  Set to zero if coordinates not included.
+
+NumTabs        1           ! Number of airfoil tables in this file.  Each table must have lines for Re and Ctrl.	
+!-------------------------------------------------------------------------------
+   ! Table #1 for Re = 0.75
+Re             0.75        ! Reynolds numbers in millions
+Ctrl           0.0         ! Control setting (must be 0 for current AirfoilInfo)
+InclUAdata     False       ! Is unsteady aerodynamics data included in this table.
+   ! Table of aerodynamics coefficients.
+NumAlf        3           ! Number of data lines in the following table.
+!Alpha      Cl       Cd       Cm
+  -180.00	   .000	  .3000  0.0
+      .00	   .000	  .3000  0.0
+   180.00	   .000	  .3000  0.0
+
