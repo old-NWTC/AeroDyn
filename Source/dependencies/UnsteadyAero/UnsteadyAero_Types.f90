@@ -40,20 +40,20 @@ IMPLICIT NONE
     CHARACTER(1024)  :: OutRootName      ! Supplied by Driver:  The name of the root file (without extension) including the full path [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: c      ! Chord length at node [m]
     INTEGER(IntKi)  :: numBlades      ! Number nodes of all blades [-]
-    INTEGER(IntKi)  :: nNodesPerBlade      ! Number nodes of all blades [-]
+    INTEGER(IntKi)  :: nNodesPerBlade      ! Number nodes per blades [-]
     INTEGER(IntKi)  :: DSMod      ! Model for the dynamic stall equations [-]
     REAL(ReKi)  :: a_s      ! speed of sound [m/s]
-    INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFIndx      !  [-]
-    TYPE(AFI_ParameterType)  :: AFI_Params      !  [-]
+    INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFIndx      ! Airfoil index for given blade node [-]
+    TYPE(AFI_ParameterType)  :: AFI_Params      ! Airfoil Info parameter data structure [-]
     CHARACTER(20)  :: OutFmt      ! Output format for numerical results [-]
     CHARACTER(20)  :: OutSFmt      ! Output format for header strings [-]
     INTEGER(IntKi)  :: NumOuts      ! The number of outputs for this module as requested in the input file [-]
-    CHARACTER(10) , DIMENSION(1:199)  :: OutList      ! The user-requested output channel labels for this modules. This should really be dimensioned with MaxOutPts [-]
+    CHARACTER(10) , DIMENSION(1:199)  :: OutList      ! The user-requested output channel labels for this module. This should really be dimensioned with MaxOutPts [-]
   END TYPE UnsteadyAero_InitInputType
 ! =======================
 ! =========  UnsteadyAero_InitOutputType  =======
   TYPE, PUBLIC :: UnsteadyAero_InitOutputType
-    TYPE(ProgDesc)  :: Version      !  [-]
+    TYPE(ProgDesc)  :: Version      ! Version structure [-]
     CHARACTER(10) , DIMENSION(:), ALLOCATABLE  :: WriteOutputHdr      ! The is the list of all HD-related output channel header strings (includes all sub-module channels) [-]
     CHARACTER(10) , DIMENSION(:), ALLOCATABLE  :: WriteOutputUnt      ! The is the list of all HD-related output channel unit strings (includes all sub-module channels) [-]
   END TYPE UnsteadyAero_InitOutputType
@@ -65,23 +65,25 @@ IMPLICIT NONE
 ! =======================
 ! =========  UnsteadyAero_DiscreteStateType  =======
   TYPE, PUBLIC :: UnsteadyAero_DiscreteStateType
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: alpha_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: alpha_minus2      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: q_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: q_minus2      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: X1_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: X2_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Kprime_alpha_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Kprime_q_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Dp_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn_pot_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: T_f      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: fprimeprime_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Df_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: fprime_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: tau_V      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn_v_minus1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: C_V_minus1      !  [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: alpha_minus1      ! angle of attack, previous time step [rad]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: alpha_minus2      ! angle of attack, two time steps ago [rad]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: q_minus1      ! non-dimensional pitching rate, previous time step [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: q_minus2      ! non-dimensional pitching rate, two time steps ago [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: X1_minus1      ! deficiency function used in the development of Cn_alpha_q__circ, previous time step [rad]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: X2_minus1      ! deficiency function used in the development of Cn_alpha_q__circ, previous time step [rad]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Kprime_alpha_minus1      ! deficiency function used in the development of Cn_alpha_nc, previous time step [rad/s]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Kprime_q_minus1      ! deficiency function used in the development of Cn_q_nc, previous time step [rad/s^2]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Kprimeprime_q_minus1      ! deficiency function used in the development of Cm_q_nc, previous time step [rad/s^2]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: K3prime_q_minus1      ! deficiency function used in the development of Cm_q_circ, previous time step [rad/s]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Dp_minus1      ! deficiency function used in the development of Cm_q_circ, previous time step [rad/s]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn_pot_minus1      ! deficiency function used in the development of Cn_prime [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: fprimeprime_minus1      ! lagged version of fprime, accounting for unsteady boundary layer response, previous time step [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Df_minus1      ! deficiency function used in the development of fprime, previous time step [rad/s]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: fprime_minus1      ! separation point distance from leading edge, expressed in cord fraction, previous time step [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: tau_V      ! time variable, tracking the travel of the LE vortex over the airfoil suction surface [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn_v_minus1      ! normal force coefficient due to the presence of LE vortex, previous time step [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: C_V_minus1      ! contribution to the normal force coefficient due to accumulated vorticity in the LE vortex, previous time step [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Dfalpha_minus1      ! deficiency function used in the development of alpha_f_prime, previous time step [rad]
   END TYPE UnsteadyAero_DiscreteStateType
 ! =======================
 ! =========  UnsteadyAero_ConstraintStateType  =======
@@ -91,12 +93,12 @@ IMPLICIT NONE
 ! =======================
 ! =========  UnsteadyAero_OtherStateType  =======
   TYPE, PUBLIC :: UnsteadyAero_OtherStateType
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: sigma1      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: sigma3      !  [-]
-    LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: TESF      !  [-]
-    LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: LESF      !  [-]
-    LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: VRTX      !  [-]
-    LOGICAL  :: FirstPass      !  [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: sigma1      ! multiplier for T_f [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: sigma3      ! multiplier for T_V [-]
+    LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: TESF      ! logical flag indicating if trailing edge separation is possible [-]
+    LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: LESF      ! logical flag indicating if leading edge separation is possible [-]
+    LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: VRTX      ! logical flag indicating if a vortex is being processed [-]
+    LOGICAL  :: FirstPass      ! logical flag indicating if this is the first time step [-]
   END TYPE UnsteadyAero_OtherStateType
 ! =======================
 ! =========  UnsteadyAero_ParameterType  =======
@@ -104,34 +106,34 @@ IMPLICIT NONE
     REAL(DbKi)  :: dt      ! time step [s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: c      ! Chord length at node [m]
     INTEGER(IntKi)  :: numBlades      ! Number nodes of all blades [-]
-    INTEGER(IntKi)  :: nNodesPerBlade      ! Number nodes of all blades [-]
-    INTEGER(IntKi)  :: DSMod      !  [-]
+    INTEGER(IntKi)  :: nNodesPerBlade      ! Number nodes per blades [-]
+    INTEGER(IntKi)  :: DSMod      ! Model for the dynamic stall equations [-]
     REAL(ReKi)  :: a_s      ! speed of sound [m/s]
-    INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFIndx      !  [-]
-    TYPE(AFI_ParameterType)  :: AFI_Params      ! Parameters for the airfoils [-]
-    INTEGER(IntKi)  :: NumOuts      ! Number of HydroDyn module-level outputs (not the total number including sub-modules [-]
-    INTEGER(IntKi)  :: OutSwtch      ! Output requested channels to: [1=Hydrodyn.out 2=GlueCode.out  3=both files] [-]
+    INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFIndx      ! Airfoil index for given blade node [-]
+    TYPE(AFI_ParameterType)  :: AFI_Params      ! Airfoil Info parameter data structure [-]
+    INTEGER(IntKi)  :: NumOuts      ! Number of outputs [-]
+    INTEGER(IntKi)  :: OutSwtch      ! Output requested channels to: [1=Unsteady.out 2=GlueCode.out  3=both files] [-]
     CHARACTER(20)  :: OutFmt      ! Output format for numerical results [-]
     CHARACTER(20)  :: OutSFmt      ! Output format for header strings [-]
     CHARACTER(10)  :: Delim      ! Delimiter string for outputs, defaults to tab-delimiters [-]
-    INTEGER(IntKi)  :: UnOutFile      ! File unit for the HydroDyn outputs [-]
+    INTEGER(IntKi)  :: UnOutFile      ! File unit for the UnsteadyAero outputs [-]
   END TYPE UnsteadyAero_ParameterType
 ! =======================
 ! =========  UnsteadyAero_InputType  =======
   TYPE, PUBLIC :: UnsteadyAero_InputType
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: U      !  [m/s]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Re      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: alpha      !  [rad]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: U      ! air velocity magnitude relative to the airfoil [m/s]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Re      ! Reynolds number [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: alpha      ! angle of attack [rad]
   END TYPE UnsteadyAero_InputType
 ! =======================
 ! =========  UnsteadyAero_OutputType  =======
   TYPE, PUBLIC :: UnsteadyAero_OutputType
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cc      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cm      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cl      !  [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cd      !  [-]
-    REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: WriteOutput      !  [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn      ! 2D, normal to chord, force coefficient [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cc      ! 2D, tangent to chord, force coefficient [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cm      ! 2D pitching moment coefficient about the 1/4 chord, positive when nose is up [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cl      ! 2D lift coefficient [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cd      ! 2D drag coefficient [-]
+    REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: WriteOutput      ! outputs to be written to a file [-]
   END TYPE UnsteadyAero_OutputType
 ! =======================
 CONTAINS
@@ -810,6 +812,34 @@ IF (ALLOCATED(SrcDiscStateData%Kprime_q_minus1)) THEN
    END IF
    DstDiscStateData%Kprime_q_minus1 = SrcDiscStateData%Kprime_q_minus1
 ENDIF
+IF (ALLOCATED(SrcDiscStateData%Kprimeprime_q_minus1)) THEN
+   i1_l = LBOUND(SrcDiscStateData%Kprimeprime_q_minus1,1)
+   i1_u = UBOUND(SrcDiscStateData%Kprimeprime_q_minus1,1)
+   i2_l = LBOUND(SrcDiscStateData%Kprimeprime_q_minus1,2)
+   i2_u = UBOUND(SrcDiscStateData%Kprimeprime_q_minus1,2)
+   IF (.NOT. ALLOCATED(DstDiscStateData%Kprimeprime_q_minus1)) THEN 
+      ALLOCATE(DstDiscStateData%Kprimeprime_q_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+      IF (ErrStat2 /= 0) THEN 
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Kprimeprime_q_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         RETURN
+      END IF
+   END IF
+   DstDiscStateData%Kprimeprime_q_minus1 = SrcDiscStateData%Kprimeprime_q_minus1
+ENDIF
+IF (ALLOCATED(SrcDiscStateData%K3prime_q_minus1)) THEN
+   i1_l = LBOUND(SrcDiscStateData%K3prime_q_minus1,1)
+   i1_u = UBOUND(SrcDiscStateData%K3prime_q_minus1,1)
+   i2_l = LBOUND(SrcDiscStateData%K3prime_q_minus1,2)
+   i2_u = UBOUND(SrcDiscStateData%K3prime_q_minus1,2)
+   IF (.NOT. ALLOCATED(DstDiscStateData%K3prime_q_minus1)) THEN 
+      ALLOCATE(DstDiscStateData%K3prime_q_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+      IF (ErrStat2 /= 0) THEN 
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%K3prime_q_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         RETURN
+      END IF
+   END IF
+   DstDiscStateData%K3prime_q_minus1 = SrcDiscStateData%K3prime_q_minus1
+ENDIF
 IF (ALLOCATED(SrcDiscStateData%Dp_minus1)) THEN
    i1_l = LBOUND(SrcDiscStateData%Dp_minus1,1)
    i1_u = UBOUND(SrcDiscStateData%Dp_minus1,1)
@@ -837,20 +867,6 @@ IF (ALLOCATED(SrcDiscStateData%Cn_pot_minus1)) THEN
       END IF
    END IF
    DstDiscStateData%Cn_pot_minus1 = SrcDiscStateData%Cn_pot_minus1
-ENDIF
-IF (ALLOCATED(SrcDiscStateData%T_f)) THEN
-   i1_l = LBOUND(SrcDiscStateData%T_f,1)
-   i1_u = UBOUND(SrcDiscStateData%T_f,1)
-   i2_l = LBOUND(SrcDiscStateData%T_f,2)
-   i2_u = UBOUND(SrcDiscStateData%T_f,2)
-   IF (.NOT. ALLOCATED(DstDiscStateData%T_f)) THEN 
-      ALLOCATE(DstDiscStateData%T_f(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%T_f.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
-         RETURN
-      END IF
-   END IF
-   DstDiscStateData%T_f = SrcDiscStateData%T_f
 ENDIF
 IF (ALLOCATED(SrcDiscStateData%fprimeprime_minus1)) THEN
    i1_l = LBOUND(SrcDiscStateData%fprimeprime_minus1,1)
@@ -936,6 +952,20 @@ IF (ALLOCATED(SrcDiscStateData%C_V_minus1)) THEN
    END IF
    DstDiscStateData%C_V_minus1 = SrcDiscStateData%C_V_minus1
 ENDIF
+IF (ALLOCATED(SrcDiscStateData%Dfalpha_minus1)) THEN
+   i1_l = LBOUND(SrcDiscStateData%Dfalpha_minus1,1)
+   i1_u = UBOUND(SrcDiscStateData%Dfalpha_minus1,1)
+   i2_l = LBOUND(SrcDiscStateData%Dfalpha_minus1,2)
+   i2_u = UBOUND(SrcDiscStateData%Dfalpha_minus1,2)
+   IF (.NOT. ALLOCATED(DstDiscStateData%Dfalpha_minus1)) THEN 
+      ALLOCATE(DstDiscStateData%Dfalpha_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+      IF (ErrStat2 /= 0) THEN 
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Dfalpha_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         RETURN
+      END IF
+   END IF
+   DstDiscStateData%Dfalpha_minus1 = SrcDiscStateData%Dfalpha_minus1
+ENDIF
  END SUBROUTINE UnsteadyAero_CopyDiscState
 
  SUBROUTINE UnsteadyAero_DestroyDiscState( DiscStateData, ErrStat, ErrMsg )
@@ -970,14 +1000,17 @@ ENDIF
 IF (ALLOCATED(DiscStateData%Kprime_q_minus1)) THEN
    DEALLOCATE(DiscStateData%Kprime_q_minus1)
 ENDIF
+IF (ALLOCATED(DiscStateData%Kprimeprime_q_minus1)) THEN
+   DEALLOCATE(DiscStateData%Kprimeprime_q_minus1)
+ENDIF
+IF (ALLOCATED(DiscStateData%K3prime_q_minus1)) THEN
+   DEALLOCATE(DiscStateData%K3prime_q_minus1)
+ENDIF
 IF (ALLOCATED(DiscStateData%Dp_minus1)) THEN
    DEALLOCATE(DiscStateData%Dp_minus1)
 ENDIF
 IF (ALLOCATED(DiscStateData%Cn_pot_minus1)) THEN
    DEALLOCATE(DiscStateData%Cn_pot_minus1)
-ENDIF
-IF (ALLOCATED(DiscStateData%T_f)) THEN
-   DEALLOCATE(DiscStateData%T_f)
 ENDIF
 IF (ALLOCATED(DiscStateData%fprimeprime_minus1)) THEN
    DEALLOCATE(DiscStateData%fprimeprime_minus1)
@@ -996,6 +1029,9 @@ IF (ALLOCATED(DiscStateData%Cn_v_minus1)) THEN
 ENDIF
 IF (ALLOCATED(DiscStateData%C_V_minus1)) THEN
    DEALLOCATE(DiscStateData%C_V_minus1)
+ENDIF
+IF (ALLOCATED(DiscStateData%Dfalpha_minus1)) THEN
+   DEALLOCATE(DiscStateData%Dfalpha_minus1)
 ENDIF
  END SUBROUTINE UnsteadyAero_DestroyDiscState
 
@@ -1041,15 +1077,17 @@ ENDIF
   IF ( ALLOCATED(InData%X2_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%X2_minus1 )  ! X2_minus1 
   IF ( ALLOCATED(InData%Kprime_alpha_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Kprime_alpha_minus1 )  ! Kprime_alpha_minus1 
   IF ( ALLOCATED(InData%Kprime_q_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Kprime_q_minus1 )  ! Kprime_q_minus1 
+  IF ( ALLOCATED(InData%Kprimeprime_q_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Kprimeprime_q_minus1 )  ! Kprimeprime_q_minus1 
+  IF ( ALLOCATED(InData%K3prime_q_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%K3prime_q_minus1 )  ! K3prime_q_minus1 
   IF ( ALLOCATED(InData%Dp_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Dp_minus1 )  ! Dp_minus1 
   IF ( ALLOCATED(InData%Cn_pot_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Cn_pot_minus1 )  ! Cn_pot_minus1 
-  IF ( ALLOCATED(InData%T_f) )   Re_BufSz    = Re_BufSz    + SIZE( InData%T_f )  ! T_f 
   IF ( ALLOCATED(InData%fprimeprime_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%fprimeprime_minus1 )  ! fprimeprime_minus1 
   IF ( ALLOCATED(InData%Df_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Df_minus1 )  ! Df_minus1 
   IF ( ALLOCATED(InData%fprime_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%fprime_minus1 )  ! fprime_minus1 
   IF ( ALLOCATED(InData%tau_V) )   Re_BufSz    = Re_BufSz    + SIZE( InData%tau_V )  ! tau_V 
   IF ( ALLOCATED(InData%Cn_v_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Cn_v_minus1 )  ! Cn_v_minus1 
   IF ( ALLOCATED(InData%C_V_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%C_V_minus1 )  ! C_V_minus1 
+  IF ( ALLOCATED(InData%Dfalpha_minus1) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Dfalpha_minus1 )  ! Dfalpha_minus1 
   IF ( Re_BufSz  .GT. 0 ) ALLOCATE( ReKiBuf(  Re_BufSz  ) )
   IF ( Db_BufSz  .GT. 0 ) ALLOCATE( DbKiBuf(  Db_BufSz  ) )
   IF ( Int_BufSz .GT. 0 ) ALLOCATE( IntKiBuf( Int_BufSz ) )
@@ -1085,6 +1123,14 @@ ENDIF
     IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Kprime_q_minus1))-1 ) =  PACK(InData%Kprime_q_minus1 ,.TRUE.)
     Re_Xferred   = Re_Xferred   + SIZE(InData%Kprime_q_minus1)
   ENDIF
+  IF ( ALLOCATED(InData%Kprimeprime_q_minus1) ) THEN
+    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Kprimeprime_q_minus1))-1 ) =  PACK(InData%Kprimeprime_q_minus1 ,.TRUE.)
+    Re_Xferred   = Re_Xferred   + SIZE(InData%Kprimeprime_q_minus1)
+  ENDIF
+  IF ( ALLOCATED(InData%K3prime_q_minus1) ) THEN
+    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%K3prime_q_minus1))-1 ) =  PACK(InData%K3prime_q_minus1 ,.TRUE.)
+    Re_Xferred   = Re_Xferred   + SIZE(InData%K3prime_q_minus1)
+  ENDIF
   IF ( ALLOCATED(InData%Dp_minus1) ) THEN
     IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Dp_minus1))-1 ) =  PACK(InData%Dp_minus1 ,.TRUE.)
     Re_Xferred   = Re_Xferred   + SIZE(InData%Dp_minus1)
@@ -1092,10 +1138,6 @@ ENDIF
   IF ( ALLOCATED(InData%Cn_pot_minus1) ) THEN
     IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Cn_pot_minus1))-1 ) =  PACK(InData%Cn_pot_minus1 ,.TRUE.)
     Re_Xferred   = Re_Xferred   + SIZE(InData%Cn_pot_minus1)
-  ENDIF
-  IF ( ALLOCATED(InData%T_f) ) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%T_f))-1 ) =  PACK(InData%T_f ,.TRUE.)
-    Re_Xferred   = Re_Xferred   + SIZE(InData%T_f)
   ENDIF
   IF ( ALLOCATED(InData%fprimeprime_minus1) ) THEN
     IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%fprimeprime_minus1))-1 ) =  PACK(InData%fprimeprime_minus1 ,.TRUE.)
@@ -1120,6 +1162,10 @@ ENDIF
   IF ( ALLOCATED(InData%C_V_minus1) ) THEN
     IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%C_V_minus1))-1 ) =  PACK(InData%C_V_minus1 ,.TRUE.)
     Re_Xferred   = Re_Xferred   + SIZE(InData%C_V_minus1)
+  ENDIF
+  IF ( ALLOCATED(InData%Dfalpha_minus1) ) THEN
+    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Dfalpha_minus1))-1 ) =  PACK(InData%Dfalpha_minus1 ,.TRUE.)
+    Re_Xferred   = Re_Xferred   + SIZE(InData%Dfalpha_minus1)
   ENDIF
  END SUBROUTINE UnsteadyAero_PackDiscState
 
@@ -1212,6 +1258,20 @@ ENDIF
   DEALLOCATE(mask2)
     Re_Xferred   = Re_Xferred   + SIZE(OutData%Kprime_q_minus1)
   ENDIF
+  IF ( ALLOCATED(OutData%Kprimeprime_q_minus1) ) THEN
+  ALLOCATE(mask2(SIZE(OutData%Kprimeprime_q_minus1,1),SIZE(OutData%Kprimeprime_q_minus1,2)))
+  mask2 = .TRUE.
+    OutData%Kprimeprime_q_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Kprimeprime_q_minus1))-1 ),mask2,OutData%Kprimeprime_q_minus1)
+  DEALLOCATE(mask2)
+    Re_Xferred   = Re_Xferred   + SIZE(OutData%Kprimeprime_q_minus1)
+  ENDIF
+  IF ( ALLOCATED(OutData%K3prime_q_minus1) ) THEN
+  ALLOCATE(mask2(SIZE(OutData%K3prime_q_minus1,1),SIZE(OutData%K3prime_q_minus1,2)))
+  mask2 = .TRUE.
+    OutData%K3prime_q_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%K3prime_q_minus1))-1 ),mask2,OutData%K3prime_q_minus1)
+  DEALLOCATE(mask2)
+    Re_Xferred   = Re_Xferred   + SIZE(OutData%K3prime_q_minus1)
+  ENDIF
   IF ( ALLOCATED(OutData%Dp_minus1) ) THEN
   ALLOCATE(mask2(SIZE(OutData%Dp_minus1,1),SIZE(OutData%Dp_minus1,2)))
   mask2 = .TRUE.
@@ -1225,13 +1285,6 @@ ENDIF
     OutData%Cn_pot_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Cn_pot_minus1))-1 ),mask2,OutData%Cn_pot_minus1)
   DEALLOCATE(mask2)
     Re_Xferred   = Re_Xferred   + SIZE(OutData%Cn_pot_minus1)
-  ENDIF
-  IF ( ALLOCATED(OutData%T_f) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%T_f,1),SIZE(OutData%T_f,2)))
-  mask2 = .TRUE.
-    OutData%T_f = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%T_f))-1 ),mask2,OutData%T_f)
-  DEALLOCATE(mask2)
-    Re_Xferred   = Re_Xferred   + SIZE(OutData%T_f)
   ENDIF
   IF ( ALLOCATED(OutData%fprimeprime_minus1) ) THEN
   ALLOCATE(mask2(SIZE(OutData%fprimeprime_minus1,1),SIZE(OutData%fprimeprime_minus1,2)))
@@ -1274,6 +1327,13 @@ ENDIF
     OutData%C_V_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%C_V_minus1))-1 ),mask2,OutData%C_V_minus1)
   DEALLOCATE(mask2)
     Re_Xferred   = Re_Xferred   + SIZE(OutData%C_V_minus1)
+  ENDIF
+  IF ( ALLOCATED(OutData%Dfalpha_minus1) ) THEN
+  ALLOCATE(mask2(SIZE(OutData%Dfalpha_minus1,1),SIZE(OutData%Dfalpha_minus1,2)))
+  mask2 = .TRUE.
+    OutData%Dfalpha_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Dfalpha_minus1))-1 ),mask2,OutData%Dfalpha_minus1)
+  DEALLOCATE(mask2)
+    Re_Xferred   = Re_Xferred   + SIZE(OutData%Dfalpha_minus1)
   ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
