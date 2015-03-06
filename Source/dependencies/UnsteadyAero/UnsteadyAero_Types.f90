@@ -34,14 +34,14 @@ MODULE UnsteadyAero_Types
 USE AirfoilInfo_Types
 USE NWTC_Library
 IMPLICIT NONE
-! =========  UnsteadyAero_InitInputType  =======
-  TYPE, PUBLIC :: UnsteadyAero_InitInputType
+! =========  UA_InitInputType  =======
+  TYPE, PUBLIC :: UA_InitInputType
     REAL(DbKi)  :: dt      ! time step [s]
     CHARACTER(1024)  :: OutRootName      ! Supplied by Driver:  The name of the root file (without extension) including the full path [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: c      ! Chord length at node [m]
     INTEGER(IntKi)  :: numBlades      ! Number nodes of all blades [-]
     INTEGER(IntKi)  :: nNodesPerBlade      ! Number nodes per blades [-]
-    INTEGER(IntKi)  :: DSMod      ! Model for the dynamic stall equations [-]
+    INTEGER(IntKi)  :: DSMod      ! Model for the dynamic stall equations [1 = Leishman/Beddoes, 2 = Gonzalez, 3 = Minnema] [-]
     REAL(ReKi)  :: a_s      ! speed of sound [m/s]
     INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFIndx      ! Airfoil index for given blade node [-]
     TYPE(AFI_ParameterType)  :: AFI_Params      ! Airfoil Info parameter data structure [-]
@@ -49,22 +49,22 @@ IMPLICIT NONE
     CHARACTER(20)  :: OutSFmt      ! Output format for header strings [-]
     INTEGER(IntKi)  :: NumOuts      ! The number of outputs for this module as requested in the input file [-]
     CHARACTER(10) , DIMENSION(1:199)  :: OutList      ! The user-requested output channel labels for this module. This should really be dimensioned with MaxOutPts [-]
-  END TYPE UnsteadyAero_InitInputType
+  END TYPE UA_InitInputType
 ! =======================
-! =========  UnsteadyAero_InitOutputType  =======
-  TYPE, PUBLIC :: UnsteadyAero_InitOutputType
+! =========  UA_InitOutputType  =======
+  TYPE, PUBLIC :: UA_InitOutputType
     TYPE(ProgDesc)  :: Version      ! Version structure [-]
     CHARACTER(10) , DIMENSION(:), ALLOCATABLE  :: WriteOutputHdr      ! The is the list of all HD-related output channel header strings (includes all sub-module channels) [-]
     CHARACTER(10) , DIMENSION(:), ALLOCATABLE  :: WriteOutputUnt      ! The is the list of all HD-related output channel unit strings (includes all sub-module channels) [-]
-  END TYPE UnsteadyAero_InitOutputType
+  END TYPE UA_InitOutputType
 ! =======================
-! =========  UnsteadyAero_ContinuousStateType  =======
-  TYPE, PUBLIC :: UnsteadyAero_ContinuousStateType
+! =========  UA_ContinuousStateType  =======
+  TYPE, PUBLIC :: UA_ContinuousStateType
     REAL(ReKi)  :: DummyContState      ! Remove this variable if you have continuous states [-]
-  END TYPE UnsteadyAero_ContinuousStateType
+  END TYPE UA_ContinuousStateType
 ! =======================
-! =========  UnsteadyAero_DiscreteStateType  =======
-  TYPE, PUBLIC :: UnsteadyAero_DiscreteStateType
+! =========  UA_DiscreteStateType  =======
+  TYPE, PUBLIC :: UA_DiscreteStateType
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: alpha_minus1      ! angle of attack, previous time step [rad]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: alpha_minus2      ! angle of attack, two time steps ago [rad]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: q_minus1      ! non-dimensional pitching rate, previous time step [-]
@@ -84,30 +84,30 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn_v_minus1      ! normal force coefficient due to the presence of LE vortex, previous time step [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: C_V_minus1      ! contribution to the normal force coefficient due to accumulated vorticity in the LE vortex, previous time step [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Dfalpha_minus1      ! deficiency function used in the development of alpha_f_prime, previous time step [rad]
-  END TYPE UnsteadyAero_DiscreteStateType
+  END TYPE UA_DiscreteStateType
 ! =======================
-! =========  UnsteadyAero_ConstraintStateType  =======
-  TYPE, PUBLIC :: UnsteadyAero_ConstraintStateType
+! =========  UA_ConstraintStateType  =======
+  TYPE, PUBLIC :: UA_ConstraintStateType
     REAL(ReKi)  :: DummyConstraintState      !  [-]
-  END TYPE UnsteadyAero_ConstraintStateType
+  END TYPE UA_ConstraintStateType
 ! =======================
-! =========  UnsteadyAero_OtherStateType  =======
-  TYPE, PUBLIC :: UnsteadyAero_OtherStateType
+! =========  UA_OtherStateType  =======
+  TYPE, PUBLIC :: UA_OtherStateType
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: sigma1      ! multiplier for T_f [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: sigma3      ! multiplier for T_V [-]
     LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: TESF      ! logical flag indicating if trailing edge separation is possible [-]
     LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: LESF      ! logical flag indicating if leading edge separation is possible [-]
     LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: VRTX      ! logical flag indicating if a vortex is being processed [-]
     LOGICAL  :: FirstPass      ! logical flag indicating if this is the first time step [-]
-  END TYPE UnsteadyAero_OtherStateType
+  END TYPE UA_OtherStateType
 ! =======================
-! =========  UnsteadyAero_ParameterType  =======
-  TYPE, PUBLIC :: UnsteadyAero_ParameterType
+! =========  UA_ParameterType  =======
+  TYPE, PUBLIC :: UA_ParameterType
     REAL(DbKi)  :: dt      ! time step [s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: c      ! Chord length at node [m]
     INTEGER(IntKi)  :: numBlades      ! Number nodes of all blades [-]
     INTEGER(IntKi)  :: nNodesPerBlade      ! Number nodes per blades [-]
-    INTEGER(IntKi)  :: DSMod      ! Model for the dynamic stall equations [-]
+    INTEGER(IntKi)  :: DSMod      ! Model for the dynamic stall equations [1 = Leishman/Beddoes, 2 = Gonzalez, 3 = Minnema] [-]
     REAL(ReKi)  :: a_s      ! speed of sound [m/s]
     INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFIndx      ! Airfoil index for given blade node [-]
     TYPE(AFI_ParameterType)  :: AFI_Params      ! Airfoil Info parameter data structure [-]
@@ -117,29 +117,29 @@ IMPLICIT NONE
     CHARACTER(20)  :: OutSFmt      ! Output format for header strings [-]
     CHARACTER(10)  :: Delim      ! Delimiter string for outputs, defaults to tab-delimiters [-]
     INTEGER(IntKi)  :: UnOutFile      ! File unit for the UnsteadyAero outputs [-]
-  END TYPE UnsteadyAero_ParameterType
+  END TYPE UA_ParameterType
 ! =======================
-! =========  UnsteadyAero_InputType  =======
-  TYPE, PUBLIC :: UnsteadyAero_InputType
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: U      ! air velocity magnitude relative to the airfoil [m/s]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Re      ! Reynolds number [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: alpha      ! angle of attack [rad]
-  END TYPE UnsteadyAero_InputType
+! =========  UA_InputType  =======
+  TYPE, PUBLIC :: UA_InputType
+    REAL(ReKi)  :: U      ! air velocity magnitude relative to the airfoil [m/s]
+    REAL(ReKi)  :: alpha      ! angle of attack [rad]
+    REAL(ReKi)  :: Re      ! Reynold's number [-]
+  END TYPE UA_InputType
 ! =======================
-! =========  UnsteadyAero_OutputType  =======
-  TYPE, PUBLIC :: UnsteadyAero_OutputType
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn      ! 2D, normal to chord, force coefficient [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cc      ! 2D, tangent to chord, force coefficient [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cm      ! 2D pitching moment coefficient about the 1/4 chord, positive when nose is up [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cl      ! 2D lift coefficient [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cd      ! 2D drag coefficient [-]
+! =========  UA_OutputType  =======
+  TYPE, PUBLIC :: UA_OutputType
+    REAL(ReKi)  :: Cn      ! 2D, normal to chord, force coefficient [-]
+    REAL(ReKi)  :: Cc      ! 2D, tangent to chord, force coefficient [-]
+    REAL(ReKi)  :: Cm      ! 2D pitching moment coefficient about the 1/4 chord, positive when nose is up [-]
+    REAL(ReKi)  :: Cl      ! 2D lift coefficient [-]
+    REAL(ReKi)  :: Cd      ! 2D drag coefficient [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: WriteOutput      ! outputs to be written to a file [-]
-  END TYPE UnsteadyAero_OutputType
+  END TYPE UA_OutputType
 ! =======================
 CONTAINS
- SUBROUTINE UnsteadyAero_CopyInitInput( SrcInitInputData, DstInitInputData, CtrlCode, ErrStat, ErrMsg )
-   TYPE(UnsteadyAero_InitInputType), INTENT(IN) :: SrcInitInputData
-   TYPE(UnsteadyAero_InitInputType), INTENT(INOUT) :: DstInitInputData
+ SUBROUTINE UA_CopyInitInput( SrcInitInputData, DstInitInputData, CtrlCode, ErrStat, ErrMsg )
+   TYPE(UA_InitInputType), INTENT(IN) :: SrcInitInputData
+   TYPE(UA_InitInputType), INTENT(INOUT) :: DstInitInputData
    INTEGER(IntKi),  INTENT(IN   ) :: CtrlCode
    INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
@@ -162,7 +162,7 @@ IF (ALLOCATED(SrcInitInputData%c)) THEN
    IF (.NOT. ALLOCATED(DstInitInputData%c)) THEN 
       ALLOCATE(DstInitInputData%c(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitInputData%c.', ErrStat, ErrMsg,'UnsteadyAero_CopyInitInput')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitInputData%c.', ErrStat, ErrMsg,'UA_CopyInitInput')
          RETURN
       END IF
    END IF
@@ -180,23 +180,23 @@ IF (ALLOCATED(SrcInitInputData%AFIndx)) THEN
    IF (.NOT. ALLOCATED(DstInitInputData%AFIndx)) THEN 
       ALLOCATE(DstInitInputData%AFIndx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitInputData%AFIndx.', ErrStat, ErrMsg,'UnsteadyAero_CopyInitInput')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitInputData%AFIndx.', ErrStat, ErrMsg,'UA_CopyInitInput')
          RETURN
       END IF
    END IF
    DstInitInputData%AFIndx = SrcInitInputData%AFIndx
 ENDIF
       CALL AFI_CopyParam( SrcInitInputData%AFI_Params, DstInitInputData%AFI_Params, CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,'UnsteadyAero_CopyInitInput:AFI_Params')
+         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,'UA_CopyInitInput:AFI_Params')
          IF (ErrStat>=AbortErrLev) RETURN
    DstInitInputData%OutFmt = SrcInitInputData%OutFmt
    DstInitInputData%OutSFmt = SrcInitInputData%OutSFmt
    DstInitInputData%NumOuts = SrcInitInputData%NumOuts
    DstInitInputData%OutList = SrcInitInputData%OutList
- END SUBROUTINE UnsteadyAero_CopyInitInput
+ END SUBROUTINE UA_CopyInitInput
 
- SUBROUTINE UnsteadyAero_DestroyInitInput( InitInputData, ErrStat, ErrMsg )
-  TYPE(UnsteadyAero_InitInputType), INTENT(INOUT) :: InitInputData
+ SUBROUTINE UA_DestroyInitInput( InitInputData, ErrStat, ErrMsg )
+  TYPE(UA_InitInputType), INTENT(INOUT) :: InitInputData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
   INTEGER(IntKi)                 :: i, i1, i2, i3, i4, i5 
@@ -210,13 +210,13 @@ IF (ALLOCATED(InitInputData%AFIndx)) THEN
    DEALLOCATE(InitInputData%AFIndx)
 ENDIF
   CALL AFI_DestroyParam( InitInputData%AFI_Params, ErrStat, ErrMsg )
- END SUBROUTINE UnsteadyAero_DestroyInitInput
+ END SUBROUTINE UA_DestroyInitInput
 
- SUBROUTINE UnsteadyAero_PackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
+ SUBROUTINE UA_PackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
   REAL(ReKi),       ALLOCATABLE, INTENT(  OUT) :: ReKiBuf(:)
   REAL(DbKi),       ALLOCATABLE, INTENT(  OUT) :: DbKiBuf(:)
   INTEGER(IntKi),   ALLOCATABLE, INTENT(  OUT) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_InitInputType),  INTENT(INOUT) :: InData
+  TYPE(UA_InitInputType),  INTENT(INOUT) :: InData
   INTEGER(IntKi),   INTENT(  OUT) :: ErrStat
   CHARACTER(*),     INTENT(  OUT) :: ErrMsg
   LOGICAL,OPTIONAL, INTENT(IN   ) :: SizeOnly
@@ -307,13 +307,13 @@ ENDIF
   IF( ALLOCATED(Int_AFI_Params_Buf) ) DEALLOCATE(Int_AFI_Params_Buf)
   IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = (InData%NumOuts )
   Int_Xferred   = Int_Xferred   + 1
- END SUBROUTINE UnsteadyAero_PackInitInput
+ END SUBROUTINE UA_PackInitInput
 
- SUBROUTINE UnsteadyAero_UnPackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
+ SUBROUTINE UA_UnPackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
   REAL(ReKi),      ALLOCATABLE, INTENT(IN   ) :: ReKiBuf(:)
   REAL(DbKi),      ALLOCATABLE, INTENT(IN   ) :: DbKiBuf(:)
   INTEGER(IntKi),  ALLOCATABLE, INTENT(IN   ) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_InitInputType), INTENT(INOUT) :: OutData
+  TYPE(UA_InitInputType), INTENT(INOUT) :: OutData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
     ! Local variables
@@ -389,11 +389,11 @@ ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
- END SUBROUTINE UnsteadyAero_UnPackInitInput
+ END SUBROUTINE UA_UnPackInitInput
 
- SUBROUTINE UnsteadyAero_CopyInitOutput( SrcInitOutputData, DstInitOutputData, CtrlCode, ErrStat, ErrMsg )
-   TYPE(UnsteadyAero_InitOutputType), INTENT(IN) :: SrcInitOutputData
-   TYPE(UnsteadyAero_InitOutputType), INTENT(INOUT) :: DstInitOutputData
+ SUBROUTINE UA_CopyInitOutput( SrcInitOutputData, DstInitOutputData, CtrlCode, ErrStat, ErrMsg )
+   TYPE(UA_InitOutputType), INTENT(IN) :: SrcInitOutputData
+   TYPE(UA_InitOutputType), INTENT(INOUT) :: DstInitOutputData
    INTEGER(IntKi),  INTENT(IN   ) :: CtrlCode
    INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
@@ -407,7 +407,7 @@ ENDIF
    ErrStat = ErrID_None
    ErrMsg  = ""
       CALL NWTC_Library_Copyprogdesc( SrcInitOutputData%Version, DstInitOutputData%Version, CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,'UnsteadyAero_CopyInitOutput:Version')
+         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,'UA_CopyInitOutput:Version')
          IF (ErrStat>=AbortErrLev) RETURN
 IF (ALLOCATED(SrcInitOutputData%WriteOutputHdr)) THEN
    i1_l = LBOUND(SrcInitOutputData%WriteOutputHdr,1)
@@ -415,7 +415,7 @@ IF (ALLOCATED(SrcInitOutputData%WriteOutputHdr)) THEN
    IF (.NOT. ALLOCATED(DstInitOutputData%WriteOutputHdr)) THEN 
       ALLOCATE(DstInitOutputData%WriteOutputHdr(i1_l:i1_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitOutputData%WriteOutputHdr.', ErrStat, ErrMsg,'UnsteadyAero_CopyInitOutput')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitOutputData%WriteOutputHdr.', ErrStat, ErrMsg,'UA_CopyInitOutput')
          RETURN
       END IF
    END IF
@@ -427,16 +427,16 @@ IF (ALLOCATED(SrcInitOutputData%WriteOutputUnt)) THEN
    IF (.NOT. ALLOCATED(DstInitOutputData%WriteOutputUnt)) THEN 
       ALLOCATE(DstInitOutputData%WriteOutputUnt(i1_l:i1_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitOutputData%WriteOutputUnt.', ErrStat, ErrMsg,'UnsteadyAero_CopyInitOutput')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitOutputData%WriteOutputUnt.', ErrStat, ErrMsg,'UA_CopyInitOutput')
          RETURN
       END IF
    END IF
    DstInitOutputData%WriteOutputUnt = SrcInitOutputData%WriteOutputUnt
 ENDIF
- END SUBROUTINE UnsteadyAero_CopyInitOutput
+ END SUBROUTINE UA_CopyInitOutput
 
- SUBROUTINE UnsteadyAero_DestroyInitOutput( InitOutputData, ErrStat, ErrMsg )
-  TYPE(UnsteadyAero_InitOutputType), INTENT(INOUT) :: InitOutputData
+ SUBROUTINE UA_DestroyInitOutput( InitOutputData, ErrStat, ErrMsg )
+  TYPE(UA_InitOutputType), INTENT(INOUT) :: InitOutputData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
   INTEGER(IntKi)                 :: i, i1, i2, i3, i4, i5 
@@ -450,13 +450,13 @@ ENDIF
 IF (ALLOCATED(InitOutputData%WriteOutputUnt)) THEN
    DEALLOCATE(InitOutputData%WriteOutputUnt)
 ENDIF
- END SUBROUTINE UnsteadyAero_DestroyInitOutput
+ END SUBROUTINE UA_DestroyInitOutput
 
- SUBROUTINE UnsteadyAero_PackInitOutput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
+ SUBROUTINE UA_PackInitOutput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
   REAL(ReKi),       ALLOCATABLE, INTENT(  OUT) :: ReKiBuf(:)
   REAL(DbKi),       ALLOCATABLE, INTENT(  OUT) :: DbKiBuf(:)
   INTEGER(IntKi),   ALLOCATABLE, INTENT(  OUT) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_InitOutputType),  INTENT(INOUT) :: InData
+  TYPE(UA_InitOutputType),  INTENT(INOUT) :: InData
   INTEGER(IntKi),   INTENT(  OUT) :: ErrStat
   CHARACTER(*),     INTENT(  OUT) :: ErrMsg
   LOGICAL,OPTIONAL, INTENT(IN   ) :: SizeOnly
@@ -517,13 +517,13 @@ ENDIF
   IF( ALLOCATED(Re_Version_Buf) )  DEALLOCATE(Re_Version_Buf)
   IF( ALLOCATED(Db_Version_Buf) )  DEALLOCATE(Db_Version_Buf)
   IF( ALLOCATED(Int_Version_Buf) ) DEALLOCATE(Int_Version_Buf)
- END SUBROUTINE UnsteadyAero_PackInitOutput
+ END SUBROUTINE UA_PackInitOutput
 
- SUBROUTINE UnsteadyAero_UnPackInitOutput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
+ SUBROUTINE UA_UnPackInitOutput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
   REAL(ReKi),      ALLOCATABLE, INTENT(IN   ) :: ReKiBuf(:)
   REAL(DbKi),      ALLOCATABLE, INTENT(IN   ) :: DbKiBuf(:)
   INTEGER(IntKi),  ALLOCATABLE, INTENT(IN   ) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_InitOutputType), INTENT(INOUT) :: OutData
+  TYPE(UA_InitOutputType), INTENT(INOUT) :: OutData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
     ! Local variables
@@ -573,11 +573,11 @@ ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
- END SUBROUTINE UnsteadyAero_UnPackInitOutput
+ END SUBROUTINE UA_UnPackInitOutput
 
- SUBROUTINE UnsteadyAero_CopyContState( SrcContStateData, DstContStateData, CtrlCode, ErrStat, ErrMsg )
-   TYPE(UnsteadyAero_ContinuousStateType), INTENT(IN) :: SrcContStateData
-   TYPE(UnsteadyAero_ContinuousStateType), INTENT(INOUT) :: DstContStateData
+ SUBROUTINE UA_CopyContState( SrcContStateData, DstContStateData, CtrlCode, ErrStat, ErrMsg )
+   TYPE(UA_ContinuousStateType), INTENT(IN) :: SrcContStateData
+   TYPE(UA_ContinuousStateType), INTENT(INOUT) :: DstContStateData
    INTEGER(IntKi),  INTENT(IN   ) :: CtrlCode
    INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
@@ -591,23 +591,23 @@ ENDIF
    ErrStat = ErrID_None
    ErrMsg  = ""
    DstContStateData%DummyContState = SrcContStateData%DummyContState
- END SUBROUTINE UnsteadyAero_CopyContState
+ END SUBROUTINE UA_CopyContState
 
- SUBROUTINE UnsteadyAero_DestroyContState( ContStateData, ErrStat, ErrMsg )
-  TYPE(UnsteadyAero_ContinuousStateType), INTENT(INOUT) :: ContStateData
+ SUBROUTINE UA_DestroyContState( ContStateData, ErrStat, ErrMsg )
+  TYPE(UA_ContinuousStateType), INTENT(INOUT) :: ContStateData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
   INTEGER(IntKi)                 :: i, i1, i2, i3, i4, i5 
 ! 
   ErrStat = ErrID_None
   ErrMsg  = ""
- END SUBROUTINE UnsteadyAero_DestroyContState
+ END SUBROUTINE UA_DestroyContState
 
- SUBROUTINE UnsteadyAero_PackContState( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
+ SUBROUTINE UA_PackContState( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
   REAL(ReKi),       ALLOCATABLE, INTENT(  OUT) :: ReKiBuf(:)
   REAL(DbKi),       ALLOCATABLE, INTENT(  OUT) :: DbKiBuf(:)
   INTEGER(IntKi),   ALLOCATABLE, INTENT(  OUT) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_ContinuousStateType),  INTENT(INOUT) :: InData
+  TYPE(UA_ContinuousStateType),  INTENT(INOUT) :: InData
   INTEGER(IntKi),   INTENT(  OUT) :: ErrStat
   CHARACTER(*),     INTENT(  OUT) :: ErrMsg
   LOGICAL,OPTIONAL, INTENT(IN   ) :: SizeOnly
@@ -643,13 +643,13 @@ ENDIF
   IF ( Int_BufSz .GT. 0 ) ALLOCATE( IntKiBuf( Int_BufSz ) )
   IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%DummyContState )
   Re_Xferred   = Re_Xferred   + 1
- END SUBROUTINE UnsteadyAero_PackContState
+ END SUBROUTINE UA_PackContState
 
- SUBROUTINE UnsteadyAero_UnPackContState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
+ SUBROUTINE UA_UnPackContState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
   REAL(ReKi),      ALLOCATABLE, INTENT(IN   ) :: ReKiBuf(:)
   REAL(DbKi),      ALLOCATABLE, INTENT(IN   ) :: DbKiBuf(:)
   INTEGER(IntKi),  ALLOCATABLE, INTENT(IN   ) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_ContinuousStateType), INTENT(INOUT) :: OutData
+  TYPE(UA_ContinuousStateType), INTENT(INOUT) :: OutData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
     ! Local variables
@@ -683,11 +683,11 @@ ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
- END SUBROUTINE UnsteadyAero_UnPackContState
+ END SUBROUTINE UA_UnPackContState
 
- SUBROUTINE UnsteadyAero_CopyDiscState( SrcDiscStateData, DstDiscStateData, CtrlCode, ErrStat, ErrMsg )
-   TYPE(UnsteadyAero_DiscreteStateType), INTENT(IN) :: SrcDiscStateData
-   TYPE(UnsteadyAero_DiscreteStateType), INTENT(INOUT) :: DstDiscStateData
+ SUBROUTINE UA_CopyDiscState( SrcDiscStateData, DstDiscStateData, CtrlCode, ErrStat, ErrMsg )
+   TYPE(UA_DiscreteStateType), INTENT(IN) :: SrcDiscStateData
+   TYPE(UA_DiscreteStateType), INTENT(INOUT) :: DstDiscStateData
    INTEGER(IntKi),  INTENT(IN   ) :: CtrlCode
    INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
@@ -708,7 +708,7 @@ IF (ALLOCATED(SrcDiscStateData%alpha_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%alpha_minus1)) THEN 
       ALLOCATE(DstDiscStateData%alpha_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%alpha_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%alpha_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -722,7 +722,7 @@ IF (ALLOCATED(SrcDiscStateData%alpha_minus2)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%alpha_minus2)) THEN 
       ALLOCATE(DstDiscStateData%alpha_minus2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%alpha_minus2.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%alpha_minus2.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -736,7 +736,7 @@ IF (ALLOCATED(SrcDiscStateData%q_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%q_minus1)) THEN 
       ALLOCATE(DstDiscStateData%q_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%q_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%q_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -750,7 +750,7 @@ IF (ALLOCATED(SrcDiscStateData%q_minus2)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%q_minus2)) THEN 
       ALLOCATE(DstDiscStateData%q_minus2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%q_minus2.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%q_minus2.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -764,7 +764,7 @@ IF (ALLOCATED(SrcDiscStateData%X1_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%X1_minus1)) THEN 
       ALLOCATE(DstDiscStateData%X1_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%X1_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%X1_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -778,7 +778,7 @@ IF (ALLOCATED(SrcDiscStateData%X2_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%X2_minus1)) THEN 
       ALLOCATE(DstDiscStateData%X2_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%X2_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%X2_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -792,7 +792,7 @@ IF (ALLOCATED(SrcDiscStateData%Kprime_alpha_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%Kprime_alpha_minus1)) THEN 
       ALLOCATE(DstDiscStateData%Kprime_alpha_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Kprime_alpha_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Kprime_alpha_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -806,7 +806,7 @@ IF (ALLOCATED(SrcDiscStateData%Kprime_q_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%Kprime_q_minus1)) THEN 
       ALLOCATE(DstDiscStateData%Kprime_q_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Kprime_q_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Kprime_q_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -820,7 +820,7 @@ IF (ALLOCATED(SrcDiscStateData%Kprimeprime_q_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%Kprimeprime_q_minus1)) THEN 
       ALLOCATE(DstDiscStateData%Kprimeprime_q_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Kprimeprime_q_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Kprimeprime_q_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -834,7 +834,7 @@ IF (ALLOCATED(SrcDiscStateData%K3prime_q_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%K3prime_q_minus1)) THEN 
       ALLOCATE(DstDiscStateData%K3prime_q_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%K3prime_q_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%K3prime_q_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -848,7 +848,7 @@ IF (ALLOCATED(SrcDiscStateData%Dp_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%Dp_minus1)) THEN 
       ALLOCATE(DstDiscStateData%Dp_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Dp_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Dp_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -862,7 +862,7 @@ IF (ALLOCATED(SrcDiscStateData%Cn_pot_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%Cn_pot_minus1)) THEN 
       ALLOCATE(DstDiscStateData%Cn_pot_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Cn_pot_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Cn_pot_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -876,7 +876,7 @@ IF (ALLOCATED(SrcDiscStateData%fprimeprime_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%fprimeprime_minus1)) THEN 
       ALLOCATE(DstDiscStateData%fprimeprime_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%fprimeprime_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%fprimeprime_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -890,7 +890,7 @@ IF (ALLOCATED(SrcDiscStateData%Df_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%Df_minus1)) THEN 
       ALLOCATE(DstDiscStateData%Df_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Df_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Df_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -904,7 +904,7 @@ IF (ALLOCATED(SrcDiscStateData%fprime_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%fprime_minus1)) THEN 
       ALLOCATE(DstDiscStateData%fprime_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%fprime_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%fprime_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -918,7 +918,7 @@ IF (ALLOCATED(SrcDiscStateData%tau_V)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%tau_V)) THEN 
       ALLOCATE(DstDiscStateData%tau_V(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%tau_V.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%tau_V.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -932,7 +932,7 @@ IF (ALLOCATED(SrcDiscStateData%Cn_v_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%Cn_v_minus1)) THEN 
       ALLOCATE(DstDiscStateData%Cn_v_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Cn_v_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Cn_v_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -946,7 +946,7 @@ IF (ALLOCATED(SrcDiscStateData%C_V_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%C_V_minus1)) THEN 
       ALLOCATE(DstDiscStateData%C_V_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%C_V_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%C_V_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
@@ -960,16 +960,16 @@ IF (ALLOCATED(SrcDiscStateData%Dfalpha_minus1)) THEN
    IF (.NOT. ALLOCATED(DstDiscStateData%Dfalpha_minus1)) THEN 
       ALLOCATE(DstDiscStateData%Dfalpha_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Dfalpha_minus1.', ErrStat, ErrMsg,'UnsteadyAero_CopyDiscState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Dfalpha_minus1.', ErrStat, ErrMsg,'UA_CopyDiscState')
          RETURN
       END IF
    END IF
    DstDiscStateData%Dfalpha_minus1 = SrcDiscStateData%Dfalpha_minus1
 ENDIF
- END SUBROUTINE UnsteadyAero_CopyDiscState
+ END SUBROUTINE UA_CopyDiscState
 
- SUBROUTINE UnsteadyAero_DestroyDiscState( DiscStateData, ErrStat, ErrMsg )
-  TYPE(UnsteadyAero_DiscreteStateType), INTENT(INOUT) :: DiscStateData
+ SUBROUTINE UA_DestroyDiscState( DiscStateData, ErrStat, ErrMsg )
+  TYPE(UA_DiscreteStateType), INTENT(INOUT) :: DiscStateData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
   INTEGER(IntKi)                 :: i, i1, i2, i3, i4, i5 
@@ -1033,13 +1033,13 @@ ENDIF
 IF (ALLOCATED(DiscStateData%Dfalpha_minus1)) THEN
    DEALLOCATE(DiscStateData%Dfalpha_minus1)
 ENDIF
- END SUBROUTINE UnsteadyAero_DestroyDiscState
+ END SUBROUTINE UA_DestroyDiscState
 
- SUBROUTINE UnsteadyAero_PackDiscState( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
+ SUBROUTINE UA_PackDiscState( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
   REAL(ReKi),       ALLOCATABLE, INTENT(  OUT) :: ReKiBuf(:)
   REAL(DbKi),       ALLOCATABLE, INTENT(  OUT) :: DbKiBuf(:)
   INTEGER(IntKi),   ALLOCATABLE, INTENT(  OUT) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_DiscreteStateType),  INTENT(INOUT) :: InData
+  TYPE(UA_DiscreteStateType),  INTENT(INOUT) :: InData
   INTEGER(IntKi),   INTENT(  OUT) :: ErrStat
   CHARACTER(*),     INTENT(  OUT) :: ErrMsg
   LOGICAL,OPTIONAL, INTENT(IN   ) :: SizeOnly
@@ -1167,13 +1167,13 @@ ENDIF
     IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Dfalpha_minus1))-1 ) =  PACK(InData%Dfalpha_minus1 ,.TRUE.)
     Re_Xferred   = Re_Xferred   + SIZE(InData%Dfalpha_minus1)
   ENDIF
- END SUBROUTINE UnsteadyAero_PackDiscState
+ END SUBROUTINE UA_PackDiscState
 
- SUBROUTINE UnsteadyAero_UnPackDiscState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
+ SUBROUTINE UA_UnPackDiscState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
   REAL(ReKi),      ALLOCATABLE, INTENT(IN   ) :: ReKiBuf(:)
   REAL(DbKi),      ALLOCATABLE, INTENT(IN   ) :: DbKiBuf(:)
   INTEGER(IntKi),  ALLOCATABLE, INTENT(IN   ) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_DiscreteStateType), INTENT(INOUT) :: OutData
+  TYPE(UA_DiscreteStateType), INTENT(INOUT) :: OutData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
     ! Local variables
@@ -1338,11 +1338,11 @@ ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
- END SUBROUTINE UnsteadyAero_UnPackDiscState
+ END SUBROUTINE UA_UnPackDiscState
 
- SUBROUTINE UnsteadyAero_CopyConstrState( SrcConstrStateData, DstConstrStateData, CtrlCode, ErrStat, ErrMsg )
-   TYPE(UnsteadyAero_ConstraintStateType), INTENT(IN) :: SrcConstrStateData
-   TYPE(UnsteadyAero_ConstraintStateType), INTENT(INOUT) :: DstConstrStateData
+ SUBROUTINE UA_CopyConstrState( SrcConstrStateData, DstConstrStateData, CtrlCode, ErrStat, ErrMsg )
+   TYPE(UA_ConstraintStateType), INTENT(IN) :: SrcConstrStateData
+   TYPE(UA_ConstraintStateType), INTENT(INOUT) :: DstConstrStateData
    INTEGER(IntKi),  INTENT(IN   ) :: CtrlCode
    INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
@@ -1356,23 +1356,23 @@ ENDIF
    ErrStat = ErrID_None
    ErrMsg  = ""
    DstConstrStateData%DummyConstraintState = SrcConstrStateData%DummyConstraintState
- END SUBROUTINE UnsteadyAero_CopyConstrState
+ END SUBROUTINE UA_CopyConstrState
 
- SUBROUTINE UnsteadyAero_DestroyConstrState( ConstrStateData, ErrStat, ErrMsg )
-  TYPE(UnsteadyAero_ConstraintStateType), INTENT(INOUT) :: ConstrStateData
+ SUBROUTINE UA_DestroyConstrState( ConstrStateData, ErrStat, ErrMsg )
+  TYPE(UA_ConstraintStateType), INTENT(INOUT) :: ConstrStateData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
   INTEGER(IntKi)                 :: i, i1, i2, i3, i4, i5 
 ! 
   ErrStat = ErrID_None
   ErrMsg  = ""
- END SUBROUTINE UnsteadyAero_DestroyConstrState
+ END SUBROUTINE UA_DestroyConstrState
 
- SUBROUTINE UnsteadyAero_PackConstrState( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
+ SUBROUTINE UA_PackConstrState( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
   REAL(ReKi),       ALLOCATABLE, INTENT(  OUT) :: ReKiBuf(:)
   REAL(DbKi),       ALLOCATABLE, INTENT(  OUT) :: DbKiBuf(:)
   INTEGER(IntKi),   ALLOCATABLE, INTENT(  OUT) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_ConstraintStateType),  INTENT(INOUT) :: InData
+  TYPE(UA_ConstraintStateType),  INTENT(INOUT) :: InData
   INTEGER(IntKi),   INTENT(  OUT) :: ErrStat
   CHARACTER(*),     INTENT(  OUT) :: ErrMsg
   LOGICAL,OPTIONAL, INTENT(IN   ) :: SizeOnly
@@ -1408,13 +1408,13 @@ ENDIF
   IF ( Int_BufSz .GT. 0 ) ALLOCATE( IntKiBuf( Int_BufSz ) )
   IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%DummyConstraintState )
   Re_Xferred   = Re_Xferred   + 1
- END SUBROUTINE UnsteadyAero_PackConstrState
+ END SUBROUTINE UA_PackConstrState
 
- SUBROUTINE UnsteadyAero_UnPackConstrState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
+ SUBROUTINE UA_UnPackConstrState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
   REAL(ReKi),      ALLOCATABLE, INTENT(IN   ) :: ReKiBuf(:)
   REAL(DbKi),      ALLOCATABLE, INTENT(IN   ) :: DbKiBuf(:)
   INTEGER(IntKi),  ALLOCATABLE, INTENT(IN   ) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_ConstraintStateType), INTENT(INOUT) :: OutData
+  TYPE(UA_ConstraintStateType), INTENT(INOUT) :: OutData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
     ! Local variables
@@ -1448,11 +1448,11 @@ ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
- END SUBROUTINE UnsteadyAero_UnPackConstrState
+ END SUBROUTINE UA_UnPackConstrState
 
- SUBROUTINE UnsteadyAero_CopyOtherState( SrcOtherStateData, DstOtherStateData, CtrlCode, ErrStat, ErrMsg )
-   TYPE(UnsteadyAero_OtherStateType), INTENT(IN) :: SrcOtherStateData
-   TYPE(UnsteadyAero_OtherStateType), INTENT(INOUT) :: DstOtherStateData
+ SUBROUTINE UA_CopyOtherState( SrcOtherStateData, DstOtherStateData, CtrlCode, ErrStat, ErrMsg )
+   TYPE(UA_OtherStateType), INTENT(IN) :: SrcOtherStateData
+   TYPE(UA_OtherStateType), INTENT(INOUT) :: DstOtherStateData
    INTEGER(IntKi),  INTENT(IN   ) :: CtrlCode
    INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
@@ -1473,7 +1473,7 @@ IF (ALLOCATED(SrcOtherStateData%sigma1)) THEN
    IF (.NOT. ALLOCATED(DstOtherStateData%sigma1)) THEN 
       ALLOCATE(DstOtherStateData%sigma1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%sigma1.', ErrStat, ErrMsg,'UnsteadyAero_CopyOtherState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%sigma1.', ErrStat, ErrMsg,'UA_CopyOtherState')
          RETURN
       END IF
    END IF
@@ -1487,7 +1487,7 @@ IF (ALLOCATED(SrcOtherStateData%sigma3)) THEN
    IF (.NOT. ALLOCATED(DstOtherStateData%sigma3)) THEN 
       ALLOCATE(DstOtherStateData%sigma3(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%sigma3.', ErrStat, ErrMsg,'UnsteadyAero_CopyOtherState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%sigma3.', ErrStat, ErrMsg,'UA_CopyOtherState')
          RETURN
       END IF
    END IF
@@ -1501,7 +1501,7 @@ IF (ALLOCATED(SrcOtherStateData%TESF)) THEN
    IF (.NOT. ALLOCATED(DstOtherStateData%TESF)) THEN 
       ALLOCATE(DstOtherStateData%TESF(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%TESF.', ErrStat, ErrMsg,'UnsteadyAero_CopyOtherState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%TESF.', ErrStat, ErrMsg,'UA_CopyOtherState')
          RETURN
       END IF
    END IF
@@ -1515,7 +1515,7 @@ IF (ALLOCATED(SrcOtherStateData%LESF)) THEN
    IF (.NOT. ALLOCATED(DstOtherStateData%LESF)) THEN 
       ALLOCATE(DstOtherStateData%LESF(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%LESF.', ErrStat, ErrMsg,'UnsteadyAero_CopyOtherState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%LESF.', ErrStat, ErrMsg,'UA_CopyOtherState')
          RETURN
       END IF
    END IF
@@ -1529,17 +1529,17 @@ IF (ALLOCATED(SrcOtherStateData%VRTX)) THEN
    IF (.NOT. ALLOCATED(DstOtherStateData%VRTX)) THEN 
       ALLOCATE(DstOtherStateData%VRTX(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%VRTX.', ErrStat, ErrMsg,'UnsteadyAero_CopyOtherState')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%VRTX.', ErrStat, ErrMsg,'UA_CopyOtherState')
          RETURN
       END IF
    END IF
    DstOtherStateData%VRTX = SrcOtherStateData%VRTX
 ENDIF
    DstOtherStateData%FirstPass = SrcOtherStateData%FirstPass
- END SUBROUTINE UnsteadyAero_CopyOtherState
+ END SUBROUTINE UA_CopyOtherState
 
- SUBROUTINE UnsteadyAero_DestroyOtherState( OtherStateData, ErrStat, ErrMsg )
-  TYPE(UnsteadyAero_OtherStateType), INTENT(INOUT) :: OtherStateData
+ SUBROUTINE UA_DestroyOtherState( OtherStateData, ErrStat, ErrMsg )
+  TYPE(UA_OtherStateType), INTENT(INOUT) :: OtherStateData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
   INTEGER(IntKi)                 :: i, i1, i2, i3, i4, i5 
@@ -1561,13 +1561,13 @@ ENDIF
 IF (ALLOCATED(OtherStateData%VRTX)) THEN
    DEALLOCATE(OtherStateData%VRTX)
 ENDIF
- END SUBROUTINE UnsteadyAero_DestroyOtherState
+ END SUBROUTINE UA_DestroyOtherState
 
- SUBROUTINE UnsteadyAero_PackOtherState( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
+ SUBROUTINE UA_PackOtherState( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
   REAL(ReKi),       ALLOCATABLE, INTENT(  OUT) :: ReKiBuf(:)
   REAL(DbKi),       ALLOCATABLE, INTENT(  OUT) :: DbKiBuf(:)
   INTEGER(IntKi),   ALLOCATABLE, INTENT(  OUT) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_OtherStateType),  INTENT(INOUT) :: InData
+  TYPE(UA_OtherStateType),  INTENT(INOUT) :: InData
   INTEGER(IntKi),   INTENT(  OUT) :: ErrStat
   CHARACTER(*),     INTENT(  OUT) :: ErrMsg
   LOGICAL,OPTIONAL, INTENT(IN   ) :: SizeOnly
@@ -1628,13 +1628,13 @@ ENDIF
   ENDIF
   IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = TRANSFER( (InData%FirstPass ), IntKiBuf(1), 1)
   Int_Xferred   = Int_Xferred   + 1
- END SUBROUTINE UnsteadyAero_PackOtherState
+ END SUBROUTINE UA_PackOtherState
 
- SUBROUTINE UnsteadyAero_UnPackOtherState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
+ SUBROUTINE UA_UnPackOtherState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
   REAL(ReKi),      ALLOCATABLE, INTENT(IN   ) :: ReKiBuf(:)
   REAL(DbKi),      ALLOCATABLE, INTENT(IN   ) :: DbKiBuf(:)
   INTEGER(IntKi),  ALLOCATABLE, INTENT(IN   ) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_OtherStateType), INTENT(INOUT) :: OutData
+  TYPE(UA_OtherStateType), INTENT(INOUT) :: OutData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
     ! Local variables
@@ -1686,11 +1686,11 @@ ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
- END SUBROUTINE UnsteadyAero_UnPackOtherState
+ END SUBROUTINE UA_UnPackOtherState
 
- SUBROUTINE UnsteadyAero_CopyParam( SrcParamData, DstParamData, CtrlCode, ErrStat, ErrMsg )
-   TYPE(UnsteadyAero_ParameterType), INTENT(IN) :: SrcParamData
-   TYPE(UnsteadyAero_ParameterType), INTENT(INOUT) :: DstParamData
+ SUBROUTINE UA_CopyParam( SrcParamData, DstParamData, CtrlCode, ErrStat, ErrMsg )
+   TYPE(UA_ParameterType), INTENT(IN) :: SrcParamData
+   TYPE(UA_ParameterType), INTENT(INOUT) :: DstParamData
    INTEGER(IntKi),  INTENT(IN   ) :: CtrlCode
    INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
@@ -1712,7 +1712,7 @@ IF (ALLOCATED(SrcParamData%c)) THEN
    IF (.NOT. ALLOCATED(DstParamData%c)) THEN 
       ALLOCATE(DstParamData%c(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%c.', ErrStat, ErrMsg,'UnsteadyAero_CopyParam')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%c.', ErrStat, ErrMsg,'UA_CopyParam')
          RETURN
       END IF
    END IF
@@ -1730,14 +1730,14 @@ IF (ALLOCATED(SrcParamData%AFIndx)) THEN
    IF (.NOT. ALLOCATED(DstParamData%AFIndx)) THEN 
       ALLOCATE(DstParamData%AFIndx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%AFIndx.', ErrStat, ErrMsg,'UnsteadyAero_CopyParam')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%AFIndx.', ErrStat, ErrMsg,'UA_CopyParam')
          RETURN
       END IF
    END IF
    DstParamData%AFIndx = SrcParamData%AFIndx
 ENDIF
       CALL AFI_CopyParam( SrcParamData%AFI_Params, DstParamData%AFI_Params, CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,'UnsteadyAero_CopyParam:AFI_Params')
+         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,'UA_CopyParam:AFI_Params')
          IF (ErrStat>=AbortErrLev) RETURN
    DstParamData%NumOuts = SrcParamData%NumOuts
    DstParamData%OutSwtch = SrcParamData%OutSwtch
@@ -1745,10 +1745,10 @@ ENDIF
    DstParamData%OutSFmt = SrcParamData%OutSFmt
    DstParamData%Delim = SrcParamData%Delim
    DstParamData%UnOutFile = SrcParamData%UnOutFile
- END SUBROUTINE UnsteadyAero_CopyParam
+ END SUBROUTINE UA_CopyParam
 
- SUBROUTINE UnsteadyAero_DestroyParam( ParamData, ErrStat, ErrMsg )
-  TYPE(UnsteadyAero_ParameterType), INTENT(INOUT) :: ParamData
+ SUBROUTINE UA_DestroyParam( ParamData, ErrStat, ErrMsg )
+  TYPE(UA_ParameterType), INTENT(INOUT) :: ParamData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
   INTEGER(IntKi)                 :: i, i1, i2, i3, i4, i5 
@@ -1762,13 +1762,13 @@ IF (ALLOCATED(ParamData%AFIndx)) THEN
    DEALLOCATE(ParamData%AFIndx)
 ENDIF
   CALL AFI_DestroyParam( ParamData%AFI_Params, ErrStat, ErrMsg )
- END SUBROUTINE UnsteadyAero_DestroyParam
+ END SUBROUTINE UA_DestroyParam
 
- SUBROUTINE UnsteadyAero_PackParam( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
+ SUBROUTINE UA_PackParam( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
   REAL(ReKi),       ALLOCATABLE, INTENT(  OUT) :: ReKiBuf(:)
   REAL(DbKi),       ALLOCATABLE, INTENT(  OUT) :: DbKiBuf(:)
   INTEGER(IntKi),   ALLOCATABLE, INTENT(  OUT) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_ParameterType),  INTENT(INOUT) :: InData
+  TYPE(UA_ParameterType),  INTENT(INOUT) :: InData
   INTEGER(IntKi),   INTENT(  OUT) :: ErrStat
   CHARACTER(*),     INTENT(  OUT) :: ErrMsg
   LOGICAL,OPTIONAL, INTENT(IN   ) :: SizeOnly
@@ -1864,13 +1864,13 @@ ENDIF
   Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = (InData%UnOutFile )
   Int_Xferred   = Int_Xferred   + 1
- END SUBROUTINE UnsteadyAero_PackParam
+ END SUBROUTINE UA_PackParam
 
- SUBROUTINE UnsteadyAero_UnPackParam( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
+ SUBROUTINE UA_UnPackParam( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
   REAL(ReKi),      ALLOCATABLE, INTENT(IN   ) :: ReKiBuf(:)
   REAL(DbKi),      ALLOCATABLE, INTENT(IN   ) :: DbKiBuf(:)
   INTEGER(IntKi),  ALLOCATABLE, INTENT(IN   ) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_ParameterType), INTENT(INOUT) :: OutData
+  TYPE(UA_ParameterType), INTENT(INOUT) :: OutData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
     ! Local variables
@@ -1950,11 +1950,11 @@ ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
- END SUBROUTINE UnsteadyAero_UnPackParam
+ END SUBROUTINE UA_UnPackParam
 
- SUBROUTINE UnsteadyAero_CopyInput( SrcInputData, DstInputData, CtrlCode, ErrStat, ErrMsg )
-   TYPE(UnsteadyAero_InputType), INTENT(IN) :: SrcInputData
-   TYPE(UnsteadyAero_InputType), INTENT(INOUT) :: DstInputData
+ SUBROUTINE UA_CopyInput( SrcInputData, DstInputData, CtrlCode, ErrStat, ErrMsg )
+   TYPE(UA_InputType), INTENT(IN) :: SrcInputData
+   TYPE(UA_InputType), INTENT(INOUT) :: DstInputData
    INTEGER(IntKi),  INTENT(IN   ) :: CtrlCode
    INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
@@ -1967,74 +1967,26 @@ ENDIF
 ! 
    ErrStat = ErrID_None
    ErrMsg  = ""
-IF (ALLOCATED(SrcInputData%U)) THEN
-   i1_l = LBOUND(SrcInputData%U,1)
-   i1_u = UBOUND(SrcInputData%U,1)
-   i2_l = LBOUND(SrcInputData%U,2)
-   i2_u = UBOUND(SrcInputData%U,2)
-   IF (.NOT. ALLOCATED(DstInputData%U)) THEN 
-      ALLOCATE(DstInputData%U(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInputData%U.', ErrStat, ErrMsg,'UnsteadyAero_CopyInput')
-         RETURN
-      END IF
-   END IF
    DstInputData%U = SrcInputData%U
-ENDIF
-IF (ALLOCATED(SrcInputData%Re)) THEN
-   i1_l = LBOUND(SrcInputData%Re,1)
-   i1_u = UBOUND(SrcInputData%Re,1)
-   i2_l = LBOUND(SrcInputData%Re,2)
-   i2_u = UBOUND(SrcInputData%Re,2)
-   IF (.NOT. ALLOCATED(DstInputData%Re)) THEN 
-      ALLOCATE(DstInputData%Re(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInputData%Re.', ErrStat, ErrMsg,'UnsteadyAero_CopyInput')
-         RETURN
-      END IF
-   END IF
-   DstInputData%Re = SrcInputData%Re
-ENDIF
-IF (ALLOCATED(SrcInputData%alpha)) THEN
-   i1_l = LBOUND(SrcInputData%alpha,1)
-   i1_u = UBOUND(SrcInputData%alpha,1)
-   i2_l = LBOUND(SrcInputData%alpha,2)
-   i2_u = UBOUND(SrcInputData%alpha,2)
-   IF (.NOT. ALLOCATED(DstInputData%alpha)) THEN 
-      ALLOCATE(DstInputData%alpha(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInputData%alpha.', ErrStat, ErrMsg,'UnsteadyAero_CopyInput')
-         RETURN
-      END IF
-   END IF
    DstInputData%alpha = SrcInputData%alpha
-ENDIF
- END SUBROUTINE UnsteadyAero_CopyInput
+   DstInputData%Re = SrcInputData%Re
+ END SUBROUTINE UA_CopyInput
 
- SUBROUTINE UnsteadyAero_DestroyInput( InputData, ErrStat, ErrMsg )
-  TYPE(UnsteadyAero_InputType), INTENT(INOUT) :: InputData
+ SUBROUTINE UA_DestroyInput( InputData, ErrStat, ErrMsg )
+  TYPE(UA_InputType), INTENT(INOUT) :: InputData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
   INTEGER(IntKi)                 :: i, i1, i2, i3, i4, i5 
 ! 
   ErrStat = ErrID_None
   ErrMsg  = ""
-IF (ALLOCATED(InputData%U)) THEN
-   DEALLOCATE(InputData%U)
-ENDIF
-IF (ALLOCATED(InputData%Re)) THEN
-   DEALLOCATE(InputData%Re)
-ENDIF
-IF (ALLOCATED(InputData%alpha)) THEN
-   DEALLOCATE(InputData%alpha)
-ENDIF
- END SUBROUTINE UnsteadyAero_DestroyInput
+ END SUBROUTINE UA_DestroyInput
 
- SUBROUTINE UnsteadyAero_PackInput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
+ SUBROUTINE UA_PackInput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
   REAL(ReKi),       ALLOCATABLE, INTENT(  OUT) :: ReKiBuf(:)
   REAL(DbKi),       ALLOCATABLE, INTENT(  OUT) :: DbKiBuf(:)
   INTEGER(IntKi),   ALLOCATABLE, INTENT(  OUT) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_InputType),  INTENT(INOUT) :: InData
+  TYPE(UA_InputType),  INTENT(INOUT) :: InData
   INTEGER(IntKi),   INTENT(  OUT) :: ErrStat
   CHARACTER(*),     INTENT(  OUT) :: ErrMsg
   LOGICAL,OPTIONAL, INTENT(IN   ) :: SizeOnly
@@ -2064,31 +2016,25 @@ ENDIF
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
-  IF ( ALLOCATED(InData%U) )   Re_BufSz    = Re_BufSz    + SIZE( InData%U )  ! U 
-  IF ( ALLOCATED(InData%Re) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Re )  ! Re 
-  IF ( ALLOCATED(InData%alpha) )   Re_BufSz    = Re_BufSz    + SIZE( InData%alpha )  ! alpha 
+  Re_BufSz   = Re_BufSz   + 1  ! U
+  Re_BufSz   = Re_BufSz   + 1  ! alpha
+  Re_BufSz   = Re_BufSz   + 1  ! Re
   IF ( Re_BufSz  .GT. 0 ) ALLOCATE( ReKiBuf(  Re_BufSz  ) )
   IF ( Db_BufSz  .GT. 0 ) ALLOCATE( DbKiBuf(  Db_BufSz  ) )
   IF ( Int_BufSz .GT. 0 ) ALLOCATE( IntKiBuf( Int_BufSz ) )
-  IF ( ALLOCATED(InData%U) ) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%U))-1 ) =  PACK(InData%U ,.TRUE.)
-    Re_Xferred   = Re_Xferred   + SIZE(InData%U)
-  ENDIF
-  IF ( ALLOCATED(InData%Re) ) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Re))-1 ) =  PACK(InData%Re ,.TRUE.)
-    Re_Xferred   = Re_Xferred   + SIZE(InData%Re)
-  ENDIF
-  IF ( ALLOCATED(InData%alpha) ) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%alpha))-1 ) =  PACK(InData%alpha ,.TRUE.)
-    Re_Xferred   = Re_Xferred   + SIZE(InData%alpha)
-  ENDIF
- END SUBROUTINE UnsteadyAero_PackInput
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%U )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%alpha )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Re )
+  Re_Xferred   = Re_Xferred   + 1
+ END SUBROUTINE UA_PackInput
 
- SUBROUTINE UnsteadyAero_UnPackInput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
+ SUBROUTINE UA_UnPackInput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
   REAL(ReKi),      ALLOCATABLE, INTENT(IN   ) :: ReKiBuf(:)
   REAL(DbKi),      ALLOCATABLE, INTENT(IN   ) :: DbKiBuf(:)
   INTEGER(IntKi),  ALLOCATABLE, INTENT(IN   ) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_InputType), INTENT(INOUT) :: OutData
+  TYPE(UA_InputType), INTENT(INOUT) :: OutData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
     ! Local variables
@@ -2117,35 +2063,20 @@ ENDIF
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
-  IF ( ALLOCATED(OutData%U) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%U,1),SIZE(OutData%U,2)))
-  mask2 = .TRUE.
-    OutData%U = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%U))-1 ),mask2,OutData%U)
-  DEALLOCATE(mask2)
-    Re_Xferred   = Re_Xferred   + SIZE(OutData%U)
-  ENDIF
-  IF ( ALLOCATED(OutData%Re) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%Re,1),SIZE(OutData%Re,2)))
-  mask2 = .TRUE.
-    OutData%Re = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Re))-1 ),mask2,OutData%Re)
-  DEALLOCATE(mask2)
-    Re_Xferred   = Re_Xferred   + SIZE(OutData%Re)
-  ENDIF
-  IF ( ALLOCATED(OutData%alpha) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%alpha,1),SIZE(OutData%alpha,2)))
-  mask2 = .TRUE.
-    OutData%alpha = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%alpha))-1 ),mask2,OutData%alpha)
-  DEALLOCATE(mask2)
-    Re_Xferred   = Re_Xferred   + SIZE(OutData%alpha)
-  ENDIF
+  OutData%U = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%alpha = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%Re = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
- END SUBROUTINE UnsteadyAero_UnPackInput
+ END SUBROUTINE UA_UnPackInput
 
- SUBROUTINE UnsteadyAero_CopyOutput( SrcOutputData, DstOutputData, CtrlCode, ErrStat, ErrMsg )
-   TYPE(UnsteadyAero_OutputType), INTENT(IN) :: SrcOutputData
-   TYPE(UnsteadyAero_OutputType), INTENT(INOUT) :: DstOutputData
+ SUBROUTINE UA_CopyOutput( SrcOutputData, DstOutputData, CtrlCode, ErrStat, ErrMsg )
+   TYPE(UA_OutputType), INTENT(IN) :: SrcOutputData
+   TYPE(UA_OutputType), INTENT(INOUT) :: DstOutputData
    INTEGER(IntKi),  INTENT(IN   ) :: CtrlCode
    INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
@@ -2158,123 +2089,43 @@ ENDIF
 ! 
    ErrStat = ErrID_None
    ErrMsg  = ""
-IF (ALLOCATED(SrcOutputData%Cn)) THEN
-   i1_l = LBOUND(SrcOutputData%Cn,1)
-   i1_u = UBOUND(SrcOutputData%Cn,1)
-   i2_l = LBOUND(SrcOutputData%Cn,2)
-   i2_u = UBOUND(SrcOutputData%Cn,2)
-   IF (.NOT. ALLOCATED(DstOutputData%Cn)) THEN 
-      ALLOCATE(DstOutputData%Cn(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOutputData%Cn.', ErrStat, ErrMsg,'UnsteadyAero_CopyOutput')
-         RETURN
-      END IF
-   END IF
    DstOutputData%Cn = SrcOutputData%Cn
-ENDIF
-IF (ALLOCATED(SrcOutputData%Cc)) THEN
-   i1_l = LBOUND(SrcOutputData%Cc,1)
-   i1_u = UBOUND(SrcOutputData%Cc,1)
-   i2_l = LBOUND(SrcOutputData%Cc,2)
-   i2_u = UBOUND(SrcOutputData%Cc,2)
-   IF (.NOT. ALLOCATED(DstOutputData%Cc)) THEN 
-      ALLOCATE(DstOutputData%Cc(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOutputData%Cc.', ErrStat, ErrMsg,'UnsteadyAero_CopyOutput')
-         RETURN
-      END IF
-   END IF
    DstOutputData%Cc = SrcOutputData%Cc
-ENDIF
-IF (ALLOCATED(SrcOutputData%Cm)) THEN
-   i1_l = LBOUND(SrcOutputData%Cm,1)
-   i1_u = UBOUND(SrcOutputData%Cm,1)
-   i2_l = LBOUND(SrcOutputData%Cm,2)
-   i2_u = UBOUND(SrcOutputData%Cm,2)
-   IF (.NOT. ALLOCATED(DstOutputData%Cm)) THEN 
-      ALLOCATE(DstOutputData%Cm(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOutputData%Cm.', ErrStat, ErrMsg,'UnsteadyAero_CopyOutput')
-         RETURN
-      END IF
-   END IF
    DstOutputData%Cm = SrcOutputData%Cm
-ENDIF
-IF (ALLOCATED(SrcOutputData%Cl)) THEN
-   i1_l = LBOUND(SrcOutputData%Cl,1)
-   i1_u = UBOUND(SrcOutputData%Cl,1)
-   i2_l = LBOUND(SrcOutputData%Cl,2)
-   i2_u = UBOUND(SrcOutputData%Cl,2)
-   IF (.NOT. ALLOCATED(DstOutputData%Cl)) THEN 
-      ALLOCATE(DstOutputData%Cl(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOutputData%Cl.', ErrStat, ErrMsg,'UnsteadyAero_CopyOutput')
-         RETURN
-      END IF
-   END IF
    DstOutputData%Cl = SrcOutputData%Cl
-ENDIF
-IF (ALLOCATED(SrcOutputData%Cd)) THEN
-   i1_l = LBOUND(SrcOutputData%Cd,1)
-   i1_u = UBOUND(SrcOutputData%Cd,1)
-   i2_l = LBOUND(SrcOutputData%Cd,2)
-   i2_u = UBOUND(SrcOutputData%Cd,2)
-   IF (.NOT. ALLOCATED(DstOutputData%Cd)) THEN 
-      ALLOCATE(DstOutputData%Cd(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOutputData%Cd.', ErrStat, ErrMsg,'UnsteadyAero_CopyOutput')
-         RETURN
-      END IF
-   END IF
    DstOutputData%Cd = SrcOutputData%Cd
-ENDIF
 IF (ALLOCATED(SrcOutputData%WriteOutput)) THEN
    i1_l = LBOUND(SrcOutputData%WriteOutput,1)
    i1_u = UBOUND(SrcOutputData%WriteOutput,1)
    IF (.NOT. ALLOCATED(DstOutputData%WriteOutput)) THEN 
       ALLOCATE(DstOutputData%WriteOutput(i1_l:i1_u),STAT=ErrStat2)
       IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOutputData%WriteOutput.', ErrStat, ErrMsg,'UnsteadyAero_CopyOutput')
+         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOutputData%WriteOutput.', ErrStat, ErrMsg,'UA_CopyOutput')
          RETURN
       END IF
    END IF
    DstOutputData%WriteOutput = SrcOutputData%WriteOutput
 ENDIF
- END SUBROUTINE UnsteadyAero_CopyOutput
+ END SUBROUTINE UA_CopyOutput
 
- SUBROUTINE UnsteadyAero_DestroyOutput( OutputData, ErrStat, ErrMsg )
-  TYPE(UnsteadyAero_OutputType), INTENT(INOUT) :: OutputData
+ SUBROUTINE UA_DestroyOutput( OutputData, ErrStat, ErrMsg )
+  TYPE(UA_OutputType), INTENT(INOUT) :: OutputData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
   INTEGER(IntKi)                 :: i, i1, i2, i3, i4, i5 
 ! 
   ErrStat = ErrID_None
   ErrMsg  = ""
-IF (ALLOCATED(OutputData%Cn)) THEN
-   DEALLOCATE(OutputData%Cn)
-ENDIF
-IF (ALLOCATED(OutputData%Cc)) THEN
-   DEALLOCATE(OutputData%Cc)
-ENDIF
-IF (ALLOCATED(OutputData%Cm)) THEN
-   DEALLOCATE(OutputData%Cm)
-ENDIF
-IF (ALLOCATED(OutputData%Cl)) THEN
-   DEALLOCATE(OutputData%Cl)
-ENDIF
-IF (ALLOCATED(OutputData%Cd)) THEN
-   DEALLOCATE(OutputData%Cd)
-ENDIF
 IF (ALLOCATED(OutputData%WriteOutput)) THEN
    DEALLOCATE(OutputData%WriteOutput)
 ENDIF
- END SUBROUTINE UnsteadyAero_DestroyOutput
+ END SUBROUTINE UA_DestroyOutput
 
- SUBROUTINE UnsteadyAero_PackOutput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
+ SUBROUTINE UA_PackOutput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
   REAL(ReKi),       ALLOCATABLE, INTENT(  OUT) :: ReKiBuf(:)
   REAL(DbKi),       ALLOCATABLE, INTENT(  OUT) :: DbKiBuf(:)
   INTEGER(IntKi),   ALLOCATABLE, INTENT(  OUT) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_OutputType),  INTENT(INOUT) :: InData
+  TYPE(UA_OutputType),  INTENT(INOUT) :: InData
   INTEGER(IntKi),   INTENT(  OUT) :: ErrStat
   CHARACTER(*),     INTENT(  OUT) :: ErrMsg
   LOGICAL,OPTIONAL, INTENT(IN   ) :: SizeOnly
@@ -2304,46 +2155,36 @@ ENDIF
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
-  IF ( ALLOCATED(InData%Cn) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Cn )  ! Cn 
-  IF ( ALLOCATED(InData%Cc) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Cc )  ! Cc 
-  IF ( ALLOCATED(InData%Cm) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Cm )  ! Cm 
-  IF ( ALLOCATED(InData%Cl) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Cl )  ! Cl 
-  IF ( ALLOCATED(InData%Cd) )   Re_BufSz    = Re_BufSz    + SIZE( InData%Cd )  ! Cd 
+  Re_BufSz   = Re_BufSz   + 1  ! Cn
+  Re_BufSz   = Re_BufSz   + 1  ! Cc
+  Re_BufSz   = Re_BufSz   + 1  ! Cm
+  Re_BufSz   = Re_BufSz   + 1  ! Cl
+  Re_BufSz   = Re_BufSz   + 1  ! Cd
   IF ( ALLOCATED(InData%WriteOutput) )   Re_BufSz    = Re_BufSz    + SIZE( InData%WriteOutput )  ! WriteOutput 
   IF ( Re_BufSz  .GT. 0 ) ALLOCATE( ReKiBuf(  Re_BufSz  ) )
   IF ( Db_BufSz  .GT. 0 ) ALLOCATE( DbKiBuf(  Db_BufSz  ) )
   IF ( Int_BufSz .GT. 0 ) ALLOCATE( IntKiBuf( Int_BufSz ) )
-  IF ( ALLOCATED(InData%Cn) ) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Cn))-1 ) =  PACK(InData%Cn ,.TRUE.)
-    Re_Xferred   = Re_Xferred   + SIZE(InData%Cn)
-  ENDIF
-  IF ( ALLOCATED(InData%Cc) ) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Cc))-1 ) =  PACK(InData%Cc ,.TRUE.)
-    Re_Xferred   = Re_Xferred   + SIZE(InData%Cc)
-  ENDIF
-  IF ( ALLOCATED(InData%Cm) ) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Cm))-1 ) =  PACK(InData%Cm ,.TRUE.)
-    Re_Xferred   = Re_Xferred   + SIZE(InData%Cm)
-  ENDIF
-  IF ( ALLOCATED(InData%Cl) ) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Cl))-1 ) =  PACK(InData%Cl ,.TRUE.)
-    Re_Xferred   = Re_Xferred   + SIZE(InData%Cl)
-  ENDIF
-  IF ( ALLOCATED(InData%Cd) ) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Cd))-1 ) =  PACK(InData%Cd ,.TRUE.)
-    Re_Xferred   = Re_Xferred   + SIZE(InData%Cd)
-  ENDIF
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Cn )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Cc )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Cm )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Cl )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Cd )
+  Re_Xferred   = Re_Xferred   + 1
   IF ( ALLOCATED(InData%WriteOutput) ) THEN
     IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%WriteOutput))-1 ) =  PACK(InData%WriteOutput ,.TRUE.)
     Re_Xferred   = Re_Xferred   + SIZE(InData%WriteOutput)
   ENDIF
- END SUBROUTINE UnsteadyAero_PackOutput
+ END SUBROUTINE UA_PackOutput
 
- SUBROUTINE UnsteadyAero_UnPackOutput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
+ SUBROUTINE UA_UnPackOutput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
   REAL(ReKi),      ALLOCATABLE, INTENT(IN   ) :: ReKiBuf(:)
   REAL(DbKi),      ALLOCATABLE, INTENT(IN   ) :: DbKiBuf(:)
   INTEGER(IntKi),  ALLOCATABLE, INTENT(IN   ) :: IntKiBuf(:)
-  TYPE(UnsteadyAero_OutputType), INTENT(INOUT) :: OutData
+  TYPE(UA_OutputType), INTENT(INOUT) :: OutData
   INTEGER(IntKi),  INTENT(  OUT) :: ErrStat
   CHARACTER(*),    INTENT(  OUT) :: ErrMsg
     ! Local variables
@@ -2372,41 +2213,16 @@ ENDIF
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
-  IF ( ALLOCATED(OutData%Cn) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%Cn,1),SIZE(OutData%Cn,2)))
-  mask2 = .TRUE.
-    OutData%Cn = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Cn))-1 ),mask2,OutData%Cn)
-  DEALLOCATE(mask2)
-    Re_Xferred   = Re_Xferred   + SIZE(OutData%Cn)
-  ENDIF
-  IF ( ALLOCATED(OutData%Cc) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%Cc,1),SIZE(OutData%Cc,2)))
-  mask2 = .TRUE.
-    OutData%Cc = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Cc))-1 ),mask2,OutData%Cc)
-  DEALLOCATE(mask2)
-    Re_Xferred   = Re_Xferred   + SIZE(OutData%Cc)
-  ENDIF
-  IF ( ALLOCATED(OutData%Cm) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%Cm,1),SIZE(OutData%Cm,2)))
-  mask2 = .TRUE.
-    OutData%Cm = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Cm))-1 ),mask2,OutData%Cm)
-  DEALLOCATE(mask2)
-    Re_Xferred   = Re_Xferred   + SIZE(OutData%Cm)
-  ENDIF
-  IF ( ALLOCATED(OutData%Cl) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%Cl,1),SIZE(OutData%Cl,2)))
-  mask2 = .TRUE.
-    OutData%Cl = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Cl))-1 ),mask2,OutData%Cl)
-  DEALLOCATE(mask2)
-    Re_Xferred   = Re_Xferred   + SIZE(OutData%Cl)
-  ENDIF
-  IF ( ALLOCATED(OutData%Cd) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%Cd,1),SIZE(OutData%Cd,2)))
-  mask2 = .TRUE.
-    OutData%Cd = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Cd))-1 ),mask2,OutData%Cd)
-  DEALLOCATE(mask2)
-    Re_Xferred   = Re_Xferred   + SIZE(OutData%Cd)
-  ENDIF
+  OutData%Cn = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%Cc = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%Cm = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%Cl = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%Cd = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
   IF ( ALLOCATED(OutData%WriteOutput) ) THEN
   ALLOCATE(mask1(SIZE(OutData%WriteOutput,1)))
   mask1 = .TRUE.
@@ -2417,10 +2233,10 @@ ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
- END SUBROUTINE UnsteadyAero_UnPackOutput
+ END SUBROUTINE UA_UnPackOutput
 
 
- SUBROUTINE UnsteadyAero_Input_ExtrapInterp(u, tin, u_out, tin_out, ErrStat, ErrMsg )
+ SUBROUTINE UA_Input_ExtrapInterp(u, tin, u_out, tin_out, ErrStat, ErrMsg )
 !
 ! This subroutine calculates a extrapolated (or interpolated) input u_out at time t_out, from previous/future time
 ! values of u (which has values associated with times in t).  Order of the interpolation is given by the size of u
@@ -2436,9 +2252,9 @@ ENDIF
 !
 !..................................................................................................................................
 
- TYPE(UnsteadyAero_inputtype), INTENT(INOUT)  :: u(:)      ! Inputs at t1 > t2 > t3
+ TYPE(UA_inputtype), INTENT(INOUT)  :: u(:)      ! Inputs at t1 > t2 > t3
  REAL(DbKi),         INTENT(IN   )  :: tin(:)      ! Times associated with the inputs
- TYPE(UnsteadyAero_inputtype), INTENT(INOUT)  :: u_out     ! Inputs at tin_out
+ TYPE(UA_inputtype), INTENT(INOUT)  :: u_out     ! Inputs at tin_out
  REAL(DbKi),         INTENT(IN   )  :: tin_out     ! time to be extrap/interp'd to
  INTEGER(IntKi),     INTENT(  OUT)  :: ErrStat   ! Error status of the operation
  CHARACTER(*),       INTENT(  OUT)  :: ErrMsg    ! Error message if ErrStat /= ErrID_None
@@ -2448,10 +2264,6 @@ ENDIF
  INTEGER(IntKi)                 :: order    ! order of polynomial fit (max 2)
  REAL(DbKi)                                 :: b0       ! temporary for extrapolation/interpolation
  REAL(DbKi)                                 :: c0       ! temporary for extrapolation/interpolation
- REAL(DbKi),ALLOCATABLE,DIMENSION(:)        :: b1       ! temporary for extrapolation/interpolation
- REAL(DbKi),ALLOCATABLE,DIMENSION(:)        :: c1       ! temporary for extrapolation/interpolation
- REAL(DbKi),ALLOCATABLE,DIMENSION(:,:)      :: b2       ! temporary for extrapolation/interpolation
- REAL(DbKi),ALLOCATABLE,DIMENSION(:,:)      :: c2       ! temporary for extrapolation/interpolation
  INTEGER(IntKi)                             :: ErrStat2 ! local errors
  CHARACTER(1024)                            :: ErrMsg2  ! local errors
     ! Initialize ErrStat
@@ -2464,107 +2276,65 @@ ENDIF
 
  if ( size(t) .ne. size(u)) then
     ErrStat = ErrID_Fatal
-    ErrMsg = ' Error in UnsteadyAero_Input_ExtrapInterp: size(t) must equal size(u) '
+    ErrMsg = ' Error in UA_Input_ExtrapInterp: size(t) must equal size(u) '
     RETURN
  endif
  if (size(u) .gt. 3) then
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Input_ExtrapInterp: size(u) must be less than 4 '
+    ErrMsg  = ' Error in UA_Input_ExtrapInterp: size(u) must be less than 4 '
     RETURN
  endif
  order = SIZE(u) - 1
  IF ( order .eq. 0 ) THEN
-IF (ALLOCATED(u_out%U) .AND. ALLOCATED(u(1)%U)) THEN
   u_out%U = u(1)%U
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Re) .AND. ALLOCATED(u(1)%Re)) THEN
-  u_out%Re = u(1)%Re
-END IF ! check if allocated
-IF (ALLOCATED(u_out%alpha) .AND. ALLOCATED(u(1)%alpha)) THEN
   u_out%alpha = u(1)%alpha
-END IF ! check if allocated
+  u_out%Re = u(1)%Re
  ELSE IF ( order .eq. 1 ) THEN
   IF ( EqualRealNos( t(1), t(2) ) ) THEN
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Input_ExtrapInterp: t(1) must not equal t(2) to avoid a division-by-zero error.'
+    ErrMsg  = ' Error in UA_Input_ExtrapInterp: t(1) must not equal t(2) to avoid a division-by-zero error.'
     RETURN
   END IF
-IF (ALLOCATED(u_out%U) .AND. ALLOCATED(u(1)%U)) THEN
-  ALLOCATE(b2(SIZE(u_out%U,1),SIZE(u_out%U,2) ))
-  ALLOCATE(c2(SIZE(u_out%U,1),SIZE(u_out%U,2) ))
-  b2 = -(u(1)%U - u(2)%U)/t(2)
-  u_out%U = u(1)%U + b2 * t_out
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Re) .AND. ALLOCATED(u(1)%Re)) THEN
-  ALLOCATE(b2(SIZE(u_out%Re,1),SIZE(u_out%Re,2) ))
-  ALLOCATE(c2(SIZE(u_out%Re,1),SIZE(u_out%Re,2) ))
-  b2 = -(u(1)%Re - u(2)%Re)/t(2)
-  u_out%Re = u(1)%Re + b2 * t_out
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%alpha) .AND. ALLOCATED(u(1)%alpha)) THEN
-  ALLOCATE(b2(SIZE(u_out%alpha,1),SIZE(u_out%alpha,2) ))
-  ALLOCATE(c2(SIZE(u_out%alpha,1),SIZE(u_out%alpha,2) ))
-  b2 = -(u(1)%alpha - u(2)%alpha)/t(2)
-  u_out%alpha = u(1)%alpha + b2 * t_out
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
+  b0 = -(u(1)%U - u(2)%U)/t(2)
+  u_out%U = u(1)%U + b0 * t_out
+  b0 = -(u(1)%alpha - u(2)%alpha)/t(2)
+  u_out%alpha = u(1)%alpha + b0 * t_out
+  b0 = -(u(1)%Re - u(2)%Re)/t(2)
+  u_out%Re = u(1)%Re + b0 * t_out
  ELSE IF ( order .eq. 2 ) THEN
   IF ( EqualRealNos( t(1), t(2) ) ) THEN
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Input_ExtrapInterp: t(1) must not equal t(2) to avoid a division-by-zero error.'
+    ErrMsg  = ' Error in UA_Input_ExtrapInterp: t(1) must not equal t(2) to avoid a division-by-zero error.'
     RETURN
   END IF
   IF ( EqualRealNos( t(2), t(3) ) ) THEN
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Input_ExtrapInterp: t(2) must not equal t(3) to avoid a division-by-zero error.'
+    ErrMsg  = ' Error in UA_Input_ExtrapInterp: t(2) must not equal t(3) to avoid a division-by-zero error.'
     RETURN
   END IF
   IF ( EqualRealNos( t(1), t(3) ) ) THEN
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Input_ExtrapInterp: t(1) must not equal t(3) to avoid a division-by-zero error.'
+    ErrMsg  = ' Error in UA_Input_ExtrapInterp: t(1) must not equal t(3) to avoid a division-by-zero error.'
     RETURN
   END IF
-IF (ALLOCATED(u_out%U) .AND. ALLOCATED(u(1)%U)) THEN
-  ALLOCATE(b2(SIZE(u_out%U,1),SIZE(u_out%U,2) ))
-  ALLOCATE(c2(SIZE(u_out%U,1),SIZE(u_out%U,2) ))
-  b2 = (t(3)**2*(u(1)%U - u(2)%U) + t(2)**2*(-u(1)%U + u(3)%U))/(t(2)*t(3)*(t(2) - t(3)))
-  c2 = ( (t(2)-t(3))*u(1)%U + t(3)*u(2)%U - t(2)*u(3)%U ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%U = u(1)%U + b2 * t_out + c2 * t_out**2
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Re) .AND. ALLOCATED(u(1)%Re)) THEN
-  ALLOCATE(b2(SIZE(u_out%Re,1),SIZE(u_out%Re,2) ))
-  ALLOCATE(c2(SIZE(u_out%Re,1),SIZE(u_out%Re,2) ))
-  b2 = (t(3)**2*(u(1)%Re - u(2)%Re) + t(2)**2*(-u(1)%Re + u(3)%Re))/(t(2)*t(3)*(t(2) - t(3)))
-  c2 = ( (t(2)-t(3))*u(1)%Re + t(3)*u(2)%Re - t(2)*u(3)%Re ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%Re = u(1)%Re + b2 * t_out + c2 * t_out**2
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%alpha) .AND. ALLOCATED(u(1)%alpha)) THEN
-  ALLOCATE(b2(SIZE(u_out%alpha,1),SIZE(u_out%alpha,2) ))
-  ALLOCATE(c2(SIZE(u_out%alpha,1),SIZE(u_out%alpha,2) ))
-  b2 = (t(3)**2*(u(1)%alpha - u(2)%alpha) + t(2)**2*(-u(1)%alpha + u(3)%alpha))/(t(2)*t(3)*(t(2) - t(3)))
-  c2 = ( (t(2)-t(3))*u(1)%alpha + t(3)*u(2)%alpha - t(2)*u(3)%alpha ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%alpha = u(1)%alpha + b2 * t_out + c2 * t_out**2
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
+  b0 = (t(3)**2*(u(1)%U - u(2)%U) + t(2)**2*(-u(1)%U + u(3)%U))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*u(1)%U + t(3)*u(2)%U - t(2)*u(3)%U ) / (t(2)*t(3)*(t(2) - t(3)))
+  u_out%U = u(1)%U + b0 * t_out + c0 * t_out**2
+  b0 = (t(3)**2*(u(1)%alpha - u(2)%alpha) + t(2)**2*(-u(1)%alpha + u(3)%alpha))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*u(1)%alpha + t(3)*u(2)%alpha - t(2)*u(3)%alpha ) / (t(2)*t(3)*(t(2) - t(3)))
+  u_out%alpha = u(1)%alpha + b0 * t_out + c0 * t_out**2
+  b0 = (t(3)**2*(u(1)%Re - u(2)%Re) + t(2)**2*(-u(1)%Re + u(3)%Re))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*u(1)%Re + t(3)*u(2)%Re - t(2)*u(3)%Re ) / (t(2)*t(3)*(t(2) - t(3)))
+  u_out%Re = u(1)%Re + b0 * t_out + c0 * t_out**2
  ELSE 
    ErrStat = ErrID_Fatal
-   ErrMsg = ' order must be less than 3 in UnsteadyAero_Input_ExtrapInterp '
+   ErrMsg = ' order must be less than 3 in UA_Input_ExtrapInterp '
    RETURN
  ENDIF 
- END SUBROUTINE UnsteadyAero_Input_ExtrapInterp
+ END SUBROUTINE UA_Input_ExtrapInterp
 
 
- SUBROUTINE UnsteadyAero_Output_ExtrapInterp(u, tin, u_out, tin_out, ErrStat, ErrMsg )
+ SUBROUTINE UA_Output_ExtrapInterp(u, tin, u_out, tin_out, ErrStat, ErrMsg )
 !
 ! This subroutine calculates a extrapolated (or interpolated) input u_out at time t_out, from previous/future time
 ! values of u (which has values associated with times in t).  Order of the interpolation is given by the size of u
@@ -2580,9 +2350,9 @@ END IF ! check if allocated
 !
 !..................................................................................................................................
 
- TYPE(UnsteadyAero_outputtype), INTENT(INOUT)  :: u(:)      ! Inputs at t1 > t2 > t3
+ TYPE(UA_outputtype), INTENT(INOUT)  :: u(:)      ! Inputs at t1 > t2 > t3
  REAL(DbKi),         INTENT(IN   )  :: tin(:)      ! Times associated with the inputs
- TYPE(UnsteadyAero_outputtype), INTENT(INOUT)  :: u_out     ! Inputs at tin_out
+ TYPE(UA_outputtype), INTENT(INOUT)  :: u_out     ! Inputs at tin_out
  REAL(DbKi),         INTENT(IN   )  :: tin_out     ! time to be extrap/interp'd to
  INTEGER(IntKi),     INTENT(  OUT)  :: ErrStat   ! Error status of the operation
  CHARACTER(*),       INTENT(  OUT)  :: ErrMsg    ! Error message if ErrStat /= ErrID_None
@@ -2594,8 +2364,6 @@ END IF ! check if allocated
  REAL(DbKi)                                 :: c0       ! temporary for extrapolation/interpolation
  REAL(DbKi),ALLOCATABLE,DIMENSION(:)        :: b1       ! temporary for extrapolation/interpolation
  REAL(DbKi),ALLOCATABLE,DIMENSION(:)        :: c1       ! temporary for extrapolation/interpolation
- REAL(DbKi),ALLOCATABLE,DIMENSION(:,:)      :: b2       ! temporary for extrapolation/interpolation
- REAL(DbKi),ALLOCATABLE,DIMENSION(:,:)      :: c2       ! temporary for extrapolation/interpolation
  INTEGER(IntKi)                             :: ErrStat2 ! local errors
  CHARACTER(1024)                            :: ErrMsg2  ! local errors
     ! Initialize ErrStat
@@ -2608,80 +2376,40 @@ END IF ! check if allocated
 
  if ( size(t) .ne. size(u)) then
     ErrStat = ErrID_Fatal
-    ErrMsg = ' Error in UnsteadyAero_Output_ExtrapInterp: size(t) must equal size(u) '
+    ErrMsg = ' Error in UA_Output_ExtrapInterp: size(t) must equal size(u) '
     RETURN
  endif
  if (size(u) .gt. 3) then
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Output_ExtrapInterp: size(u) must be less than 4 '
+    ErrMsg  = ' Error in UA_Output_ExtrapInterp: size(u) must be less than 4 '
     RETURN
  endif
  order = SIZE(u) - 1
  IF ( order .eq. 0 ) THEN
-IF (ALLOCATED(u_out%Cn) .AND. ALLOCATED(u(1)%Cn)) THEN
   u_out%Cn = u(1)%Cn
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cc) .AND. ALLOCATED(u(1)%Cc)) THEN
   u_out%Cc = u(1)%Cc
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cm) .AND. ALLOCATED(u(1)%Cm)) THEN
   u_out%Cm = u(1)%Cm
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cl) .AND. ALLOCATED(u(1)%Cl)) THEN
   u_out%Cl = u(1)%Cl
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cd) .AND. ALLOCATED(u(1)%Cd)) THEN
   u_out%Cd = u(1)%Cd
-END IF ! check if allocated
 IF (ALLOCATED(u_out%WriteOutput) .AND. ALLOCATED(u(1)%WriteOutput)) THEN
   u_out%WriteOutput = u(1)%WriteOutput
 END IF ! check if allocated
  ELSE IF ( order .eq. 1 ) THEN
   IF ( EqualRealNos( t(1), t(2) ) ) THEN
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Output_ExtrapInterp: t(1) must not equal t(2) to avoid a division-by-zero error.'
+    ErrMsg  = ' Error in UA_Output_ExtrapInterp: t(1) must not equal t(2) to avoid a division-by-zero error.'
     RETURN
   END IF
-IF (ALLOCATED(u_out%Cn) .AND. ALLOCATED(u(1)%Cn)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cn,1),SIZE(u_out%Cn,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cn,1),SIZE(u_out%Cn,2) ))
-  b2 = -(u(1)%Cn - u(2)%Cn)/t(2)
-  u_out%Cn = u(1)%Cn + b2 * t_out
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cc) .AND. ALLOCATED(u(1)%Cc)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cc,1),SIZE(u_out%Cc,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cc,1),SIZE(u_out%Cc,2) ))
-  b2 = -(u(1)%Cc - u(2)%Cc)/t(2)
-  u_out%Cc = u(1)%Cc + b2 * t_out
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cm) .AND. ALLOCATED(u(1)%Cm)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cm,1),SIZE(u_out%Cm,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cm,1),SIZE(u_out%Cm,2) ))
-  b2 = -(u(1)%Cm - u(2)%Cm)/t(2)
-  u_out%Cm = u(1)%Cm + b2 * t_out
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cl) .AND. ALLOCATED(u(1)%Cl)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cl,1),SIZE(u_out%Cl,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cl,1),SIZE(u_out%Cl,2) ))
-  b2 = -(u(1)%Cl - u(2)%Cl)/t(2)
-  u_out%Cl = u(1)%Cl + b2 * t_out
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cd) .AND. ALLOCATED(u(1)%Cd)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cd,1),SIZE(u_out%Cd,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cd,1),SIZE(u_out%Cd,2) ))
-  b2 = -(u(1)%Cd - u(2)%Cd)/t(2)
-  u_out%Cd = u(1)%Cd + b2 * t_out
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
+  b0 = -(u(1)%Cn - u(2)%Cn)/t(2)
+  u_out%Cn = u(1)%Cn + b0 * t_out
+  b0 = -(u(1)%Cc - u(2)%Cc)/t(2)
+  u_out%Cc = u(1)%Cc + b0 * t_out
+  b0 = -(u(1)%Cm - u(2)%Cm)/t(2)
+  u_out%Cm = u(1)%Cm + b0 * t_out
+  b0 = -(u(1)%Cl - u(2)%Cl)/t(2)
+  u_out%Cl = u(1)%Cl + b0 * t_out
+  b0 = -(u(1)%Cd - u(2)%Cd)/t(2)
+  u_out%Cd = u(1)%Cd + b0 * t_out
 IF (ALLOCATED(u_out%WriteOutput) .AND. ALLOCATED(u(1)%WriteOutput)) THEN
   ALLOCATE(b1(SIZE(u_out%WriteOutput,1)))
   ALLOCATE(c1(SIZE(u_out%WriteOutput,1)))
@@ -2693,64 +2421,34 @@ END IF ! check if allocated
  ELSE IF ( order .eq. 2 ) THEN
   IF ( EqualRealNos( t(1), t(2) ) ) THEN
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Output_ExtrapInterp: t(1) must not equal t(2) to avoid a division-by-zero error.'
+    ErrMsg  = ' Error in UA_Output_ExtrapInterp: t(1) must not equal t(2) to avoid a division-by-zero error.'
     RETURN
   END IF
   IF ( EqualRealNos( t(2), t(3) ) ) THEN
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Output_ExtrapInterp: t(2) must not equal t(3) to avoid a division-by-zero error.'
+    ErrMsg  = ' Error in UA_Output_ExtrapInterp: t(2) must not equal t(3) to avoid a division-by-zero error.'
     RETURN
   END IF
   IF ( EqualRealNos( t(1), t(3) ) ) THEN
     ErrStat = ErrID_Fatal
-    ErrMsg  = ' Error in UnsteadyAero_Output_ExtrapInterp: t(1) must not equal t(3) to avoid a division-by-zero error.'
+    ErrMsg  = ' Error in UA_Output_ExtrapInterp: t(1) must not equal t(3) to avoid a division-by-zero error.'
     RETURN
   END IF
-IF (ALLOCATED(u_out%Cn) .AND. ALLOCATED(u(1)%Cn)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cn,1),SIZE(u_out%Cn,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cn,1),SIZE(u_out%Cn,2) ))
-  b2 = (t(3)**2*(u(1)%Cn - u(2)%Cn) + t(2)**2*(-u(1)%Cn + u(3)%Cn))/(t(2)*t(3)*(t(2) - t(3)))
-  c2 = ( (t(2)-t(3))*u(1)%Cn + t(3)*u(2)%Cn - t(2)*u(3)%Cn ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%Cn = u(1)%Cn + b2 * t_out + c2 * t_out**2
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cc) .AND. ALLOCATED(u(1)%Cc)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cc,1),SIZE(u_out%Cc,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cc,1),SIZE(u_out%Cc,2) ))
-  b2 = (t(3)**2*(u(1)%Cc - u(2)%Cc) + t(2)**2*(-u(1)%Cc + u(3)%Cc))/(t(2)*t(3)*(t(2) - t(3)))
-  c2 = ( (t(2)-t(3))*u(1)%Cc + t(3)*u(2)%Cc - t(2)*u(3)%Cc ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%Cc = u(1)%Cc + b2 * t_out + c2 * t_out**2
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cm) .AND. ALLOCATED(u(1)%Cm)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cm,1),SIZE(u_out%Cm,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cm,1),SIZE(u_out%Cm,2) ))
-  b2 = (t(3)**2*(u(1)%Cm - u(2)%Cm) + t(2)**2*(-u(1)%Cm + u(3)%Cm))/(t(2)*t(3)*(t(2) - t(3)))
-  c2 = ( (t(2)-t(3))*u(1)%Cm + t(3)*u(2)%Cm - t(2)*u(3)%Cm ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%Cm = u(1)%Cm + b2 * t_out + c2 * t_out**2
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cl) .AND. ALLOCATED(u(1)%Cl)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cl,1),SIZE(u_out%Cl,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cl,1),SIZE(u_out%Cl,2) ))
-  b2 = (t(3)**2*(u(1)%Cl - u(2)%Cl) + t(2)**2*(-u(1)%Cl + u(3)%Cl))/(t(2)*t(3)*(t(2) - t(3)))
-  c2 = ( (t(2)-t(3))*u(1)%Cl + t(3)*u(2)%Cl - t(2)*u(3)%Cl ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%Cl = u(1)%Cl + b2 * t_out + c2 * t_out**2
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
-IF (ALLOCATED(u_out%Cd) .AND. ALLOCATED(u(1)%Cd)) THEN
-  ALLOCATE(b2(SIZE(u_out%Cd,1),SIZE(u_out%Cd,2) ))
-  ALLOCATE(c2(SIZE(u_out%Cd,1),SIZE(u_out%Cd,2) ))
-  b2 = (t(3)**2*(u(1)%Cd - u(2)%Cd) + t(2)**2*(-u(1)%Cd + u(3)%Cd))/(t(2)*t(3)*(t(2) - t(3)))
-  c2 = ( (t(2)-t(3))*u(1)%Cd + t(3)*u(2)%Cd - t(2)*u(3)%Cd ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%Cd = u(1)%Cd + b2 * t_out + c2 * t_out**2
-  DEALLOCATE(b2)
-  DEALLOCATE(c2)
-END IF ! check if allocated
+  b0 = (t(3)**2*(u(1)%Cn - u(2)%Cn) + t(2)**2*(-u(1)%Cn + u(3)%Cn))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*u(1)%Cn + t(3)*u(2)%Cn - t(2)*u(3)%Cn ) / (t(2)*t(3)*(t(2) - t(3)))
+  u_out%Cn = u(1)%Cn + b0 * t_out + c0 * t_out**2
+  b0 = (t(3)**2*(u(1)%Cc - u(2)%Cc) + t(2)**2*(-u(1)%Cc + u(3)%Cc))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*u(1)%Cc + t(3)*u(2)%Cc - t(2)*u(3)%Cc ) / (t(2)*t(3)*(t(2) - t(3)))
+  u_out%Cc = u(1)%Cc + b0 * t_out + c0 * t_out**2
+  b0 = (t(3)**2*(u(1)%Cm - u(2)%Cm) + t(2)**2*(-u(1)%Cm + u(3)%Cm))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*u(1)%Cm + t(3)*u(2)%Cm - t(2)*u(3)%Cm ) / (t(2)*t(3)*(t(2) - t(3)))
+  u_out%Cm = u(1)%Cm + b0 * t_out + c0 * t_out**2
+  b0 = (t(3)**2*(u(1)%Cl - u(2)%Cl) + t(2)**2*(-u(1)%Cl + u(3)%Cl))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*u(1)%Cl + t(3)*u(2)%Cl - t(2)*u(3)%Cl ) / (t(2)*t(3)*(t(2) - t(3)))
+  u_out%Cl = u(1)%Cl + b0 * t_out + c0 * t_out**2
+  b0 = (t(3)**2*(u(1)%Cd - u(2)%Cd) + t(2)**2*(-u(1)%Cd + u(3)%Cd))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*u(1)%Cd + t(3)*u(2)%Cd - t(2)*u(3)%Cd ) / (t(2)*t(3)*(t(2) - t(3)))
+  u_out%Cd = u(1)%Cd + b0 * t_out + c0 * t_out**2
 IF (ALLOCATED(u_out%WriteOutput) .AND. ALLOCATED(u(1)%WriteOutput)) THEN
   ALLOCATE(b1(SIZE(u_out%WriteOutput,1)))
   ALLOCATE(c1(SIZE(u_out%WriteOutput,1)))
@@ -2762,10 +2460,10 @@ IF (ALLOCATED(u_out%WriteOutput) .AND. ALLOCATED(u(1)%WriteOutput)) THEN
 END IF ! check if allocated
  ELSE 
    ErrStat = ErrID_Fatal
-   ErrMsg = ' order must be less than 3 in UnsteadyAero_Output_ExtrapInterp '
+   ErrMsg = ' order must be less than 3 in UA_Output_ExtrapInterp '
    RETURN
  ENDIF 
- END SUBROUTINE UnsteadyAero_Output_ExtrapInterp
+ END SUBROUTINE UA_Output_ExtrapInterp
 
 END MODULE UnsteadyAero_Types
 !ENDOFREGISTRYGENERATEDFILE
