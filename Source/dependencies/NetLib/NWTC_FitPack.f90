@@ -4,9 +4,9 @@
 ! This code provides a wrapper for Dierckx's FitPack routines currently used at the NWTC (mainly codes in the FAST framework).
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2013-09-21 22:37:32 -0600 (Sat, 21 Sep 2013) $
-! (File) Revision #: $Rev: 175 $
-! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/NWTC_Library.f90 $                !MLB: Fix this.
+! File last committed: $Date: 2015-05-07 19:36:42 -0600 (Thu, 07 May 2015) $
+! (File) Revision #: $Rev: 305 $
+! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/branches/NetLib/NWTC_source/NWTC_FitPack.f90 $ 
 !**********************************************************************************************************************************
 MODULE NWTC_FitPack
 
@@ -21,10 +21,10 @@ MODULE NWTC_FitPack
 
          ! Your project must include the following files:
          ! From the NWTC Subroutine Library:
-         !     {Doub | Sing}Prec.f90 [from NWTC Library]
+         !     SingPrec.f90          [from NWTC Library]
          !     Sys*.f90              [from NWTC Library]
          !     NWTC_Base.f90         [from NWTC Library]
-         ! fitpack library (preferable a binary, but available in source form from http://www.netlib.org/, too)                !MLB: Fix this.
+         ! fitpack library (preferably a binary, but available in source form from http://www.netlib.org/dierckx/, too).
          ! This wrapper file:
          !     NWTC_FitPack.f90
 
@@ -32,13 +32,11 @@ MODULE NWTC_FitPack
 
    INTERFACE FitPack_BispevLite                 ! Computes bicubic splines of a rectangular grid of data.
 !      MODULE PROCEDURE FitPack_dBispevLite      ! Dummy routine that prints an error message if double precision is used.
-!      MODULE PROCEDURE FitPack_qBispevLite      ! Dummy routine that prints an error message if quad precision is used.
       MODULE PROCEDURE FitPack_sBispevLite      ! Single-precision version.
    END INTERFACE
 
    INTERFACE FitPack_RegridLite                 ! Computes bicubic splines of a rectangular grid of data.
       MODULE PROCEDURE FitPack_dRegridLite      ! Dummy routine that prints an error message if double precision is used.
-      MODULE PROCEDURE FitPack_qRegridLite      ! Dummy routine that prints an error message if quad precision is used.
       MODULE PROCEDURE FitPack_sRegridLite      ! Single-precision version.
    END INTERFACE
 
@@ -347,182 +345,6 @@ CONTAINS
 
    END SUBROUTINE FitPack_dRegridLite
 !=======================================================================
-   SUBROUTINE FitPack_qRegridLite ( NumX, X, NumY, Y, ElSize, Elev, SCsize, SplCoef, ErrStat, ErrMsg )
-
-
-      ! This Fortran routine is a wrapper for Paul Dierckx's FitPack regrid.f routine.
-      ! This works only with single-precision values (SiKi).
-      ! It *may* assume that the length of REALs and INTEGERs are the same.
-      ! Hard-coded assumptions:
-      !     The calling routine passes it a rectangular grid of data.
-      !     The knots will be at the original X,Y points (Option = -1).
-      !     It will generate cubic splines in both directions.
-      !     No smoothing will be done.
-      ! You can blame Marshall Buhl for this mess.
-
-      ! This routine calls regrid and regrid uses the following routines either directly or indirectly:
-      !     fpback, fpbspl, fpchec, fpdisc, fpgivs, fpgrre, fpknot, fpregr, and fprota.
-      !
-      !  regrid
-      !     fpchec
-      !     fpregr
-      !        fpgrre
-      !           fpbspl
-      !           fpdisc
-      !           fpgivs
-      !           fprota
-      !           fpback
-      !        fpknot
-
-      USE                                          NWTC_Base                  ! We only need the precision and error level constants
-
-      IMPLICIT                                     NONE
-
-
-         ! Argument declarations:
-
-      INTEGER,                 INTENT(IN)     :: ElSize              ! The length of the Elev array.
-      INTEGER,                 INTENT(IN)     :: NumX                ! The length of the X array.
-      INTEGER,                 INTENT(IN)     :: NumY                ! The length of the Y array.
-      INTEGER,                 INTENT(IN)     :: SCsize              ! The length of the SplCoef array.
-
-      REAL(QuKi),              INTENT(IN)     :: Elev   (ElSize)     ! The "elevations" for the x and y coordinates for which spline coefficients will be computed.
-      REAL(QuKi),              INTENT(OUT)    :: SplCoef(SCsize)     ! The resulting spline coefficients.
-      REAL(QuKi),              INTENT(IN)     :: X      (NumX)       ! X coordinates for the Elev array.
-      REAL(QuKi),              INTENT(IN)     :: Y      (NumY)       ! Y coordinates for the Elev array.
-                                 
-      INTEGER,                 INTENT(OUT)    :: ErrStat             ! The error status to be returned to the calling program.
-      INTEGER, PARAMETER                      :: SplDeg     = 3      ! The degree of the spline polynomials.
-                                 
-      CHARACTER(*),            INTENT(OUT)    :: ErrMsg              ! Error message.
-
-
-!         ! Local declarations.
-!
-!      REAL(DbKi)                                :: ResidSq                    ! The sum of squared residuals of the spline approximation
-!      REAL(DbKi), ALLOCATABLE                   :: ReWorkAry  (:)             ! A working array of type REAL.
-!!MLB: Should SmthFact be a user-specified parameter?  It almost seems like it would be dependent on airfoils.  Andrew used 0.1 for lift and 0.2 for drag because of the relative sizes of the curves.
-!!     We decided that for the first cut, force it to zero (no smoothing), but maybe eventually making it user-specified.
-!      REAL(DbKi), PARAMETER                     :: SmthFact   = 0.0_SiKi      ! The non-negative smoothing factor.  Hard-coded to 0 for no smoothing.
-!
-!      INTEGER(IntKi)                            :: ErrStatLcl                 ! The local version of the error status.
-!      INTEGER(IntKi), ALLOCATABLE               :: InWorkAry  (:)             ! A working array of type INTEGER.
-!      INTEGER(IntKi)                            :: LenIWrkAry                 ! The size of InWorkAry.
-!      INTEGER(IntKi)                            :: LenRWrkAry                 ! The size of ReWorkAry.
-!      INTEGER(IntKi)                            :: LenSpCoAry                 ! The size of SplCoef.
-!      INTEGER(IntKi)                            :: MaxXknots                  ! The maximum number of knots in the X direction.
-!      INTEGER(IntKi)                            :: MaxYknots                  ! The maximum number of knots in the Y direction.
-!      INTEGER(IntKi), PARAMETER                 :: Option     = -1            ! The degree of the spline polynomials.
-!
-!
-         ! This routine is just a dummy.
-
-      SplCoef(:) = 0.0_QuKi
-
-      CALL ExitThisRoutine ( ErrID_Fatal, ' Error >> FitPack_RegridLite is not available for quadruple precision.' )
-!
-!         ! Check to see if this program was compiled with non-standard REALs (not four bytes).
-!         ! We do this because the FitPack routines *may* require the word length of REALs and INTEGERs to be the same.
-!                                  
-!      IF ( KIND( 1.0 ) /= SiKi )  THEN
-!         CALL ExitThisRoutine( ErrID_SEVERE, ' The FitPack routines have not been tested with REALs that are not four bytes.' )
-!      END IF         
-!
-!
-!         ! Let's set some array limits.
-!
-!      MaxXknots  = NumX + SplDeg + 1
-!      MaxYknots  = NumY + SplDeg + 1
-!      LenIWrkAry = 3 + NumX + NumY + MaxXknots + MaxYknots 
-!      LenRWrkAry = 4 + MaxXknots*( NumY + 2*SplDeg + 5 ) + MaxYknots*( 2*SplDeg + 5 ) + NumX*( SplDeg + 1 ) &
-!                 + NumY*( SplDeg + 1 ) + MAX( NumY, MaxXknots )
-!      LenSpCoAry = ( MaxXknots - SplDeg - 1 )*( MaxYknots - SplDeg - 1 )
-!
-!
-!         ! Allocate the arrays.
-!
-!      CALL AllocAry ( SplCoef, LenSpCoAry, "array for spline coefficients for airfoil data" &
-!                    , ErrStatLcl, ErrMsg )
-!      IF ( ErrStatLcl /= 0 )  THEN
-!         CALL ExitThisRoutine( ErrID_FATAL, ErrMsg )
-!      END IF
-!
-!      CALL AllocAry ( InWorkAry, LenIWrkAry, 'the INTEGER work array for regrid', ErrStatLcL, ErrMsg )
-!      IF ( ErrStatLcl /= 0 )  THEN
-!         CALL ExitThisRoutine( ErrID_FATAL, ErrMsg )
-!      END IF
-!
-!      CALL AllocAry ( ReWorkAry, LenRWrkAry, 'the REAL work array for regrid', ErrStatLcL, ErrMsg )
-!      IF ( ErrStatLcl /= 0 )  THEN
-!         CALL ExitThisRoutine( ErrID_FATAL, ErrMsg )
-!      END IF
-!
-!
-!         ! Compute the spline coefficients.
-!
-!      CALL regrid ( iopt=Option, mx=NumX, x=X, my=NumY, y=Y, z=Elev, xb=X(1), xe=X(NumX), yb=Y(1), ye=Y(NumY), kx=SplDeg &
-!                  , ky=SplDeg, s=SmthFact, nxest=MaxXknots, nyest=MaxYknots, nx=NumX, tx=X, ny=NumY, ty=Y, c=SplCoef &
-!                  , fp=ResidSq, wrk=ReWorkAry, lwrk=LenRWrkAry, iwrk=InWorkAry, kwrk=LenIWrkAry, ier=ErrStatLcl )
-!
-!
-!         ! Check for errors.
-!
-!      IF ( ErrStatLcl == 1 )  THEN
-!         CALL ExitThisRoutine( ErrID_FATAL, 'regrid: The required storage space exceeds the available storage space, as ' &
-!                                          //'specified by the parameters nxest and nyest.' )
-!      ELSEIF ( ErrStatLcl == 2 )  THEN
-!         CALL ExitThisRoutine( ErrID_FATAL, 'regrid: A theoretically impossible result was found during the iteration process ' &
-!                                          //'for finding a smoothing spline.' )
-!      ELSEIF ( ErrStatLcl == 3 )  THEN
-!         CALL ExitThisRoutine( ErrID_FATAL, 'regrid: The maximal number of iterations maxit (set to 20 by the program) allowed ' &
-!                                          //'for finding a smoothing spline with fp=s has been reached.' )
-!      ELSEIF ( ErrStatLcl == 10 )  THEN
-!         CALL ExitThisRoutine( ErrID_FATAL, 'regrid: One or more input conditions were invalid.' )
-!      ELSE
-!         CALL ExitThisRoutine( ErrID_None, '' )
-!      END IF
-
-
-   RETURN
-
-   !=======================================================================
-   CONTAINS
-   !=======================================================================
-      SUBROUTINE ExitThisRoutine ( ErrID, Msg )
-
-         ! This subroutine cleans up the parent routine before exiting.
-
-
-            ! Argument declarations.
-
-         INTEGER(IntKi), INTENT(IN)       :: ErrID                            ! The error identifier (ErrLev)
-
-         CHARACTER(*),   INTENT(IN)       :: Msg                              ! The error message (ErrMsg)
-
-
-            ! Local declarations.
-
-         LOGICAL                          :: IsOpen                           ! A flag that indicates if the input unit is still open.
-
-
-            ! Deallocate the work arrays.
-
-!         IF ( ALLOCATED( ReWorkAry ) ) DEALLOCATE( ReWorkAry )
-!         IF ( ALLOCATED( InWorkAry ) ) DEALLOCATE( InWorkAry )
-
-
-            ! Set error status/message
-
-         ErrStat = ErrID
-         ErrMsg  = Msg
-
-
-         RETURN
-
-      END SUBROUTINE ExitThisRoutine ! ( ErrID, Msg )
-
-   END SUBROUTINE FitPack_qRegridLite
-!=======================================================================
    SUBROUTINE FitPack_sRegridLite ( NumX     , X &
                                   , NumY     , Y &
                                   , ElSize   , Elev &
@@ -676,9 +498,12 @@ CONTAINS
 
          ! Compute the spline coefficients.
 
-      CALL regrid ( iopt=Option, mx=NumX, x=X, my=NumY, y=Y, z=Elev, xb=X(1), xe=X(NumX), yb=Y(1), ye=Y(NumY), kx=SplDegX &
-                  , ky=SplDegY, s=SmthFact, nxest=MaxXknots, nyest=MaxYknots, nx=NumXknots, tx=Xknots, ny=NumYknots, ty=Yknots &
-                  , c=SplCoef, fp=ResidSq, wrk=ReWorkAry, lwrk=LenRWrkAry, iwrk=InWorkAry, kwrk=LenIWrkAry, ier=ErrStatLcl )
+      !CALL regrid ( iopt=Option, mx=NumX, x=X, my=NumY, y=Y, z=Elev, xb=X(1), xe=X(NumX), yb=Y(1), ye=Y(NumY), kx=SplDegX &
+      !            , ky=SplDegY, s=SmthFact, nxest=MaxXknots, nyest=MaxYknots, nx=NumXknots, tx=Xknots, ny=NumYknots, ty=Yknots &
+      !            , c=SplCoef, fp=ResidSq, wrk=ReWorkAry, lwrk=LenRWrkAry, iwrk=InWorkAry, kwrk=LenIWrkAry, ier=ErrStatLcl )
+      CALL regrid ( Option, NumX, X, NumY, Y, Elev, X(1), X(NumX), Y(1), Y(NumY), SplDegX &
+                  , SplDegY, SmthFact, MaxXknots, MaxYknots, NumXknots, Xknots, NumYknots, Yknots &
+                  , SplCoef, ResidSq, ReWorkAry, LenRWrkAry, InWorkAry, LenIWrkAry, ErrStatLcl )
 
 
          ! Check for errors.

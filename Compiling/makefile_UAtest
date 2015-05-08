@@ -1,0 +1,216 @@
+#================================================================================#
+# This makefile created by B. Jonkman on 7-May-2015,                             #
+# adapted from InflowWind v3.0 (A. Platt).                                       #
+# (c) 2015 National Renewable Energy Laboratory                                  #
+#                                                                                #
+#                                                                                #
+#================================================================================#
+
+   # 32-bit or 64-bit?
+BITS = 32
+#BITS = 64
+
+#OS=lin
+
+
+   # Name of compiler to use and flags to use.
+FC      = gfortran
+
+FFLAGS  = -O2 -m$(BITS) -fbacktrace -ffree-line-length-none -x f95-cpp-input -C
+LDFLAGS = -O2 -m$(BITS) -fbacktrace -g -fno-inline
+# some useful gfortran options:
+#  -DFPE_TRAP_ENABLED
+#  -Wl,--large-address-aware   # not necessary when $(BITS) is 64 (64-bit target)
+#  -Wl,--stack=999999999       # not necessary when $(BITS) is 64
+#  -Wconversion-extra -Wconversion
+#  -fdefault-real-8 -fcheck=bounds,do,mem,pointer -std=f2003 -O0 -v -Wall
+# http://gcc.gnu.org/onlinedocs/gfortran/Option-Index.html#Option-Index
+#
+# makefile:
+# --warn-undefined-variables
+
+
+
+   # Location of source files for AeroDyn/WTP, NWTC Library, and the FAST Registry.
+   # You will probably need to change these for your system.
+
+
+ifeq ($(OS),Windows_NT)
+   RegistryProgram   = C:/Users/bjonkman/Documents/DATA/DesignCodes/simulators/FAST/SVNdirectory/branches/BJonkman/bin/Registry_win32.exe
+   LDFLAGS          := $(LDFLAGS) -llapack -lblas -LC:/LAPACK/win32
+
+else
+
+      RegistryProgram   = /Users/aplatt/software-development/windsvn/FAST/branches/FAST_Registry/registry.exe
+			# Mac flag requirement
+	# Mac needs some additional flags prepended for linking to get lapack working, hence the funny notation here.
+		LDFLAGS := -framework Accelerate $(LDFLAGS)
+
+endif
+
+
+NETLIB_DIR   = ../Source/dependencies/NetLib
+NWTC_Lib_DIR = ../Source/dependencies/NWTC_Library
+AFI_DIR      = ../Source/dependencies/Airfoil_Info
+UA_DIR       = ../Source/dependencies/UnsteadyAero
+Driver_DIR   = ../Source/drivers
+
+DEST_DIR     = ../bin
+OUTPUT_NAME  = UnsteadyAero_Driver
+
+
+
+   #==========================================================#
+   # You should not need to change anything beyond this point #
+   #==========================================================#
+
+   # System-specific settings.
+
+ifeq ($(OS),Windows_NT)
+      # Windows
+   DEL_CMD   = del
+   EXE_EXT   = _gwin$(BITS).exe
+   INTER_DIR = Obj_win$(BITS)
+   MD_CMD    = @mkdir
+   CP_CMD    = copy
+   OBJ_EXT   = .obj
+   PATH_SEP  = \\
+   SYS_FILE  = SysGnuWin
+else
+      # Linux or Mac
+   DEL_CMD   = rm -f
+   EXE_EXT   = _glin$(BITS)
+   INTER_DIR = Obj_lin$(BITS)
+   MD_CMD    = @mkdir -p
+   CP_CMD    = cp
+   OBJ_EXT   = .o
+   PATH_SEP  = /
+   SYS_FILE  = SysGnuLinux
+endif
+
+
+   # Source files (by module)
+
+LIB_SOURCES =           	\
+	SingPrec.f90        	   \
+	NWTC_Base.f90        	\
+	$(SYS_FILE).f90      	\
+	NWTC_Library_Types.f90 	\
+	NWTC_IO.f90          	\
+	NWTC_Num.f90         	\
+	ModMesh_Types.f90    	\
+	ModMesh.f90          	\
+	ModMesh_Mapping.f90  	\
+	NWTC_Library.f90
+
+NETLIB_SOURCES  =          \
+	NWTC_LAPACK.f90         \
+	NWTC_FitPack.f90        \
+	dierckx_fitpack.f
+
+AFI_SOURCES =              \
+	AirfoilInfo_Types.f90   \
+	AirfoilInfo.f90
+
+UA_SOURCES =                \
+	UnsteadyAero_Types.f90   \
+	UnsteadyAero.f90         \
+	UnsteadyAeroTest.f90
+
+
+
+vpath %.f90 $(NWTC_Lib_DIR) $(NETLIB_DIR) $(AFI_DIR) $(UA_DIR) $(Driver_DIR)
+vpath %.f   $(NETLIB_DIR)
+vpath %.mod $(INTER_DIR)
+vpath %$(OBJ_EXT) $(INTER_DIR)
+vpath %.txt $(AFI_DIR) $(UA_DIR)
+
+
+
+	# complete object list
+ALL_SOURCES = $(LIB_SOURCES) $(NETLIB_SOURCES) $(AFI_SOURCES) $(UA_SOURCES)
+ALL_OBJS    = $(ALL_SOURCES:.f90=$(OBJ_EXT))
+ALL_OBJS   := $(ALL_OBJS:.F90=$(OBJ_EXT))
+ALL_OBJS   := $(ALL_OBJS:.f=$(OBJ_EXT))
+
+
+   # Rule to do everything.
+
+all:     default
+# use this for "all" for debugging: print variables:
+#all:     ; $(info $$NWTC_Lib_DIR is [${NWTC_Lib_DIR}]) echo debugging
+
+default: $(INTER_DIR) $(ALL_OBJS) $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT)
+
+
+###   # General rules for compliling the files.
+###%.obj: %.f90
+###	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
+
+
+   ### general rules for making the files ###
+
+   # Making .o or .obj files from .f90 files
+%$(OBJ_EXT): %.f90
+	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
+
+   # Making .o or .obj files from .f files
+%$(OBJ_EXT): %.f
+	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
+
+   # Making _Types.f90 files from .txt registry files.   These registries need the extra flag.
+AirfoilInfo_Types.f90: AirfoilInfo_Registry.txt
+	$(RegistryProgram) $< -I $(NWTC_Lib_DIR)
+	$(CP_CMD) $@ "$(AFI_DIR)$(PATH_SEP)"
+
+UnsteadyAero_Types.f90: UnsteadyAero_Registry.txt
+	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AFI_DIR)
+	$(CP_CMD) $@ "$(UA_DIR)$(PATH_SEP)"
+
+
+
+
+   #  Dependency rules.
+#NWTC Library dependency rules:
+NWTC_Base$(OBJ_EXT):                SingPrec$(OBJ_EXT)
+$(SYS_FILE)$(OBJ_EXT):              NWTC_Base$(OBJ_EXT) SingPrec$(OBJ_EXT)
+NWTC_Library_Types$(OBJ_EXT):       $(SYS_FILE)$(OBJ_EXT) NWTC_Base$(OBJ_EXT)
+NWTC_IO$(OBJ_EXT):                  NWTC_Library_Types$(OBJ_EXT) $(SYS_FILE)$(OBJ_EXT)
+NWTC_Num$(OBJ_EXT):                 NWTC_IO$(OBJ_EXT)
+ModMesh_Types$(OBJ_EXT):            NWTC_Num$(OBJ_EXT)
+ModMesh$(OBJ_EXT):                  ModMesh_Types$(OBJ_EXT) NWTC_Num$(OBJ_EXT) ModMesh_Types$(OBJ_EXT)
+ModMesh_Mapping$(OBJ_EXT):          ModMesh$(OBJ_EXT)  NWTC_LAPACK$(OBJ_EXT)
+NWTC_LAPACK$(OBJ_EXT):              NWTC_Base$(OBJ_EXT)
+NWTC_Library$(OBJ_EXT):             ModMesh$(OBJ_EXT)  ModMesh_Mapping$(OBJ_EXT) NWTC_Num$(OBJ_EXT) NWTC_IO$(OBJ_EXT) NWTC_LAPACK$(OBJ_EXT)
+
+NWTC_FitPack$(OBJ_EXT):             NWTC_Library$(OBJ_EXT) dierckx_fitpack$(OBJ_EXT)
+
+
+AirfoilInfo_Types$(OBJ_EXT):        NWTC_Library$(OBJ_EXT)
+AirfoilInfo$(OBJ_EXT):              AirfoilInfo_Types$(OBJ_EXT)  NWTC_FitPack$(OBJ_EXT)
+
+UnsteadyAero_Types$(OBJ_EXT):       NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)
+UnsteadyAero$(OBJ_EXT):             AirfoilInfo$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
+UnsteadyAeroTest$(OBJ_EXT):         UnsteadyAero$(OBJ_EXT)
+
+
+   # Make sure the destination directory for the intermediate files exist.
+
+$(INTER_DIR):
+	$(MD_CMD) $(INTER_DIR)
+
+
+   # For linking driver code.
+
+$(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT): $(ALL_OBJS) | $(INTER_DIR)
+	$(FC) $(LDFLAGS) -I $(INTER_DIR) -o $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT) \
+	$(foreach src, $(ALL_OBJS), $(addprefix $(INTER_DIR)/,$(src)))
+
+
+   # Cleanup afterwards.
+clean:
+	$(DEL_CMD) $(INTER_DIR)$(PATH_SEP)*.mod $(INTER_DIR)$(PATH_SEP)*$(OBJ_EXT)
+	$(DEL_CMD) "$(DEST_DIR)$(PATH_SEP)$(OUTPUT_NAME)$(EXE_EXT)"
+	$(DEL_CMD) "$(AFI_DIR)$(PATH_SEP)AirfoilInfo_Types.f90"
+	$(DEL_CMD) "$(UA_DIR)$(PATH_SEP)UnsteadyAero_Types.f90"
+	$(DEL_CMD) *_Types.f90

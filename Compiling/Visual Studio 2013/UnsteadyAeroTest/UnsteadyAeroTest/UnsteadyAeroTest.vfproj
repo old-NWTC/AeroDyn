@@ -34,27 +34,15 @@
 				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat AirfoilInfo" Description="Running Registry for AirfoilInfo" Outputs="..\..\..\..\Source\dependencies\Airfoil_Info\AirfoilInfo_Types.f90"/></FileConfiguration></File>
 		<File RelativePath="..\..\..\..\Source\dependencies\Airfoil_Info\AirfoilInfo_Types.f90"/></Filter>
 		<Filter Name="NWTC_Library">
-		<Filter Name="FitPack">
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\bispev.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpback.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpbisp.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpbspl.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpchec.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpdisc.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpgivs.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpgrre.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpknot.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fprati.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fpregr.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\fprota.f"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\Wrappers\NWTC_FitPack.f90"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\Dierckx_FitPack\regrid.f"/></Filter>
+		<Filter Name="NetLib">
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\dierckx_fitpack.f"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\NWTC_FitPack.f90"/>
+		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\NWTC_LAPACK.f90"/></Filter>
 		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\ModMesh.f90"/>
 		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\ModMesh_Mapping.f90"/>
 		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\ModMesh_Types.f90"/>
 		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_Base.f90"/>
 		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_IO.f90"/>
-		<File RelativePath="..\..\..\..\Source\dependencies\NetLib\NWTC_LAPACK.f90"/>
 		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_Library.f90"/>
 		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_Library_Types.f90"/>
 		<File RelativePath="..\..\..\..\Source\dependencies\NWTC_Library\NWTC_Num.f90"/>
@@ -66,6 +54,5 @@
 				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat UnsteadyAero" Description="Running Registry for UnsteadyAero" Outputs="..\..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></FileConfiguration></File>
 		<File RelativePath="..\..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></Filter>
 		<File RelativePath="..\..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero.f90"/>
-		<File RelativePath=".\UnsteadyAeroTest.f90"/></Filter>
-		<File RelativePath=".\ReadMe.txt"/></Files>
+		<File RelativePath="..\..\..\..\Source\drivers\UnsteadyAeroTest.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>
