@@ -143,11 +143,6 @@ all:     default
 default: $(INTER_DIR) $(ALL_OBJS) $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT)
 
 
-###   # General rules for compliling the files.
-###%.obj: %.f90
-###	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
-
-
    ### general rules for making the files ###
 
    # Making .o or .obj files from .f90 files
