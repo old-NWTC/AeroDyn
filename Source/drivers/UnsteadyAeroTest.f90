@@ -31,6 +31,10 @@ use AirfoilInfo
    AFI_InitInputs%NumAFfiles = NumAFfiles
    UnEc = 0
    
+      ErrStat = ErrID_None
+      ErrMsg  = ""
+   
+   
    
    allocate ( AFI_InitInputs%FileNames( AFI_InitInputs%NumAFfiles ), STAT=ErrStat )
    if ( errStat /= 0 )  then
@@ -116,7 +120,7 @@ program UnsteadyAeroTest
    InitInData%numBlades       = 1
    
       ! All nodes/blades are using the same 2D airfoil
-   afNames(1) = 'C:\Dev\NREL_SVN\WT_Perf\branches\v4.x\CertTest\af_files2\S809_CLN_298.DAT'
+   afNames(1) = '../../../../CertTest/af_files2/S809_CLN_298.DAT'
    
       ! Initialize the Airfoil Info Params
    call Init_AFI(NumAFfiles, afNames, InitInData%AFI_Params, errStat, errMsg)
@@ -144,7 +148,7 @@ program UnsteadyAeroTest
    
    
    ! Open the file for output
-   outFileName = 'C:\dev\UnsteadyAeroTests\Constant_Alpha.UA.out'
+   outFileName = 'Constant_Alpha.UA.out'
    call GetNewUnit( unOutFile )
    
    call OpenFOutFile ( unOutFile, outFileName, errStat ) 
