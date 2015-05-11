@@ -35,12 +35,36 @@ USE NWTC_Library
 IMPLICIT NONE
 ! =========  AFI_UA_BL_Type  =======
   TYPE, PUBLIC :: AFI_UA_BL_Type
-    REAL(ReKi)  :: BL_AOD      ! Angle of attack for minimum Cd (used for Beddoes-Leishman unsteady aero) [degrees]
-    REAL(ReKi)  :: BL_AOL      ! Angle of attack for zero lift (used for Beddoes-Leishman unsteady aero) [degrees]
-    REAL(ReKi)  :: BL_Cd0      ! Minimum Cd value (used for Beddoes-Leishman unsteady aero) [degrees]
-    REAL(ReKi)  :: BL_CnA      ! Cn slope for zero lift (used for Beddoes-Leishman unsteady aero) [-]
-    REAL(ReKi)  :: BL_CnS      ! Cn at stall value for positive angle of attack (used for Beddoes-Leishman unsteady aero) [-]
-    REAL(ReKi)  :: BL_CnSL      ! Cn at stall value for negative angle (used for Beddoes-Leishman unsteady aero) [-]
+    REAL(ReKi)  :: alpha0      ! Angle of attack for zero lift (used for Beddoes-Leishman unsteady aero) [degrees]
+    REAL(ReKi)  :: alpha1      !  [=]
+    REAL(ReKi)  :: alpha2      !  [=]
+    REAL(ReKi)  :: eta_e      ! Recovery factor in the range [0.85 - 0.95] [-]
+    REAL(ReKi)  :: C_nalpha      ! Cn slope for zero lift (used for Beddoes-Leishman unsteady aero) [-]
+    REAL(ReKi)  :: T_f0      !  [=]
+    REAL(ReKi)  :: T_V0      !  [=]
+    REAL(ReKi)  :: T_p      !  [=]
+    REAL(ReKi)  :: T_VL      !  [=]
+    REAL(ReKi)  :: b1      !  [=]
+    REAL(ReKi)  :: b2      !  [=]
+    REAL(ReKi)  :: b5      !  [=]
+    REAL(ReKi)  :: A1      !  [=]
+    REAL(ReKi)  :: A2      !  [=]
+    REAL(ReKi)  :: A5      !  [=]
+    REAL(ReKi)  :: S1      !  [=]
+    REAL(ReKi)  :: S2      !  [=]
+    REAL(ReKi)  :: S3      !  [=]
+    REAL(ReKi)  :: S4      !  [=]
+    REAL(ReKi)  :: Cn1      ! Cn at stall value for positive angle of attack (used for Beddoes-Leishman unsteady aero) [-]
+    REAL(ReKi)  :: Cn2      ! Cn at stall value for negative angle (used for Beddoes-Leishman unsteady aero) [-]
+    REAL(ReKi)  :: St_sh      !  [=]
+    REAL(ReKi)  :: Cd0      ! Minimum Cd value (used for Beddoes-Leishman unsteady aero) [degrees]
+    REAL(ReKi)  :: Cm0      !  [=]
+    REAL(ReKi)  :: k0      !  [=]
+    REAL(ReKi)  :: k1      !  [=]
+    REAL(ReKi)  :: k2      !  [=]
+    REAL(ReKi)  :: k3      !  [=]
+    REAL(ReKi)  :: k1_hat      !  [=]
+    REAL(ReKi)  :: x_cp_bar      !  [=]
   END TYPE AFI_UA_BL_Type
 ! =======================
 ! =========  AFI_Table_Type  =======
@@ -176,12 +200,36 @@ CONTAINS
 ! 
    ErrStat = ErrID_None
    ErrMsg  = ""
-   DstUA_BL_TypeData%BL_AOD = SrcUA_BL_TypeData%BL_AOD
-   DstUA_BL_TypeData%BL_AOL = SrcUA_BL_TypeData%BL_AOL
-   DstUA_BL_TypeData%BL_Cd0 = SrcUA_BL_TypeData%BL_Cd0
-   DstUA_BL_TypeData%BL_CnA = SrcUA_BL_TypeData%BL_CnA
-   DstUA_BL_TypeData%BL_CnS = SrcUA_BL_TypeData%BL_CnS
-   DstUA_BL_TypeData%BL_CnSL = SrcUA_BL_TypeData%BL_CnSL
+   DstUA_BL_TypeData%alpha0 = SrcUA_BL_TypeData%alpha0
+   DstUA_BL_TypeData%alpha1 = SrcUA_BL_TypeData%alpha1
+   DstUA_BL_TypeData%alpha2 = SrcUA_BL_TypeData%alpha2
+   DstUA_BL_TypeData%eta_e = SrcUA_BL_TypeData%eta_e
+   DstUA_BL_TypeData%C_nalpha = SrcUA_BL_TypeData%C_nalpha
+   DstUA_BL_TypeData%T_f0 = SrcUA_BL_TypeData%T_f0
+   DstUA_BL_TypeData%T_V0 = SrcUA_BL_TypeData%T_V0
+   DstUA_BL_TypeData%T_p = SrcUA_BL_TypeData%T_p
+   DstUA_BL_TypeData%T_VL = SrcUA_BL_TypeData%T_VL
+   DstUA_BL_TypeData%b1 = SrcUA_BL_TypeData%b1
+   DstUA_BL_TypeData%b2 = SrcUA_BL_TypeData%b2
+   DstUA_BL_TypeData%b5 = SrcUA_BL_TypeData%b5
+   DstUA_BL_TypeData%A1 = SrcUA_BL_TypeData%A1
+   DstUA_BL_TypeData%A2 = SrcUA_BL_TypeData%A2
+   DstUA_BL_TypeData%A5 = SrcUA_BL_TypeData%A5
+   DstUA_BL_TypeData%S1 = SrcUA_BL_TypeData%S1
+   DstUA_BL_TypeData%S2 = SrcUA_BL_TypeData%S2
+   DstUA_BL_TypeData%S3 = SrcUA_BL_TypeData%S3
+   DstUA_BL_TypeData%S4 = SrcUA_BL_TypeData%S4
+   DstUA_BL_TypeData%Cn1 = SrcUA_BL_TypeData%Cn1
+   DstUA_BL_TypeData%Cn2 = SrcUA_BL_TypeData%Cn2
+   DstUA_BL_TypeData%St_sh = SrcUA_BL_TypeData%St_sh
+   DstUA_BL_TypeData%Cd0 = SrcUA_BL_TypeData%Cd0
+   DstUA_BL_TypeData%Cm0 = SrcUA_BL_TypeData%Cm0
+   DstUA_BL_TypeData%k0 = SrcUA_BL_TypeData%k0
+   DstUA_BL_TypeData%k1 = SrcUA_BL_TypeData%k1
+   DstUA_BL_TypeData%k2 = SrcUA_BL_TypeData%k2
+   DstUA_BL_TypeData%k3 = SrcUA_BL_TypeData%k3
+   DstUA_BL_TypeData%k1_hat = SrcUA_BL_TypeData%k1_hat
+   DstUA_BL_TypeData%x_cp_bar = SrcUA_BL_TypeData%x_cp_bar
  END SUBROUTINE AFI_CopyUA_BL_Type
 
  SUBROUTINE AFI_DestroyUA_BL_Type( UA_BL_TypeData, ErrStat, ErrMsg )
@@ -228,26 +276,98 @@ CONTAINS
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
-  Re_BufSz   = Re_BufSz   + 1  ! BL_AOD
-  Re_BufSz   = Re_BufSz   + 1  ! BL_AOL
-  Re_BufSz   = Re_BufSz   + 1  ! BL_Cd0
-  Re_BufSz   = Re_BufSz   + 1  ! BL_CnA
-  Re_BufSz   = Re_BufSz   + 1  ! BL_CnS
-  Re_BufSz   = Re_BufSz   + 1  ! BL_CnSL
+  Re_BufSz   = Re_BufSz   + 1  ! alpha0
+  Re_BufSz   = Re_BufSz   + 1  ! alpha1
+  Re_BufSz   = Re_BufSz   + 1  ! alpha2
+  Re_BufSz   = Re_BufSz   + 1  ! eta_e
+  Re_BufSz   = Re_BufSz   + 1  ! C_nalpha
+  Re_BufSz   = Re_BufSz   + 1  ! T_f0
+  Re_BufSz   = Re_BufSz   + 1  ! T_V0
+  Re_BufSz   = Re_BufSz   + 1  ! T_p
+  Re_BufSz   = Re_BufSz   + 1  ! T_VL
+  Re_BufSz   = Re_BufSz   + 1  ! b1
+  Re_BufSz   = Re_BufSz   + 1  ! b2
+  Re_BufSz   = Re_BufSz   + 1  ! b5
+  Re_BufSz   = Re_BufSz   + 1  ! A1
+  Re_BufSz   = Re_BufSz   + 1  ! A2
+  Re_BufSz   = Re_BufSz   + 1  ! A5
+  Re_BufSz   = Re_BufSz   + 1  ! S1
+  Re_BufSz   = Re_BufSz   + 1  ! S2
+  Re_BufSz   = Re_BufSz   + 1  ! S3
+  Re_BufSz   = Re_BufSz   + 1  ! S4
+  Re_BufSz   = Re_BufSz   + 1  ! Cn1
+  Re_BufSz   = Re_BufSz   + 1  ! Cn2
+  Re_BufSz   = Re_BufSz   + 1  ! St_sh
+  Re_BufSz   = Re_BufSz   + 1  ! Cd0
+  Re_BufSz   = Re_BufSz   + 1  ! Cm0
+  Re_BufSz   = Re_BufSz   + 1  ! k0
+  Re_BufSz   = Re_BufSz   + 1  ! k1
+  Re_BufSz   = Re_BufSz   + 1  ! k2
+  Re_BufSz   = Re_BufSz   + 1  ! k3
+  Re_BufSz   = Re_BufSz   + 1  ! k1_hat
+  Re_BufSz   = Re_BufSz   + 1  ! x_cp_bar
   IF ( Re_BufSz  .GT. 0 ) ALLOCATE( ReKiBuf(  Re_BufSz  ) )
   IF ( Db_BufSz  .GT. 0 ) ALLOCATE( DbKiBuf(  Db_BufSz  ) )
   IF ( Int_BufSz .GT. 0 ) ALLOCATE( IntKiBuf( Int_BufSz ) )
-  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%BL_AOD )
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%alpha0 )
   Re_Xferred   = Re_Xferred   + 1
-  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%BL_AOL )
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%alpha1 )
   Re_Xferred   = Re_Xferred   + 1
-  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%BL_Cd0 )
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%alpha2 )
   Re_Xferred   = Re_Xferred   + 1
-  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%BL_CnA )
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%eta_e )
   Re_Xferred   = Re_Xferred   + 1
-  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%BL_CnS )
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%C_nalpha )
   Re_Xferred   = Re_Xferred   + 1
-  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%BL_CnSL )
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%T_f0 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%T_V0 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%T_p )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%T_VL )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%b1 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%b2 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%b5 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%A1 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%A2 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%A5 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%S1 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%S2 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%S3 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%S4 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Cn1 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Cn2 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%St_sh )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Cd0 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%Cm0 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%k0 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%k1 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%k2 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%k3 )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%k1_hat )
+  Re_Xferred   = Re_Xferred   + 1
+  IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%x_cp_bar )
   Re_Xferred   = Re_Xferred   + 1
  END SUBROUTINE AFI_PackUA_BL_Type
 
@@ -284,17 +404,65 @@ CONTAINS
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
-  OutData%BL_AOD = ReKiBuf ( Re_Xferred )
+  OutData%alpha0 = ReKiBuf ( Re_Xferred )
   Re_Xferred   = Re_Xferred   + 1
-  OutData%BL_AOL = ReKiBuf ( Re_Xferred )
+  OutData%alpha1 = ReKiBuf ( Re_Xferred )
   Re_Xferred   = Re_Xferred   + 1
-  OutData%BL_Cd0 = ReKiBuf ( Re_Xferred )
+  OutData%alpha2 = ReKiBuf ( Re_Xferred )
   Re_Xferred   = Re_Xferred   + 1
-  OutData%BL_CnA = ReKiBuf ( Re_Xferred )
+  OutData%eta_e = ReKiBuf ( Re_Xferred )
   Re_Xferred   = Re_Xferred   + 1
-  OutData%BL_CnS = ReKiBuf ( Re_Xferred )
+  OutData%C_nalpha = ReKiBuf ( Re_Xferred )
   Re_Xferred   = Re_Xferred   + 1
-  OutData%BL_CnSL = ReKiBuf ( Re_Xferred )
+  OutData%T_f0 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%T_V0 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%T_p = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%T_VL = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%b1 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%b2 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%b5 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%A1 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%A2 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%A5 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%S1 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%S2 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%S3 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%S4 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%Cn1 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%Cn2 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%St_sh = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%Cd0 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%Cm0 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%k0 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%k1 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%k2 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%k3 = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%k1_hat = ReKiBuf ( Re_Xferred )
+  Re_Xferred   = Re_Xferred   + 1
+  OutData%x_cp_bar = ReKiBuf ( Re_Xferred )
   Re_Xferred   = Re_Xferred   + 1
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1

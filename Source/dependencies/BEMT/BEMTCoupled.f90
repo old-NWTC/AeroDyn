@@ -21,6 +21,7 @@ module BEMTCoupled
 
 function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
                               Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+                              UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
       
 
@@ -47,6 +48,10 @@ function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu,
    logical,                intent(in   ) :: useHubLoss
    logical,                intent(in   ) :: useTipLoss
    integer,                intent(in   ) :: SkewWakeMod   ! Skewed wake model
+   logical,                intent(in   ) :: UA_Flag
+   type(UA_ParameterType),       intent(in   ) :: p_UA           ! Parameters
+   type(UA_DiscreteStateType),   intent(in   ) :: xd_UA          ! Discrete states at Time
+   type(UA_OtherStateType),      intent(in   ) :: OtherState_UA  ! Other/optimization states
    integer(IntKi),         intent(  out) :: ErrStat       ! Error status of the operation
    character(*),           intent(  out) :: ErrMsg        ! Error message if ErrStat /= ErrID_None
   
@@ -64,6 +69,7 @@ function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu,
       
    BEMTC_ElementalErrFn = BEMTC_Elemental(axInduction, tanInduction, psi, chi0,  airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
                               Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+                              UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               phi, AOA, Re, Cl, Cd, Cx, Cy, chi, ErrStat, ErrMsg)
       
    
@@ -73,6 +79,7 @@ end function BEMTC_ElementalErrFn
 ! This is the coupled calculation for the  BEMT solve
 function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
                               Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+                              UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               phi, AOA, Re, Cl, Cd, Cx, Cy,  chi, ErrStat, ErrMsg)
       
    !real(ReKi),             intent(in   ) :: phi
@@ -99,6 +106,10 @@ function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, num
    logical,                intent(in   ) :: useHubLoss
    logical,                intent(in   ) :: useTipLoss
    integer,                intent(in   ) :: SkewWakeMod   ! Skewed wake model
+   logical,                intent(in   ) :: UA_Flag
+   type(UA_ParameterType),       intent(in   ) :: p_UA           ! Parameters
+   type(UA_DiscreteStateType),   intent(in   ) :: xd_UA          ! Discrete states at Time
+   type(UA_OtherStateType),      intent(in   ) :: OtherState_UA  ! Other/optimization states
    real(ReKi),             intent(  out) :: phi, AOA, Re, Cl, Cd, Cx, Cy,  chi
    integer(IntKi),         intent(  out) :: ErrStat       ! Error status of the operation
    character(*),           intent(  out) :: ErrMsg        ! Error message if ErrStat /= ErrID_None
@@ -119,8 +130,9 @@ function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, num
          ! Compute phi, AOA, Re, and chi based on current values of axInduction, tanInduction, local wind, etc.
       W = BEMTC_Wind(axInduction, tanInduction, Vx, Vy, chord, theta, airDens, mu, chi0, psi, phi, AOA, Re, chi)
       
-         ! Look up Cl and Cd based on AOA and Re and Airfoil information      
-      call  BE_CalcOutputs( AFInfo, AOA*R2D, log(Re), Cl, Cd, errStat, errMsg) ! AOA is in degrees in this look up table and Re is in log(Re)
+         ! Look up Cl and Cd based on AOA and Re and Airfoil information  
+      call  BE_CalcOutputs( AFInfo, UA_Flag, AOA*R2D, W, log(Re), p_UA, xd_UA, OtherState_UA, Cl, Cd,  errStat, errMsg)  
+      !call  BE_CalcOutputs( AFInfo, AOA*R2D, log(Re), Cl, Cd, errStat, errMsg) ! AOA is in degrees in this look up table and Re is in log(Re)
       if (errStat >= AbortErrLev) then
          call SetErrStat( errStat, errMsg, errStat, errMsg, 'BEMTC_Elemental' ) 
          return
@@ -168,8 +180,8 @@ real(ReKi) function BEMTC_Wind(a, ap, Vx, Vy, chord, theta, airDens, mu, chi0, p
 
     ! Alternate computation of inflow velocity using vectoral basis developed by Rick Damiani.
     !Vx, Vy, Vz are in the blade-element coord sys
-    Vmag = sqrt(Vx**2+Vy**2+Vz**2)
-    Wx   = -Vmag*a*cos(precone) + Vx + Vy*ap*sin(chi)*cos(psi)*(1 + sin(chi)*sin(psi))
+    !Vmag = sqrt(Vx**2+Vy**2+Vz**2)
+    !Wx   = -Vmag*a*cos(precone) + Vx + Vy*ap*sin(chi)*cos(psi)*(1 + sin(chi)*sin(psi))
     ! Wx = Vx
     ! inflow angle and angle of attack
     

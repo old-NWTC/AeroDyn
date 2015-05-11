@@ -59,6 +59,7 @@ end Function Minimum
 !*****************************************************
 real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot, niter, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta,  rHub, lambda, AFInfo, &
                               Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+                              UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)  
 
 !TODO: Need to establish better FPP and nearzero values based on ReKi GJH 7/17/2014 DO NOT RELEASE WITHOUT FIXING THIS!!!!!!
@@ -90,8 +91,10 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
    LOGICAL,                INTENT(IN   ) :: useHubLoss
    LOGICAL,                INTENT(IN   ) :: useTipLoss
    INTEGER,                INTENT(IN   ) :: SkewWakeMod   ! Skewed wake model
-   
-   
+   logical,                intent(in   ) :: UA_Flag
+   type(UA_ParameterType),       intent(in   ) :: p_UA           ! Parameters
+   type(UA_DiscreteStateType),   intent(in   ) :: xd_UA          ! Discrete states at Time
+   type(UA_OtherStateType),      intent(in   ) :: OtherState_UA  ! Other/optimization states 
    INTEGER(IntKi),         INTENT(  OUT) :: ErrStat       ! Error status of the operation
    CHARACTER(*),           INTENT(  OUT) :: ErrMsg        ! Error message if ErrStat /= ErrID_None
   
@@ -108,9 +111,11 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
   BB = x2
   FA = UncoupledErrFn(AA, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
                               Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+                              UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
   FB = UncoupledErrFn(BB, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
                               Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+                              UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
   
   if (RootBracketed(FA,FB).eq.0) then 
@@ -137,6 +142,7 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
         done = 1
         valueAtRoot = UncoupledErrFn(BB, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
                               Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+                              UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
       else 
         if ((abs(EE) >= Tol1) .and. (abs(FA) > abs(FB))) then
@@ -183,6 +189,7 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
       
         FB = UncoupledErrFn(BB, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
                               Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+                              UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
         i=i+1
       endif

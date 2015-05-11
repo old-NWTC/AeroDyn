@@ -59,9 +59,6 @@
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\BEMTUncoupled.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\Brent.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\mod_root1dim.f90"/></Filter>
-		<Filter Name="UnsteadyAero">
-		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero.f90"/></Filter>
 		<Filter Name="NWTC_Library">
 		<Filter Name="NetLib">
 		<Filter Name="FitPack">
@@ -71,7 +68,6 @@
 			<FileConfiguration Name="Release|Win32">
 				<Tool Name="VFFortranCompilerTool" StandardWarnings="standardWarningsNone"/></FileConfiguration></File>
 		<File RelativePath="..\..\..\Source\dependencies\NetLib\NWTC_FitPack.f90"/></Filter>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\NWTC_LAPACK.f90"/>
 		<Filter Name="go">
 		<File RelativePath="..\..\..\Source\dependencies\NetLib\go\fmin_fcn.f90"/></Filter>
 		<Filter Name="MinPack">
@@ -85,7 +81,8 @@
 		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\qrfac.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\r1mpyq.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\r1updt.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\spmpar.f"/></Filter></Filter>
+		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\spmpar.f"/></Filter>
+		<File RelativePath="..\..\..\Source\dependencies\NetLib\NWTC_LAPACK.f90"/></Filter>
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\ModMesh.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\ModMesh_Mapping.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\ModMesh_Types.f90"/>
@@ -96,10 +93,13 @@
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\NWTC_Num.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\SingPrec.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\SysIVF.f90"/></Filter>
+		<Filter Name="UnsteadyAero">
+		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero.f90"/>
+		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></Filter>
 		<Filter Name="WT_Perf">
 		<File RelativePath="..\..\..\Source\WT_Perf.f90"/>
 		<File RelativePath="..\..\..\Source\WT_Perf_IO.f90"/>
 		<File RelativePath="..\..\..\Source\WT_PerfSubs.f90"/>
-		<File RelativePath=".\WTP_Types.f90"/></Filter></Filter>
+		<File RelativePath="..\..\..\Source\WTP_Types.f90"/></Filter></Filter>
 		<File RelativePath=".\ReadMe.txt"/></Files>
 	<Globals/></VisualStudioProject>

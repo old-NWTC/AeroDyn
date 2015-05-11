@@ -172,7 +172,7 @@ module WTP_DvrSubs
       AD_Data%useTIDrag        = WTP_Data%useTIDrag    
       AD_Data%numReIterations  = 1                   ! This is currently not available in the input file and is only for testing
       AD_Data%maxIndIterations = WTP_Data%maxIter
-      AD_Data%BEMT_SkewWakeMod = WTP_Data%skewWakeMod    ! This is needed because AD needs to branch according to the solution technique used within BEMT
+      !AD_Data%BEMT_SkewWakeMod = WTP_Data%skewWakeMod    ! This is needed because AD needs to branch according to the solution technique used within BEMT
       
       
       AD_Data%BEMT%DT               = 0.25 ! seconds   - not currently used                    

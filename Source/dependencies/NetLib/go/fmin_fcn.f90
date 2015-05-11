@@ -2,6 +2,7 @@ module fminfcn
    
    use NWTC_Library
    use AirFoilInfo_Types
+   use UnsteadyAero_Types
    use BEMTUnCoupled
    
    type, public :: fmin_fcnArgs 
@@ -25,6 +26,10 @@ module fminfcn
       logical           :: useHubLoss
       logical           :: useTipLoss 
       integer(IntKi)    :: SkewWakeMod
+      logical                     :: UA_Flag
+      type(UA_ParameterType)      :: p_UA           ! Parameters
+      type(UA_DiscreteStateType)  :: xd_UA          ! Discrete states at Time
+      type(UA_OtherStateType)     :: OtherState_UA  ! Other/optimization states
       integer(IntKi)    :: errStat       ! Error status of the operation
       character(4096)   :: errMsg        ! Error message if ErrStat /= ErrID_None
    end type fmin_fcnArgs
@@ -48,6 +53,7 @@ real(ReKi) function fmin_fcn(x, fcnArgs)
    ! Call the UncoupledErrFn subroutine to compute the residual
    fmin_fcn = UncoupledErrFn( x,  fcnArgs%psi, fcnArgs%chi0, 1, fcnArgs%airDens, fcnArgs%mu, fcnArgs%numBlades, fcnArgs%rlocal, fcnArgs%rtip, fcnArgs%chord, fcnArgs%theta, fcnArgs%rHub, fcnArgs%lambda, fcnArgs%AFInfo, &
                               fcnArgs%Vx, fcnArgs%Vy, fcnArgs%useTanInd, fcnArgs%useAIDrag, fcnArgs%useTIDrag, fcnArgs%useHubLoss, fcnArgs%useTipLoss,  fcnArgs%SkewWakeMod, &
+                              fcnArgs%UA_Flag, fcnArgs%p_UA, fcnArgs%xd_UA, fcnArgs%OtherState_UA, &
                               errStat, errMsg)  
    
    fcnArgs%errStat = errStat

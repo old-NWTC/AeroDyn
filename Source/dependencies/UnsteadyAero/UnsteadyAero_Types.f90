@@ -43,8 +43,6 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: nNodesPerBlade      ! Number nodes per blades [-]
     INTEGER(IntKi)  :: DSMod      ! Model for the dynamic stall equations [1 = Leishman/Beddoes, 2 = Gonzalez, 3 = Minnema] [-]
     REAL(ReKi)  :: a_s      ! speed of sound [m/s]
-    INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFIndx      ! Airfoil index for given blade node [-]
-    TYPE(AFI_ParameterType)  :: AFI_Params      ! Airfoil Info parameter data structure [-]
     CHARACTER(20)  :: OutFmt      ! Output format for numerical results [-]
     CHARACTER(20)  :: OutSFmt      ! Output format for header strings [-]
     INTEGER(IntKi)  :: NumOuts      ! The number of outputs for this module as requested in the input file [-]
@@ -99,6 +97,8 @@ IMPLICIT NONE
     LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: LESF      ! logical flag indicating if leading edge separation is possible [-]
     LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: VRTX      ! logical flag indicating if a vortex is being processed [-]
     LOGICAL  :: FirstPass      ! logical flag indicating if this is the first time step [-]
+    INTEGER(IntKi)  :: iBladeNode      ! index for the blade node being operated on (within the current blade) [-]
+    INTEGER(IntKi)  :: iBlade      ! index for the blade being operated on [-]
   END TYPE UA_OtherStateType
 ! =======================
 ! =========  UA_ParameterType  =======
@@ -109,8 +109,6 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: nNodesPerBlade      ! Number nodes per blades [-]
     INTEGER(IntKi)  :: DSMod      ! Model for the dynamic stall equations [1 = Leishman/Beddoes, 2 = Gonzalez, 3 = Minnema] [-]
     REAL(ReKi)  :: a_s      ! speed of sound [m/s]
-    INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFIndx      ! Airfoil index for given blade node [-]
-    TYPE(AFI_ParameterType)  :: AFI_Params      ! Airfoil Info parameter data structure [-]
     INTEGER(IntKi)  :: NumOuts      ! Number of outputs [-]
     INTEGER(IntKi)  :: OutSwtch      ! Output requested channels to: [1=Unsteady.out 2=GlueCode.out  3=both files] [-]
     CHARACTER(20)  :: OutFmt      ! Output format for numerical results [-]
@@ -172,23 +170,6 @@ ENDIF
    DstInitInputData%nNodesPerBlade = SrcInitInputData%nNodesPerBlade
    DstInitInputData%DSMod = SrcInitInputData%DSMod
    DstInitInputData%a_s = SrcInitInputData%a_s
-IF (ALLOCATED(SrcInitInputData%AFIndx)) THEN
-   i1_l = LBOUND(SrcInitInputData%AFIndx,1)
-   i1_u = UBOUND(SrcInitInputData%AFIndx,1)
-   i2_l = LBOUND(SrcInitInputData%AFIndx,2)
-   i2_u = UBOUND(SrcInitInputData%AFIndx,2)
-   IF (.NOT. ALLOCATED(DstInitInputData%AFIndx)) THEN 
-      ALLOCATE(DstInitInputData%AFIndx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitInputData%AFIndx.', ErrStat, ErrMsg,'UA_CopyInitInput')
-         RETURN
-      END IF
-   END IF
-   DstInitInputData%AFIndx = SrcInitInputData%AFIndx
-ENDIF
-      CALL AFI_CopyParam( SrcInitInputData%AFI_Params, DstInitInputData%AFI_Params, CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,'UA_CopyInitInput:AFI_Params')
-         IF (ErrStat>=AbortErrLev) RETURN
    DstInitInputData%OutFmt = SrcInitInputData%OutFmt
    DstInitInputData%OutSFmt = SrcInitInputData%OutSFmt
    DstInitInputData%NumOuts = SrcInitInputData%NumOuts
@@ -206,10 +187,6 @@ ENDIF
 IF (ALLOCATED(InitInputData%c)) THEN
    DEALLOCATE(InitInputData%c)
 ENDIF
-IF (ALLOCATED(InitInputData%AFIndx)) THEN
-   DEALLOCATE(InitInputData%AFIndx)
-ENDIF
-  CALL AFI_DestroyParam( InitInputData%AFI_Params, ErrStat, ErrMsg )
  END SUBROUTINE UA_DestroyInitInput
 
  SUBROUTINE UA_PackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
@@ -233,9 +210,6 @@ ENDIF
   INTEGER(IntKi)                 :: i,i1,i2,i3,i4,i5     
   LOGICAL                        :: OnlySize ! if present and true, do not pack, just allocate buffers
  ! buffers to store meshes, if any
-  REAL(ReKi),     ALLOCATABLE :: Re_AFI_Params_Buf(:)
-  REAL(DbKi),     ALLOCATABLE :: Db_AFI_Params_Buf(:)
-  INTEGER(IntKi), ALLOCATABLE :: Int_AFI_Params_Buf(:)
   OnlySize = .FALSE.
   IF ( PRESENT(SizeOnly) ) THEN
     OnlySize = SizeOnly
@@ -256,14 +230,6 @@ ENDIF
   Int_BufSz  = Int_BufSz  + 1  ! nNodesPerBlade
   Int_BufSz  = Int_BufSz  + 1  ! DSMod
   Re_BufSz   = Re_BufSz   + 1  ! a_s
-  IF ( ALLOCATED(InData%AFIndx) )   Int_BufSz   = Int_BufSz   + SIZE( InData%AFIndx )  ! AFIndx 
-  CALL AFI_PackParam( Re_AFI_Params_Buf, Db_AFI_Params_Buf, Int_AFI_Params_Buf, InData%AFI_Params, ErrStat, ErrMsg, .TRUE. ) ! AFI_Params 
-  IF(ALLOCATED(Re_AFI_Params_Buf)) Re_BufSz  = Re_BufSz  + SIZE( Re_AFI_Params_Buf  ) ! AFI_Params
-  IF(ALLOCATED(Db_AFI_Params_Buf)) Db_BufSz  = Db_BufSz  + SIZE( Db_AFI_Params_Buf  ) ! AFI_Params
-  IF(ALLOCATED(Int_AFI_Params_Buf))Int_BufSz = Int_BufSz + SIZE( Int_AFI_Params_Buf ) ! AFI_Params
-  IF(ALLOCATED(Re_AFI_Params_Buf))  DEALLOCATE(Re_AFI_Params_Buf)
-  IF(ALLOCATED(Db_AFI_Params_Buf))  DEALLOCATE(Db_AFI_Params_Buf)
-  IF(ALLOCATED(Int_AFI_Params_Buf)) DEALLOCATE(Int_AFI_Params_Buf)
 !  missing buffer for OutFmt
 !  missing buffer for OutSFmt
   Int_BufSz  = Int_BufSz  + 1  ! NumOuts
@@ -285,26 +251,6 @@ ENDIF
   Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%a_s )
   Re_Xferred   = Re_Xferred   + 1
-  IF ( ALLOCATED(InData%AFIndx) ) THEN
-    IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(InData%AFIndx))-1 ) = PACK(InData%AFIndx ,.TRUE.)
-    Int_Xferred   = Int_Xferred   + SIZE(InData%AFIndx)
-  ENDIF
-  CALL AFI_PackParam( Re_AFI_Params_Buf, Db_AFI_Params_Buf, Int_AFI_Params_Buf, InData%AFI_Params, ErrStat, ErrMsg, OnlySize ) ! AFI_Params 
-  IF(ALLOCATED(Re_AFI_Params_Buf)) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf( Re_Xferred:Re_Xferred+SIZE(Re_AFI_Params_Buf)-1 ) = Re_AFI_Params_Buf
-    Re_Xferred = Re_Xferred + SIZE(Re_AFI_Params_Buf)
-  ENDIF
-  IF(ALLOCATED(Db_AFI_Params_Buf)) THEN
-    IF ( .NOT. OnlySize ) DbKiBuf( Db_Xferred:Db_Xferred+SIZE(Db_AFI_Params_Buf)-1 ) = Db_AFI_Params_Buf
-    Db_Xferred = Db_Xferred + SIZE(Db_AFI_Params_Buf)
-  ENDIF
-  IF(ALLOCATED(Int_AFI_Params_Buf)) THEN
-    IF ( .NOT. OnlySize ) IntKiBuf( Int_Xferred:Int_Xferred+SIZE(Int_AFI_Params_Buf)-1 ) = Int_AFI_Params_Buf
-    Int_Xferred = Int_Xferred + SIZE(Int_AFI_Params_Buf)
-  ENDIF
-  IF( ALLOCATED(Re_AFI_Params_Buf) )  DEALLOCATE(Re_AFI_Params_Buf)
-  IF( ALLOCATED(Db_AFI_Params_Buf) )  DEALLOCATE(Db_AFI_Params_Buf)
-  IF( ALLOCATED(Int_AFI_Params_Buf) ) DEALLOCATE(Int_AFI_Params_Buf)
   IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = (InData%NumOuts )
   Int_Xferred   = Int_Xferred   + 1
  END SUBROUTINE UA_PackInitInput
@@ -333,9 +279,6 @@ ENDIF
   LOGICAL, ALLOCATABLE           :: mask4(:,:,:,:)
   LOGICAL, ALLOCATABLE           :: mask5(:,:,:,:,:)
  ! buffers to store meshes, if any
-  REAL(ReKi),    ALLOCATABLE :: Re_AFI_Params_Buf(:)
-  REAL(DbKi),    ALLOCATABLE :: Db_AFI_Params_Buf(:)
-  INTEGER(IntKi),    ALLOCATABLE :: Int_AFI_Params_Buf(:)
     !
   ErrStat = ErrID_None
   ErrMsg  = ""
@@ -362,28 +305,6 @@ ENDIF
   Int_Xferred   = Int_Xferred   + 1
   OutData%a_s = ReKiBuf ( Re_Xferred )
   Re_Xferred   = Re_Xferred   + 1
-  IF ( ALLOCATED(OutData%AFIndx) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%AFIndx,1),SIZE(OutData%AFIndx,2)))
-  mask2 = .TRUE.
-    OutData%AFIndx = UNPACK(IntKiBuf( Int_Xferred:Re_Xferred+(SIZE(OutData%AFIndx))-1 ),mask2,OutData%AFIndx)
-  DEALLOCATE(mask2)
-    Int_Xferred   = Int_Xferred   + SIZE(OutData%AFIndx)
-  ENDIF
- ! first call AFI_PackParam to get correctly sized buffers for unpacking
-  CALL AFI_PackParam( Re_AFI_Params_Buf, Db_AFI_Params_Buf, Int_AFI_Params_Buf, OutData%AFI_Params, ErrStat, ErrMsg, .TRUE. ) ! AFI_Params 
-  IF(ALLOCATED(Re_AFI_Params_Buf)) THEN
-    Re_AFI_Params_Buf = ReKiBuf( Re_Xferred:Re_Xferred+SIZE(Re_AFI_Params_Buf)-1 )
-    Re_Xferred = Re_Xferred + SIZE(Re_AFI_Params_Buf)
-  ENDIF
-  IF(ALLOCATED(Db_AFI_Params_Buf)) THEN
-    Db_AFI_Params_Buf = DbKiBuf( Db_Xferred:Db_Xferred+SIZE(Db_AFI_Params_Buf)-1 )
-    Db_Xferred = Db_Xferred + SIZE(Db_AFI_Params_Buf)
-  ENDIF
-  IF(ALLOCATED(Int_AFI_Params_Buf)) THEN
-    Int_AFI_Params_Buf = IntKiBuf( Int_Xferred:Int_Xferred+SIZE(Int_AFI_Params_Buf)-1 )
-    Int_Xferred = Int_Xferred + SIZE(Int_AFI_Params_Buf)
-  ENDIF
-  CALL AFI_UnPackParam( Re_AFI_Params_Buf, Db_AFI_Params_Buf, Int_AFI_Params_Buf, OutData%AFI_Params, ErrStat, ErrMsg ) ! AFI_Params 
   OutData%NumOuts = IntKiBuf ( Int_Xferred )
   Int_Xferred   = Int_Xferred   + 1
   Re_Xferred   = Re_Xferred-1
@@ -1536,6 +1457,8 @@ IF (ALLOCATED(SrcOtherStateData%VRTX)) THEN
    DstOtherStateData%VRTX = SrcOtherStateData%VRTX
 ENDIF
    DstOtherStateData%FirstPass = SrcOtherStateData%FirstPass
+   DstOtherStateData%iBladeNode = SrcOtherStateData%iBladeNode
+   DstOtherStateData%iBlade = SrcOtherStateData%iBlade
  END SUBROUTINE UA_CopyOtherState
 
  SUBROUTINE UA_DestroyOtherState( OtherStateData, ErrStat, ErrMsg )
@@ -1603,6 +1526,8 @@ ENDIF
   IF ( ALLOCATED(InData%LESF) )   Int_BufSz   = Int_BufSz   + SIZE( InData%LESF )  ! LESF 
   IF ( ALLOCATED(InData%VRTX) )   Int_BufSz   = Int_BufSz   + SIZE( InData%VRTX )  ! VRTX 
   Int_BufSz  = Int_BufSz  + 1  ! FirstPass
+  Int_BufSz  = Int_BufSz  + 1  ! iBladeNode
+  Int_BufSz  = Int_BufSz  + 1  ! iBlade
   IF ( Re_BufSz  .GT. 0 ) ALLOCATE( ReKiBuf(  Re_BufSz  ) )
   IF ( Db_BufSz  .GT. 0 ) ALLOCATE( DbKiBuf(  Db_BufSz  ) )
   IF ( Int_BufSz .GT. 0 ) ALLOCATE( IntKiBuf( Int_BufSz ) )
@@ -1627,6 +1552,10 @@ ENDIF
     Int_Xferred   = Int_Xferred   + SIZE(InData%VRTX)
   ENDIF
   IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = TRANSFER( (InData%FirstPass ), IntKiBuf(1), 1)
+  Int_Xferred   = Int_Xferred   + 1
+  IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = (InData%iBladeNode )
+  Int_Xferred   = Int_Xferred   + 1
+  IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = (InData%iBlade )
   Int_Xferred   = Int_Xferred   + 1
  END SUBROUTINE UA_PackOtherState
 
@@ -1683,6 +1612,10 @@ ENDIF
   ENDIF
   IF ( ALLOCATED(OutData%VRTX) ) THEN
   ENDIF
+  OutData%iBladeNode = IntKiBuf ( Int_Xferred )
+  Int_Xferred   = Int_Xferred   + 1
+  OutData%iBlade = IntKiBuf ( Int_Xferred )
+  Int_Xferred   = Int_Xferred   + 1
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
   Int_Xferred  = Int_Xferred-1
@@ -1722,23 +1655,6 @@ ENDIF
    DstParamData%nNodesPerBlade = SrcParamData%nNodesPerBlade
    DstParamData%DSMod = SrcParamData%DSMod
    DstParamData%a_s = SrcParamData%a_s
-IF (ALLOCATED(SrcParamData%AFIndx)) THEN
-   i1_l = LBOUND(SrcParamData%AFIndx,1)
-   i1_u = UBOUND(SrcParamData%AFIndx,1)
-   i2_l = LBOUND(SrcParamData%AFIndx,2)
-   i2_u = UBOUND(SrcParamData%AFIndx,2)
-   IF (.NOT. ALLOCATED(DstParamData%AFIndx)) THEN 
-      ALLOCATE(DstParamData%AFIndx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-      IF (ErrStat2 /= 0) THEN 
-         CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%AFIndx.', ErrStat, ErrMsg,'UA_CopyParam')
-         RETURN
-      END IF
-   END IF
-   DstParamData%AFIndx = SrcParamData%AFIndx
-ENDIF
-      CALL AFI_CopyParam( SrcParamData%AFI_Params, DstParamData%AFI_Params, CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,'UA_CopyParam:AFI_Params')
-         IF (ErrStat>=AbortErrLev) RETURN
    DstParamData%NumOuts = SrcParamData%NumOuts
    DstParamData%OutSwtch = SrcParamData%OutSwtch
    DstParamData%OutFmt = SrcParamData%OutFmt
@@ -1758,10 +1674,6 @@ ENDIF
 IF (ALLOCATED(ParamData%c)) THEN
    DEALLOCATE(ParamData%c)
 ENDIF
-IF (ALLOCATED(ParamData%AFIndx)) THEN
-   DEALLOCATE(ParamData%AFIndx)
-ENDIF
-  CALL AFI_DestroyParam( ParamData%AFI_Params, ErrStat, ErrMsg )
  END SUBROUTINE UA_DestroyParam
 
  SUBROUTINE UA_PackParam( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
@@ -1785,9 +1697,6 @@ ENDIF
   INTEGER(IntKi)                 :: i,i1,i2,i3,i4,i5     
   LOGICAL                        :: OnlySize ! if present and true, do not pack, just allocate buffers
  ! buffers to store meshes, if any
-  REAL(ReKi),     ALLOCATABLE :: Re_AFI_Params_Buf(:)
-  REAL(DbKi),     ALLOCATABLE :: Db_AFI_Params_Buf(:)
-  INTEGER(IntKi), ALLOCATABLE :: Int_AFI_Params_Buf(:)
   OnlySize = .FALSE.
   IF ( PRESENT(SizeOnly) ) THEN
     OnlySize = SizeOnly
@@ -1807,14 +1716,6 @@ ENDIF
   Int_BufSz  = Int_BufSz  + 1  ! nNodesPerBlade
   Int_BufSz  = Int_BufSz  + 1  ! DSMod
   Re_BufSz   = Re_BufSz   + 1  ! a_s
-  IF ( ALLOCATED(InData%AFIndx) )   Int_BufSz   = Int_BufSz   + SIZE( InData%AFIndx )  ! AFIndx 
-  CALL AFI_PackParam( Re_AFI_Params_Buf, Db_AFI_Params_Buf, Int_AFI_Params_Buf, InData%AFI_Params, ErrStat, ErrMsg, .TRUE. ) ! AFI_Params 
-  IF(ALLOCATED(Re_AFI_Params_Buf)) Re_BufSz  = Re_BufSz  + SIZE( Re_AFI_Params_Buf  ) ! AFI_Params
-  IF(ALLOCATED(Db_AFI_Params_Buf)) Db_BufSz  = Db_BufSz  + SIZE( Db_AFI_Params_Buf  ) ! AFI_Params
-  IF(ALLOCATED(Int_AFI_Params_Buf))Int_BufSz = Int_BufSz + SIZE( Int_AFI_Params_Buf ) ! AFI_Params
-  IF(ALLOCATED(Re_AFI_Params_Buf))  DEALLOCATE(Re_AFI_Params_Buf)
-  IF(ALLOCATED(Db_AFI_Params_Buf))  DEALLOCATE(Db_AFI_Params_Buf)
-  IF(ALLOCATED(Int_AFI_Params_Buf)) DEALLOCATE(Int_AFI_Params_Buf)
   Int_BufSz  = Int_BufSz  + 1  ! NumOuts
   Int_BufSz  = Int_BufSz  + 1  ! OutSwtch
 !  missing buffer for OutFmt
@@ -1838,26 +1739,6 @@ ENDIF
   Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) =  (InData%a_s )
   Re_Xferred   = Re_Xferred   + 1
-  IF ( ALLOCATED(InData%AFIndx) ) THEN
-    IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(InData%AFIndx))-1 ) = PACK(InData%AFIndx ,.TRUE.)
-    Int_Xferred   = Int_Xferred   + SIZE(InData%AFIndx)
-  ENDIF
-  CALL AFI_PackParam( Re_AFI_Params_Buf, Db_AFI_Params_Buf, Int_AFI_Params_Buf, InData%AFI_Params, ErrStat, ErrMsg, OnlySize ) ! AFI_Params 
-  IF(ALLOCATED(Re_AFI_Params_Buf)) THEN
-    IF ( .NOT. OnlySize ) ReKiBuf( Re_Xferred:Re_Xferred+SIZE(Re_AFI_Params_Buf)-1 ) = Re_AFI_Params_Buf
-    Re_Xferred = Re_Xferred + SIZE(Re_AFI_Params_Buf)
-  ENDIF
-  IF(ALLOCATED(Db_AFI_Params_Buf)) THEN
-    IF ( .NOT. OnlySize ) DbKiBuf( Db_Xferred:Db_Xferred+SIZE(Db_AFI_Params_Buf)-1 ) = Db_AFI_Params_Buf
-    Db_Xferred = Db_Xferred + SIZE(Db_AFI_Params_Buf)
-  ENDIF
-  IF(ALLOCATED(Int_AFI_Params_Buf)) THEN
-    IF ( .NOT. OnlySize ) IntKiBuf( Int_Xferred:Int_Xferred+SIZE(Int_AFI_Params_Buf)-1 ) = Int_AFI_Params_Buf
-    Int_Xferred = Int_Xferred + SIZE(Int_AFI_Params_Buf)
-  ENDIF
-  IF( ALLOCATED(Re_AFI_Params_Buf) )  DEALLOCATE(Re_AFI_Params_Buf)
-  IF( ALLOCATED(Db_AFI_Params_Buf) )  DEALLOCATE(Db_AFI_Params_Buf)
-  IF( ALLOCATED(Int_AFI_Params_Buf) ) DEALLOCATE(Int_AFI_Params_Buf)
   IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = (InData%NumOuts )
   Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. OnlySize ) IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = (InData%OutSwtch )
@@ -1890,9 +1771,6 @@ ENDIF
   LOGICAL, ALLOCATABLE           :: mask4(:,:,:,:)
   LOGICAL, ALLOCATABLE           :: mask5(:,:,:,:,:)
  ! buffers to store meshes, if any
-  REAL(ReKi),    ALLOCATABLE :: Re_AFI_Params_Buf(:)
-  REAL(DbKi),    ALLOCATABLE :: Db_AFI_Params_Buf(:)
-  INTEGER(IntKi),    ALLOCATABLE :: Int_AFI_Params_Buf(:)
     !
   ErrStat = ErrID_None
   ErrMsg  = ""
@@ -1919,28 +1797,6 @@ ENDIF
   Int_Xferred   = Int_Xferred   + 1
   OutData%a_s = ReKiBuf ( Re_Xferred )
   Re_Xferred   = Re_Xferred   + 1
-  IF ( ALLOCATED(OutData%AFIndx) ) THEN
-  ALLOCATE(mask2(SIZE(OutData%AFIndx,1),SIZE(OutData%AFIndx,2)))
-  mask2 = .TRUE.
-    OutData%AFIndx = UNPACK(IntKiBuf( Int_Xferred:Re_Xferred+(SIZE(OutData%AFIndx))-1 ),mask2,OutData%AFIndx)
-  DEALLOCATE(mask2)
-    Int_Xferred   = Int_Xferred   + SIZE(OutData%AFIndx)
-  ENDIF
- ! first call AFI_PackParam to get correctly sized buffers for unpacking
-  CALL AFI_PackParam( Re_AFI_Params_Buf, Db_AFI_Params_Buf, Int_AFI_Params_Buf, OutData%AFI_Params, ErrStat, ErrMsg, .TRUE. ) ! AFI_Params 
-  IF(ALLOCATED(Re_AFI_Params_Buf)) THEN
-    Re_AFI_Params_Buf = ReKiBuf( Re_Xferred:Re_Xferred+SIZE(Re_AFI_Params_Buf)-1 )
-    Re_Xferred = Re_Xferred + SIZE(Re_AFI_Params_Buf)
-  ENDIF
-  IF(ALLOCATED(Db_AFI_Params_Buf)) THEN
-    Db_AFI_Params_Buf = DbKiBuf( Db_Xferred:Db_Xferred+SIZE(Db_AFI_Params_Buf)-1 )
-    Db_Xferred = Db_Xferred + SIZE(Db_AFI_Params_Buf)
-  ENDIF
-  IF(ALLOCATED(Int_AFI_Params_Buf)) THEN
-    Int_AFI_Params_Buf = IntKiBuf( Int_Xferred:Int_Xferred+SIZE(Int_AFI_Params_Buf)-1 )
-    Int_Xferred = Int_Xferred + SIZE(Int_AFI_Params_Buf)
-  ENDIF
-  CALL AFI_UnPackParam( Re_AFI_Params_Buf, Db_AFI_Params_Buf, Int_AFI_Params_Buf, OutData%AFI_Params, ErrStat, ErrMsg ) ! AFI_Params 
   OutData%NumOuts = IntKiBuf ( Int_Xferred )
   Int_Xferred   = Int_Xferred   + 1
   OutData%OutSwtch = IntKiBuf ( Int_Xferred )

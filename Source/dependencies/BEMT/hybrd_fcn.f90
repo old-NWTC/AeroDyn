@@ -3,6 +3,7 @@ module hybrd_fcn
    use NWTC_Library
    use AirFoilInfo_Types
    use BEMTCoupled
+   use UnsteadyAero_Types
    
    type, public :: hybrd_fcnArgs
  
@@ -28,7 +29,11 @@ module hybrd_fcn
       logical           :: useHubLoss
       logical           :: useTipLoss 
       integer(IntKi)    :: SkewWakeMod
-      integer(IntKi)    :: errStat       ! Error status of the operation
+      logical                      :: UA_Flag
+      type(UA_ParameterType)       :: p_UA           ! Parameters
+      type(UA_DiscreteStateType)   :: xd_UA          ! Discrete states at Time
+      type(UA_OtherStateType)      :: OtherState_UA  ! Other/optimization states
+      integer(IntKi)       :: errStat       ! Error status of the operation
       character(4096)      :: errMsg        ! Error message if ErrStat /= ErrID_None
    end type hybrd_fcnArgs
    
@@ -51,6 +56,7 @@ subroutine fcn(n, x, fvec, iflag, fcnArgs)
    ! Call the BEMTC_ElementalErrFn subroutine to compute the residual
    fvec = BEMTC_ElementalErrFn( x(1), x(2), fcnArgs%psi, fcnArgs%chi0, fcnArgs%airDens, fcnArgs%mu, fcnArgs%numBlades, fcnArgs%rlocal, fcnArgs%rtip, fcnArgs%chord, fcnArgs%theta, fcnArgs%rHub, fcnArgs%lambda, fcnArgs%AFInfo, &
                               fcnArgs%Vx, fcnArgs%Vy, fcnArgs%Vinf, fcnArgs%useTanInd, fcnArgs%useAIDrag, fcnArgs%useTIDrag, fcnArgs%useHubLoss, fcnArgs%useTipLoss,  fcnArgs%SkewWakeMod, &
+                              fcnArgs%UA_Flag, fcnArgs%p_UA, fcnArgs%xd_UA, fcnArgs%OtherState_UA, &
                               errStat, errMsg)
    
    

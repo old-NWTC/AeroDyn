@@ -24,7 +24,8 @@ SET Source_Loc=..\..\..\Source
 
 SET NWTC_Lib_Loc=%Source_Loc%\dependencies\NWTC_Library
 SET AirfoilInfo_Loc=%Source_Loc%\dependencies\Airfoil_Info
-SET BEMTInfo_Loc=%Source_Loc%\dependencies\BEMT
+SET BEMT_Loc=%Source_Loc%\dependencies\BEMT
+SET UnsteadyAero_Loc=%Source_Loc%\dependencies\UnsteadyAero
 
 
 
@@ -39,14 +40,19 @@ REM ----------------------------------------------------------------------------
 REM ---------------- RUN THE REGISTRY TO AUTO-GENERATE FILES -------------------
 REM ----------------------------------------------------------------------------
 
+:UnsteadyAero
+SET CURR_LOC=%Source_Loc%\dependencies\UnsteadyAero
+%REGISTRY% "%CURR_LOC%\UnsteadyAero_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc%
+GOTO checkError
+
 :BEMT
 SET CURR_LOC=%Source_Loc%\dependencies\BEMT
-%REGISTRY% "%CURR_LOC%\BEMT_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc%
+%REGISTRY% "%CURR_LOC%\BEMT_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %UnsteadyAero_Loc%
 GOTO checkError
 
 :AeroDyn
 SET CURR_LOC=%Source_Loc%\dependencies\AeroDyn
-%REGISTRY% "%CURR_LOC%\AeroDyn_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %BEMTInfo_Loc%
+%REGISTRY% "%CURR_LOC%\AeroDyn_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %BEMT_Loc% -I %UnsteadyAero_Loc%
 GOTO checkError
 
 :AFI
