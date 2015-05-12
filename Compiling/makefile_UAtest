@@ -91,16 +91,16 @@ endif
 
    # Source files (by module)
 
-LIB_SOURCES =           	\
-	SingPrec.f90        	   \
-	NWTC_Base.f90        	\
-	$(SYS_FILE).f90      	\
-	NWTC_Library_Types.f90 	\
-	NWTC_IO.f90          	\
-	NWTC_Num.f90         	\
-	ModMesh_Types.f90    	\
-	ModMesh.f90          	\
-	ModMesh_Mapping.f90  	\
+LIB_SOURCES =              \
+	SingPrec.f90            \
+	NWTC_Base.f90           \
+	$(SYS_FILE).f90         \
+	NWTC_Library_Types.f90  \
+	NWTC_IO.f90             \
+	NWTC_Num.f90            \
+	ModMesh_Types.f90       \
+	ModMesh.f90             \
+	ModMesh_Mapping.f90     \
 	NWTC_Library.f90
 
 NETLIB_SOURCES  =          \
@@ -153,14 +153,12 @@ default: $(INTER_DIR) $(ALL_OBJS) $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT)
 %$(OBJ_EXT): %.f
 	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
 
-   # Making _Types.f90 files from .txt registry files.   These registries need the extra flag.
+   # Making _Types.f90 files from .txt registry files.
 AirfoilInfo_Types.f90: AirfoilInfo_Registry.txt
-	$(RegistryProgram) $< -I $(NWTC_Lib_DIR)
-	$(CP_CMD) $@ "$(AFI_DIR)$(PATH_SEP)"
+	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -O $(AFI_DIR) -noextrap
 
 UnsteadyAero_Types.f90: UnsteadyAero_Registry.txt
-	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AFI_DIR)
-	$(CP_CMD) $@ "$(UA_DIR)$(PATH_SEP)"
+	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AFI_DIR) -O $(UA_DIR)
 
 
 

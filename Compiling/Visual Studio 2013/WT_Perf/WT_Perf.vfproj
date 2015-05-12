@@ -94,12 +94,17 @@
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\SingPrec.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\SysIVF.f90"/></Filter>
 		<Filter Name="UnsteadyAero">
-		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero.f90"/>
+		<Filter Name="RegistryFiles">
+		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Registry.txt">
+			<FileConfiguration Name="Debug|Win32">
+				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat UnsteadyAero" Description="Running Registry for UnsteadyAero" Outputs="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></FileConfiguration>
+			<FileConfiguration Name="Release|Win32">
+				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat UnsteadyAero" Description="Running Registry for UnsteadyAero" Outputs="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></FileConfiguration></File>
 		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></Filter>
+		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero.f90"/></Filter>
 		<Filter Name="WT_Perf">
 		<File RelativePath="..\..\..\Source\WT_Perf.f90"/>
 		<File RelativePath="..\..\..\Source\WT_Perf_IO.f90"/>
 		<File RelativePath="..\..\..\Source\WT_PerfSubs.f90"/>
-		<File RelativePath="..\..\..\Source\WTP_Types.f90"/></Filter></Filter>
-		<File RelativePath=".\ReadMe.txt"/></Files>
+		<File RelativePath="..\..\..\Source\WTP_Types.f90"/></Filter></Filter></Files>
 	<Globals/></VisualStudioProject>
