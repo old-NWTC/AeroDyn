@@ -38,7 +38,7 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
    fileName = trim(inputFile)
    call GetRoot ( fileName, rootName )
    call GetNewUnit( unIn )   
-   call OpenFInpFile( unIn, fileName, errStat )
+   call OpenFInpFile( unIn, fileName, errStat, ErrMsg )
    if ( errStat /= ErrID_None ) then
       errMsg  = ' Failed to open WT_Perf input file: '//fileName
       errStat = ErrID_Fatal
@@ -95,10 +95,10 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
 
       ! Read the model-configuration section.
 
-   call ReadCom ( unIn, fileName,                                 'the model-configuration subtitle'                )
-   call ReadVar ( unIn, fileName, inputData%numSect,  'numSect',  'Number of circumferential sectors.'              )
-   call ReadVar ( unIn, fileName, inputData%maxIter,  'maxIter',  'Max number of iterations for induction factor.'  )
-   call ReadVar ( unIn, fileName, inputData%ATol,     'ATol',     'Error tolerance for induction iteration.'        )
+   call ReadCom ( unIn, fileName,                                 'the model-configuration subtitle'                , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%numSect,  'numSect',  'Number of circumferential sectors.'              , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%maxIter,  'maxIter',  'Max number of iterations for induction factor.'  , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%ATol,     'ATol',     'Error tolerance for induction iteration.'        , errStat2, errMsg2 )
    !call ReadVar ( unIn, fileName, inputData%SWTol,    'SWTol',    'Error tolerance for skewed-wake iteration.'      )
 
 
@@ -124,11 +124,11 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
    
       ! Read the algorithm-configuration section.
 
-   call ReadCom ( unIn, fileName,                       'the algorithm-configuration subtitle'                           )
-   call ReadVar ( unIn, fileName, inputData%useTipLoss,  'useTipLoss',  'Use the Prandtl tip-loss model?'                                )
-   call ReadVar ( unIn, fileName, inputData%useHubLoss,  'useHubLoss',  'Use the Prandtl hub-loss model?'                                )
-   call ReadVar ( unIn, fileName, inputData%useTanInd,    'useTanInd',    'Include Swirl effects?'                                         )
-   call ReadVar ( unIn, fileName, inputData%skewWakeMod, 'skewWakeMod', 'Skewed-wake correction model'                                  )
+   call ReadCom ( unIn, fileName,                       'the algorithm-configuration subtitle'                           , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%useTipLoss,  'useTipLoss',  'Use the Prandtl tip-loss model?'                , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%useHubLoss,  'useHubLoss',  'Use the Prandtl hub-loss model?'                , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%useTanInd,    'useTanInd',    'Include Swirl effects?'                       , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%skewWakeMod, 'skewWakeMod', 'Skewed-wake correction model'                   , errStat2, errMsg2 )
 !Start of proposed change.  v3.02.00b-mlb 22-August-2006  M. Buhl
 !v3.02.00b-mlb   CALL ReadVar ( unIn, fileName, AdvBrake, 'AdvBrake', 'Use the advanced brake-state model?'                            )
 !End of proposed change.  v3.02.00b-mlb 22-August-2006  M. Buhl
@@ -138,11 +138,11 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
 !v3.02.00b-mlb   CALL ReadVar ( unIn, fileName, IndType,  'IndType',  'Use: 0-None, 1-PROPPC, 2-PROPX induction algorithm.'            )
   ! CALL ReadVar ( unIn, fileName, IndType,  'IndType',  'Use: 0-None, 1-BEM induction algorithm.'                        )
 !3.03.01a00-dcm
-   call ReadVar ( unIn, fileName, inputData%useInduction,  'useInduction',  'Use BEM induction algorithm?'                        )
+   call ReadVar ( unIn, fileName, inputData%useInduction,  'useInduction',  'Use BEM induction algorithm?'                        , errStat2, errMsg2 )
 !End of proposed change.  v3.02.00b-mlb 22-August-2006  M. Buhl
 !End of proposed change.  v3.02.00a-mlb 03-August-2006  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%useAIDrag,   'useAIDrag',   'Include the drag term in the axial-induction calculation?'      )
-   call ReadVar ( unIn, fileName, inputData%useTIDrag,   'useTIDrag',   'Include the drag term in the tangential-induction calculation?' )
+   call ReadVar ( unIn, fileName, inputData%useAIDrag,   'useAIDrag',   'Include the drag term in the axial-induction calculation?'      , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%useTIDrag,   'useTIDrag',   'Include the drag term in the tangential-induction calculation?' , errStat2, errMsg2 )
 
 
    if ( inputData%useAIDrag )  then
@@ -173,7 +173,7 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
   !    SkewWake = .FALSE.
   ! ENDIF
 
-   if ( inputData%useInduction == .FALSE. )  then    ! Don't do skewed wakes if induction calculations are disabled.
+   if ( .NOT. inputData%useInduction )  then    ! Don't do skewed wakes if induction calculations are disabled.
       inputData%skewWakeMod = 0
    endif
 
@@ -181,14 +181,14 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
 
       ! Read the turbine-data section.
 
-   call ReadCom ( unIn, fileName, 'the turbine-data subtitle' )
-   call ReadVar ( unIn, fileName, inputData%NumBlade, 'NumBlade', 'Number of blades.'     )
-   call ReadVar ( unIn, fileName, inputData%RotorRad, 'RotorRad', 'Unconed rotor radius.' )
-   call ReadVar ( unIn, fileName, inputData%HubRad,   'HubRad',   'Hub radius.' )
-   call ReadVar ( unIn, fileName, inputData%PreCone,  'PreCone',  'Cone angle.' )
-   call ReadVar ( unIn, fileName, inputData%Tilt,     'Tilt',     'Shaft tilt.' )
-   call ReadVar ( unIn, fileName, inputData%Yaw,      'Yaw',      'Yaw error.' )
-   call ReadVar ( unIn, fileName, inputData%HubHt,    'HubHt',    'Hub height.' )
+   call ReadCom ( unIn, fileName, 'the turbine-data subtitle' , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%NumBlade, 'NumBlade', 'Number of blades.'     , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%RotorRad, 'RotorRad', 'Unconed rotor radius.' , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%HubRad,   'HubRad',   'Hub radius.' , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%PreCone,  'PreCone',  'Cone angle.' , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%Tilt,     'Tilt',     'Shaft tilt.' , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%Yaw,      'Yaw',      'Yaw error.' , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%HubHt,    'HubHt',    'Hub height.' , errStat2, errMsg2 )
 
   
    if ( inputData%dimenInp )  then
@@ -227,7 +227,7 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
   
       ! Read in the number of segments and allocate the property arrays.
 
-   call ReadVar ( unIn, fileName, inputData%numSeg,   'numSeg',   'Number of blade segments (entire rotor radius).' )
+   call ReadVar ( unIn, fileName, inputData%numSeg,   'numSeg',   'Number of blade segments (entire rotor radius).' , errStat2, errMsg2 )
 
    if ( inputData%numSeg < 1 )  call Abort ( ' Variable "numSeg" must be greater than 0.  Instead, it is "'//Int2LStr( inputData%numSeg )//'".' )
 
@@ -241,7 +241,7 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
    
       ! Read in the distributed blade properties.
 
-   call ReadCom  ( unIn, fileName, 'the header for the blade-element data' )
+   call ReadCom  ( unIn, fileName, 'the header for the blade-element data' , errStat2, errMsg2 )
 
    NumElmPr = 0
 
@@ -300,15 +300,15 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
 
       ! Read the aerodynamic-data section.
 
-   call ReadCom ( unIn, fileName, 'the aerodynamic-data subtitle'   )
-   call ReadVar ( unIn, fileName, inputData%AirDens,  'AirDens',  'Air density.' )
-   call ReadVar ( unIn, fileName, inputData%KinVisc,  'KinVisc',  'Kinesmatic viscosity.' )
-   call ReadVar ( unIn, fileName, inputData%ShearExp, 'ShearExp', 'Shear exponent.' )
-   call ReadVar ( unIn, fileName, inputData%UseCm,    'UseCm',    'Cm data included in airfoil tables?' )
+   call ReadCom ( unIn, fileName, 'the aerodynamic-data subtitle'   , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%AirDens,  'AirDens',  'Air density.' , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%KinVisc,  'KinVisc',  'Kinesmatic viscosity.' , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%ShearExp, 'ShearExp', 'Shear exponent.' , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%UseCm,    'UseCm',    'Cm data included in airfoil tables?' , errStat2, errMsg2 )
 !Start of proposed change.  v3.03.02a-mlb, 10-Apr-2010,  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%UseCpmin, 'UseCpmin', 'Cp,min data included in airfoil tables?' )
+   call ReadVar ( unIn, fileName, inputData%UseCpmin, 'UseCpmin', 'Cp,min data included in airfoil tables?' , errStat2, errMsg2 )
 !End of proposed change.  v3.03.02a-mlb, 10-Apr-2010,  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%NumAF,    'NumAF',    'Number of unique airfoil tables.'     )
+   call ReadVar ( unIn, fileName, inputData%NumAF,    'NumAF',    'Number of unique airfoil tables.'     , errStat2, errMsg2 )
 
    if ( inputData%AirDens <= 0.0 )  call Abort ( ' The air density must be greater than zero.' )
    if ( inputData%KinVisc <= 0.0 )  call Abort ( ' The kinesmatic viscosity must be greater than zero.' )
@@ -346,7 +346,7 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
    
    do IAF=1,inputData%NumAF
 
-      call ReadVar ( unIn, fileName, inputData%AF_File(IAF), 'AF_File', 'Airfoil file #'//trim( Int2LStr( IAF ) )//'.' )
+      call ReadVar ( unIn, fileName, inputData%AF_File(IAF), 'AF_File', 'Airfoil file #'//trim( Int2LStr( IAF ) )//'.' , errStat2, errMsg2 )
       
 
    enddo
@@ -363,28 +363,28 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
 
       ! Read the I/O-configuration section.
 
-   call ReadCom ( unIn, fileName, 'the I/O-configuration subtitle'                                                                          )
-   call ReadVar ( unIn, fileName, inputData%OutFileRoot, 'OutFileRoot', 'Root name for any output files'                                    )
+   call ReadCom ( unIn, fileName, 'the I/O-configuration subtitle'                                                                          , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%OutFileRoot, 'OutFileRoot', 'Root name for any output files'                                    , errStat2, errMsg2 )
 !Start of proposed change.  v3.03.02a-mlb, 04-Dec-2009  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%UnfPower, 'UnfPower', 'Write Power to an unformatted file?'                                     )
+   call ReadVar ( unIn, fileName, inputData%UnfPower, 'UnfPower', 'Write Power to an unformatted file?'                                     , errStat2, errMsg2 )
 !End of proposed change.  v3.03.02a-mlb, 04-Dec-2009  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%TabDel,   'TabDel',   'Make output tab-delimited (fixed-width otherwise)?'                      )
+   call ReadVar ( unIn, fileName, inputData%TabDel,   'TabDel',   'Make output tab-delimited (fixed-width otherwise)?'                      , errStat2, errMsg2 )
 !Start of proposed change.  v3.02.00c-mlb 24-August-2006  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%OutNines, 'OutNines', 'Output nines for cases that fail to satisfy the convergence criterion?'  )
+   call ReadVar ( unIn, fileName, inputData%OutNines, 'OutNines', 'Output nines for cases that fail to satisfy the convergence criterion?'  , errStat2, errMsg2 )
 !Start of proposed change.  v3.03.02a-mlb, 01-Dec-2009  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%Beep,     'Beep',     'Beep on exit?'                                                           )
+   call ReadVar ( unIn, fileName, inputData%Beep,     'Beep',     'Beep on exit?'                                                           , errStat2, errMsg2 )
 !End of proposed change.  v3.03.02a-mlb, 01-Dec-2009  M. Buhl
 !#IFDEF debug2
 !#print *, "fileName:   Solution, Converge, OutNines = ", Solution, Converge, OutNines
 !#ENDIF
 !End of proposed change.  v3.02.00c-mlb 24-August-2006  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%KFact,    'KFact',    'Output dimensional parameters in K?'                                     )
-   call ReadVar ( unIn, fileName, inputData%WriteBED, 'WriteBED', 'Write out blade element data to "bladelem.dat"?'                         )
-   call ReadVar ( unIn, fileName, inputData%InputTSR, 'InputTSR', 'Input speeds as TSRs?'                                                   )
+   call ReadVar ( unIn, fileName, inputData%KFact,    'KFact',    'Output dimensional parameters in K?'                                    , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%WriteBED, 'WriteBED', 'Write out blade element data to "bladelem.dat"?'                        , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%InputTSR, 'InputTSR', 'Input speeds as TSRs?'                                                  , errStat2, errMsg2 )
 !Start of proposed change.  v3.03.02a-mlb, 10-Dec-2009  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%OutMaxCp, 'OutMaxCp', 'Output conditions leading to maximum Cp?'                                )
+   call ReadVar ( unIn, fileName, inputData%OutMaxCp, 'OutMaxCp', 'Output conditions leading to maximum Cp?'                                , errStat2, errMsg2 )
 !End of proposed change.  v3.03.02a-mlb, 10-Dec-2009  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%SpdUnits, 'SpdUnits', 'Wind-speed units (mps, fps, mph).'                                       )
+   call ReadVar ( unIn, fileName, inputData%SpdUnits, 'SpdUnits', 'Wind-speed units (mps, fps, mph).'                                       , errStat2, errMsg2 )
 
 
       ! Set units conversion and compute TSR parameters.
@@ -399,9 +399,9 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
 
       ! Read the combined-case section.
 
-   call ReadCom  ( unIn, fileName,                       'the combined-case subtitle'     )
-   call ReadVar  ( unIn, fileName, inputData%NumCases, 'NumCases', 'Number of cases to run.'        )
-   call ReadCom  ( unIn, fileName,                       'the combined-case-block header' )
+   call ReadCom  ( unIn, fileName,                       'the combined-case subtitle'     , errStat2, errMsg2 )
+   call ReadVar  ( unIn, fileName, inputData%NumCases, 'NumCases', 'Number of cases to run.'        , errStat2, errMsg2 )
+   call ReadCom  ( unIn, fileName,                       'the combined-case-block header' , errStat2, errMsg2 )
 
    IF ( inputData%NumCases < 0 )  THEN
 
