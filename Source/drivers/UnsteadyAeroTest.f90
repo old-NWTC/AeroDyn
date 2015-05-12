@@ -155,7 +155,7 @@ program UnsteadyAeroTest
    outFileName = '.\TestingUA_Driver.out'
    call GetNewUnit( unOutFile )
    
-   call OpenFOutFile ( unOutFile, outFileName, errStat ) 
+   call OpenFOutFile ( unOutFile, outFileName, errStat, errMsg ) 
    if ( errStat /= 0 ) stop
       
       

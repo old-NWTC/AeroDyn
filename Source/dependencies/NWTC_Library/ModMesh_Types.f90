@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2014-06-27 11:08:59 -0600 (Fri, 27 Jun 2014) $
-! (File) Revision #: $Rev: 240 $
+! File last committed: $Date: 2015-04-30 12:53:04 -0600 (Thu, 30 Apr 2015) $
+! (File) Revision #: $Rev: 300 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/ModMesh_Types.f90 $
 !**********************************************************************************************************************************
 MODULE ModMesh_Types
@@ -111,7 +111,7 @@ MODULE ModMesh_Types
       LOGICAL :: fieldmask(FIELDMASK_SIZE) = .FALSE.         ! Dimension as number of allocatable fields, below
       LOGICAL,POINTER :: RemapFlag  => NULL()                ! false=no action/ignore; true=remap required
       INTEGER :: ios                                         ! Mesh type: input (1), output(2), or state(3)
-      INTEGER :: Nnodes                                      ! Number of nodes (vertices) in mesh
+      INTEGER :: Nnodes = 0                                  ! Number of nodes (vertices) in mesh
 
      ! Mesh elements
       TYPE(ElemTabType), POINTER :: ElemTable(:) => NULL()   ! Elements in the mesh, by type
@@ -185,6 +185,7 @@ CONTAINS
        CASE ( ELEMENT_WEDGE15 )
          NumNodes = 15
        CASE DEFAULT
+          NumNodes = 0
          CALL ProgAbort(' NumNodes: invalid argument Xelement = '//TRIM(Num2LStr(Xelement)))
      END SELECT
    END FUNCTION NumNodes

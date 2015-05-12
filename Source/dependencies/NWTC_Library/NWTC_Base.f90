@@ -1,6 +1,6 @@
 !**********************************************************************************************************************************
 ! LICENSING
-! Copyright (C) 2013-2014  National Renewable Energy Laboratory
+! Copyright (C) 2013-2015  National Renewable Energy Laboratory
 !
 !    This file is part of the NWTC Subroutine Library.
 !
@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2015-01-10 21:35:49 -0700 (Sat, 10 Jan 2015) $
-! (File) Revision #: $Rev: 283 $
+! File last committed: $Date: 2015-04-30 12:53:04 -0600 (Thu, 30 Apr 2015) $
+! (File) Revision #: $Rev: 300 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/NWTC_Base.f90 $
 !**********************************************************************************************************************************
 MODULE NWTC_Base
@@ -35,7 +35,8 @@ MODULE NWTC_Base
       ! General constants:
 
    INTEGER, PARAMETER            :: BITS_IN_ADDR  = C_INTPTR_T*8                  ! The number of bits in an address (32-bit or 64-bit).
-
+   INTEGER, PARAMETER            :: ErrMsgLen = 1024
+   
    INTEGER(IntKi), PARAMETER     :: ChanLen   = 10                                ! The allowable length of channel names (i.e., width of output columns) in the FAST framework
 
    INTEGER(IntKi), PARAMETER     :: NWTC_Verbose = 10
@@ -58,8 +59,8 @@ MODULE NWTC_Base
    TYPE DLL_Type
 
       INTEGER(C_INTPTR_T)       :: FileAddr                                        ! The address of file FileName.         (RETURN value from LoadLibrary ) [Windows]
-      TYPE(C_PTR)               :: FileAddrX                                       ! The address of file FileName.         (RETURN value from dlopen ) [Linux]
-      TYPE(C_FUNPTR)            :: ProcAddr                                        ! The address of procedure ProcName.    (RETURN value from GetProcAddress or dlsym)
+      TYPE(C_PTR)               :: FileAddrX = C_NULL_PTR                          ! The address of file FileName.         (RETURN value from dlopen ) [Linux]
+      TYPE(C_FUNPTR)            :: ProcAddr  = C_NULL_FUNPTR                       ! The address of procedure ProcName.    (RETURN value from GetProcAddress or dlsym) [initialized to Null for pack/unpack]
 
       CHARACTER(1024)           :: FileName                                        ! The name of the DLL file including the full path to the current working directory.
       CHARACTER(1024)           :: ProcName                                        ! The name of the procedure in the DLL that will be called.

@@ -1,6 +1,6 @@
 !**********************************************************************************************************************************
 ! LICENSING
-! Copyright (C) 2013-2014  National Renewable Energy Laboratory
+! Copyright (C) 2013-2015  National Renewable Energy Laboratory
 !
 !    This file is part of the NWTC Subroutine Library.
 !
@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2015-01-10 21:35:49 -0700 (Sat, 10 Jan 2015) $
-! (File) Revision #: $Rev: 283 $
+! File last committed: $Date: 2015-05-11 21:38:05 -0600 (Mon, 11 May 2015) $
+! (File) Revision #: $Rev: 309 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/NWTC_Num.f90 $
 !**********************************************************************************************************************************
 MODULE NWTC_Num
@@ -38,6 +38,9 @@ MODULE NWTC_Num
    !  FUNCTION   CubicSplineInterpM    ( X, XAry, YAry, Coef, ErrStat, ErrMsg )                       ! Interpolate using cubic splines for multiple tables of irregularly space data.
    !  FUNCTION   EqualRealNos          ( ReNum1, ReNum2 )
    !  SUBROUTINE Eye                   ( A, ErrStat, ErrMsg )                                         ! sets A equal to the identity matrix (A can have 2 or 3 dimensions)
+   !  FUNCTION   DCM_exp               ( lambda )                         
+   !  SUBROUTINE DCM_logMap            ( DCM, logMap, ErrStat, ErrMsg )
+   !  SUBROUTINE DCM_SetLogMapForInterp( tensor )
    !  SUBROUTINE GaussElim             ( AugMat, NumEq, x, ErrStat, ErrMsg )                          ! Performs Gauss-Jordan elimination to solve Ax=b for x; AugMat = [A b]
    !  SUBROUTINE GetOffsetReg          ( Ary, NumPts, Val, Ind, Fract, ErrStat, ErrMsg )              ! Determine index of the point in Ary just below Val and the fractional distance to the next point in the array.
    !  FUNCTION   GetSmllRotAngs        ( DCMat, ErrStat, ErrMsg )
@@ -49,21 +52,35 @@ MODULE NWTC_Num
    !  FUNCTION   InterpStp             ( XVal, XAry, YAry, ILo, AryLen )                              ! Generic interface for InterpStpComp and InterpStpReal.
    !     FUNCTION   InterpStpComp      ( XVal, XAry, YAry, Ind, AryLen )
    !     FUNCTION   InterpStpReal      ( XVal, XAry, YAry, Ind, AryLen )
+   !  SUBROUTINE InterpStpReal2D       ( InCoord, Dataset, x, y, z, LastIndex, InterpData )
+   !  SUBROUTINE InterpStpReal3D       ( InCoord, Dataset, x, y,    LastIndex, InterpData )   
+   !  FUNCTION   InterpWrappedStpReal  ( XValIn, XAry, YAry, Ind, AryLen )
+   !  SUBROUTINE IsoparametricCoords   ( InCoord, posLo, posHi, isopc )
    !  FUNCTION   IsSymmetric           ( A )                                                          ! Function to determine if A(:,:) is symmetric
    !  SUBROUTINE LocateBin             ( XVal, XAry, Ind, AryLen )
    !  SUBROUTINE LocateStp             ( XVal, XAry, Ind, AryLen )
    !  FUNCTION   Mean                  ( Ary, AryLen )                                                ! Function to calculate the mean value of a vector array.
    !  SUBROUTINE MPi2Pi                ( Angle )
    !  FUNCTION   PSF                   ( N, NumPrimes )                                               ! This routine factors the number N into its primes.  
+   !  FUNCTION   Quaternion_Conjugate( q )
+   !  FUNCTION   Quaternion_Norm( q )
+   !  FUNCTION   Quaternion_Power( q, alpha )
+   !  FUNCTION   Quaternion_Product( p, q )
+   !  FUNCTION   Quaternion_to_DCM( q )
+   !  FUNCTION   DCM_to_Quaternion( DCM )
+   !  FUNCTION   Quaternion_Interp( q1, q2, s )
    !  SUBROUTINE RegCubicSplineInit    ( AryLen, XAry, YAry, DelX, Coef )                             ! Calculate coefficients for regularly spaced array to use cubic splines.
    !  SUBROUTINE RegCubicSplineInitM   ( XAry, YAry, DelX, Coef, ErrStat, ErrMsg )                    ! Interpolate using cubic splines for multiple tables of regularly space data.
    !  FUNCTION   RegCubicSplineInterp  ( X, AryLen, XAry, YAry, DelX, Coef )                          ! Interpolate a regularly spaced array using cubic splines.
    !  FUNCTION   RegCubicSplineInterpM ( X, XAry, YAry, DelX, Coef, ErrStat, ErrMsg )                 ! Initialize cubic splines for multiple tables of regularly space data.
    !  SUBROUTINE RombergInt            ( f, a, b, R, err, eps, ErrStat )
+   !  SUBROUTINE SetAnglesForInterp    ( angles )                                                     ! uses 2pi periodicity of angles to set angles for interpolation (makes sure no two adjacent entries are more than pi apart)
    !  SUBROUTINE SetConstants
    !  SUBROUTINE SmllRotTrans          ( RotationType, Theta1, Theta2, Theta3, TransMat, ErrTxt )
    !  SUBROUTINE SortUnion             ( Ary1, N1, Ary2, N2, Ary, N )
    !  FUNCTION   StdDevFn              ( Ary, AryLen, Mean )                                          ! Function to calculate the standard deviation of a vector array.
+   !  FUNCTION   trace                 ( A )                                                          ! computes the trace (sum of diagonal elements) of a matrix  (2-dimension array)
+   !  FUNCTION   TwoNorm               ( v )                                                          ! computes the l2 norm of a vector (1-dimension array) 
    !  SUBROUTINE Zero2TwoPi            ( Angle )
    
    USE                                          NWTC_IO
@@ -100,29 +117,29 @@ MODULE NWTC_Num
    REAL(ReKi)                                :: TwoByPi                       ! 2/Pi
    REAL(ReKi)                                :: TwoPi                         ! 2*Pi
 
-
-   TYPE, PUBLIC               :: CubSplineType                                ! This derived type is used to hold data for performing cubic splines.
-      INTEGER                                :: NumPts                        ! The number of points in the XAry and YAry arrays.
-      REAL(ReKi), ALLOCATABLE                :: Coef      (:,:)               ! The NumPts-1 length array of cubic coefficients.  The second dimension must be "0:3".
-      REAL(ReKi), ALLOCATABLE                :: XAry      (:)                 ! The NumPts length array of x values for the interpolation.
-      REAL(ReKi), ALLOCATABLE                :: YAry      (:)                 ! The NumPts length array of y values for the interpolation.
-   END TYPE CubSplineType
-
-   TYPE, PUBLIC               :: RegCubSplineType                             ! This derived type is used to hold data for performing cubic splines wuth regularly-spaced data.
-      INTEGER                                :: NumPts                        ! The number of points in the XAry and YAry arrays.
-      REAL(ReKi), ALLOCATABLE                :: Coef      (:,:)               ! The NumPts-1 length array of cubic coefficients.  The second dimension must be "0:3".
-      REAL(ReKi)                             :: DelX                          ! The distance between the equally spaced points in XAry.
-      REAL(ReKi), ALLOCATABLE                :: XAry      (:)                 ! The NumPts length array of x values for the interpolation.
-      REAL(ReKi), ALLOCATABLE                :: YAry      (:)                 ! The NumPts length array of y values for the interpolation.
-   END TYPE RegCubSplineType
-
-   TYPE, PUBLIC               :: RegGridType                                  ! This derived type is used to hold the contents of a regular grid of data.
-      INTEGER                                :: NumDims                       ! The number of dimensions for this grid.
-      REAL(ReKi), ALLOCATABLE                :: Mins      (:)                 ! The set of minimums for the grid in each NumDims dimensions.
-      REAL(ReKi), ALLOCATABLE                :: Steps     (:)                 ! The set of step sizes for the grid in each NumDims dimensions.
-      REAL(ReKi), ALLOCATABLE                :: Grid      (:)                 ! The NumDims dimensional grid.
-   END TYPE RegGridType
-
+!bjj: I'm not sure why MLB added these 3 types; they don't seem to be used anywhere
+   !TYPE, PUBLIC               :: CubSplineType                                ! This derived type is used to hold data for performing cubic splines.
+   !   INTEGER                                :: NumPts                        ! The number of points in the XAry and YAry arrays.
+   !   REAL(ReKi), ALLOCATABLE                :: Coef      (:,:)               ! The NumPts-1 length array of cubic coefficients.  The second dimension must be "0:3".
+   !   REAL(ReKi), ALLOCATABLE                :: XAry      (:)                 ! The NumPts length array of x values for the interpolation.
+   !   REAL(ReKi), ALLOCATABLE                :: YAry      (:)                 ! The NumPts length array of y values for the interpolation.
+   !END TYPE CubSplineType
+   !
+   !TYPE, PUBLIC               :: RegCubSplineType                             ! This derived type is used to hold data for performing cubic splines wuth regularly-spaced data.
+   !   INTEGER                                :: NumPts                        ! The number of points in the XAry and YAry arrays.
+   !   REAL(ReKi), ALLOCATABLE                :: Coef      (:,:)               ! The NumPts-1 length array of cubic coefficients.  The second dimension must be "0:3".
+   !   REAL(ReKi)                             :: DelX                          ! The distance between the equally spaced points in XAry.
+   !   REAL(ReKi), ALLOCATABLE                :: XAry      (:)                 ! The NumPts length array of x values for the interpolation.
+   !   REAL(ReKi), ALLOCATABLE                :: YAry      (:)                 ! The NumPts length array of y values for the interpolation.
+   !END TYPE RegCubSplineType
+   !
+   !TYPE, PUBLIC               :: RegGridType                                  ! This derived type is used to hold the contents of a regular grid of data.
+   !   INTEGER                                :: NumDims                       ! The number of dimensions for this grid.
+   !   REAL(ReKi), ALLOCATABLE                :: Mins      (:)                 ! The set of minimums for the grid in each NumDims dimensions.
+   !   REAL(ReKi), ALLOCATABLE                :: Steps     (:)                 ! The set of step sizes for the grid in each NumDims dimensions.
+   !   REAL(ReKi), ALLOCATABLE                :: Grid      (:)                 ! The NumDims dimensional grid.
+   !END TYPE RegGridType
+!bjj: end of MLB types removed
 
 !=======================================================================
 
@@ -301,7 +318,7 @@ CONTAINS
 
    INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                    ! Error status.
 
-   CHARACTER(4096), INTENT(OUT) :: ErrMsg                                     ! Error message.
+   CHARACTER(*), INTENT(OUT)    :: ErrMsg                                     ! Error message.
 
 
       ! Local declarations.
@@ -315,32 +332,34 @@ CONTAINS
 
    INTEGER(IntKi)               :: ErrStatLcL                                 ! Local error status.
    INTEGER                      :: I                                          ! The index into the arrays.
+   CHARACTER(*), PARAMETER      :: RoutineName = 'CubicSplineInit'
 
-
+   ErrStat = ErrID_None
+   ErrMsg  = ""
 
       ! Allocate the various intermediate arrays.
 
    ALLOCATE ( DelX( AryLen - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the DelX array in CubicSplineInit.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the DelX array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( Slope( AryLen - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the Slope array in CubicSplineInit.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the Slope array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( U( AryLen - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the U array in CubicSplineInit.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the U array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( V( AryLen - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the V array in CubicSplineInit.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the V array.' )
       RETURN
    ENDIF
 
@@ -441,7 +460,7 @@ CONTAINS
 
    INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                    ! Error status.
 
-   CHARACTER(4096), INTENT(OUT) :: ErrMsg                                     ! Error message.
+   CHARACTER(*), INTENT(OUT)    :: ErrMsg                                     ! Error message.
 
 
       ! Local declarations.
@@ -458,7 +477,7 @@ CONTAINS
    INTEGER                      :: I                                          ! The index into the arrays.
    INTEGER                      :: NumCrvs                                    ! Number of curves to be interpolated.
    INTEGER                      :: NumPts                                     ! Number of points in each curve.
-
+   CHARACTER(*), PARAMETER      :: RoutineName = 'CubicSplineInitM'
 
 
       ! How big are the arrays?
@@ -471,37 +490,37 @@ CONTAINS
 
    ALLOCATE ( ZLo( NumCrvs ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the ZLo array in CubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the ZLo array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( ZHi( NumCrvs ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the ZHi array in CubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the ZHi array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( DelX( NumPts - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the DelX array in CubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the DelX array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( Slope( NumPts-1, NumCrvs ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the Slope array in CubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the Slope array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( U( NumPts - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the U array in CubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the U array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( V( NumPts-1, NumCrvs ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the V array in CubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the V array.' )
       RETURN
    ENDIF
 
@@ -608,7 +627,7 @@ CONTAINS
 
    INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                    ! Error status.
 
-   CHARACTER(4096), INTENT(OUT) :: ErrMsg                                     ! Error message.
+   CHARACTER(*), INTENT(OUT)    :: ErrMsg                                     ! Error message.
 
 
       ! Local declarations.
@@ -619,6 +638,8 @@ CONTAINS
    INTEGER                      :: ILo                                        ! The index into the array for which X is just above or equal to XAry(ILo).
 
 
+   ErrStat = ErrID_None
+   ErrMsg  = ""
 
       ! See if X is within the range of XAry.  Return the end point if it is not.
 
@@ -640,40 +661,7 @@ CONTAINS
    CubicSplineInterp = Coef(ILo,0) + XOff*( Coef(ILo,1) + XOff*( Coef(ILo,2) + XOff*Coef(ILo,3) ) )
 
 
-   CALL ExitThisRoutine ( ErrID_None, 'No Problemo' )
-
    RETURN
-
-   !=======================================================================
-   CONTAINS
-   !=======================================================================
-      SUBROUTINE ExitThisRoutine ( ErrID, Msg )
-
-         ! This subroutine cleans up the parent routine before exiting.
-
-
-            ! Argument declarations.
-
-         INTEGER(IntKi), INTENT(IN)       :: ErrID                            ! The error identifier (ErrLev)
-
-         CHARACTER(*),   INTENT(IN)       :: Msg                              ! The error message (ErrMsg)
-
-
-            ! Local declarations.
-
-         LOGICAL                          :: IsOpen                           ! A flag that indicates if the input unit is still open.
-
-
-            ! Set error status/message
-
-         ErrStat = ErrID
-         ErrMsg  = Msg
-
-
-         RETURN
-
-      END SUBROUTINE ExitThisRoutine ! ( ErrID, Msg )
-
    END FUNCTION CubicSplineInterp ! ( X, AryLen, XAry, YAry, Coef, ErrStat, ErrMsg )
 !=======================================================================
    FUNCTION CubicSplineInterpM ( X, XAry, YAry, Coef, ErrStat, ErrMsg ) RESULT( Res )
@@ -699,7 +687,7 @@ CONTAINS
 
    INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                    ! Error status.
 
-   CHARACTER(4096), INTENT(OUT) :: ErrMsg                                     ! Error message.
+   CHARACTER(*),    INTENT(OUT) :: ErrMsg                                     ! Error message.
 
 
       ! Local declarations.
@@ -711,7 +699,7 @@ CONTAINS
    INTEGER                      :: NumCrvs                                    ! Number of curves to be interpolated.
    INTEGER                      :: NumPts                                     ! Number of points in each curve.
 
-
+   CHARACTER(*), PARAMETER      :: RoutineName = 'RegCubicSplineInterpM'
 
       ! How big are the arrays?
 
@@ -721,8 +709,12 @@ CONTAINS
 
    ALLOCATE ( Res( NumCrvs ) , STAT=ErrStatLcl )
    IF ( ErrStatLcl /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, '  >> Error allocating memory for the function result array in RegCubicSplineInterpM.' )
+      ErrStat = ErrID_Fatal
+      ErrMsg = RoutineName//':Error allocating memory for the function result array.'
       RETURN
+   ELSE
+      ErrStat = ErrID_None
+      ErrMsg  = ""
    ENDIF
 
 
@@ -745,40 +737,7 @@ CONTAINS
 
    Res(:) = Coef(ILo,:,0) + XOff*( Coef(ILo,:,1) + XOff*( Coef(ILo,:,2) + XOff*Coef(ILo,:,3) ) )
 
-
-   CALL ExitThisRoutine ( ErrID_None, 'No Problemo' )
-
    RETURN
-
-   !=======================================================================
-   CONTAINS
-   !=======================================================================
-      SUBROUTINE ExitThisRoutine ( ErrID, Msg )
-
-         ! This subroutine cleans up the parent routine before exiting.
-
-
-            ! Argument declarations.
-
-         INTEGER(IntKi), INTENT(IN)       :: ErrID                            ! The error identifier (ErrLev)
-
-         CHARACTER(*),   INTENT(IN)       :: Msg                              ! The error message (ErrMsg)
-
-
-            ! Local declarations.
-
-         LOGICAL                          :: IsOpen                           ! A flag that indicates if the input unit is still open.
-
-
-            ! Set error status/message
-
-         ErrStat = ErrID
-         ErrMsg  = Msg
-
-
-         RETURN
-
-      END SUBROUTINE ExitThisRoutine ! ( ErrID, Msg )
 
    END FUNCTION CubicSplineInterpM ! ( X, XAry, YAry, Coef, ErrStat, ErrMsg )
 !=======================================================================         
@@ -935,7 +894,7 @@ SUBROUTINE DCM_SetLogMapForInterp( tensor )
    REAL(ReKi)                    :: temp(3), temp1(3) ! difference between two tensors
    REAL(ReKi)                    :: period(3)         ! the period to add to the rotational parameters
    INTEGER(IntKi)                :: nc                ! size of the tensors matrix
-   INTEGER(IntKi)                :: ic, k             ! loop counters for each array dimension
+   INTEGER(IntKi)                :: ic                ! loop counters for each array dimension
    
    nc = size(tensor,2)
           
@@ -1280,7 +1239,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
    INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                    ! Error status.
    INTEGER(IntKi), INTENT(OUT)  :: Ind                                        ! The index of the point in Ary just below Val.
 
-   CHARACTER(4096), INTENT(OUT) :: ErrMsg                                     ! Error message.
+   CHARACTER(*),   INTENT(OUT)  :: ErrMsg                                     ! Error message.
 
 
       ! Local declarations.
@@ -1294,13 +1253,12 @@ END SUBROUTINE DCM_SetLogMapForInterp
       ! Check the validity of the data.
 
    IF ( NumPts == 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, ' >> The value of NumPts cannot be zero when calling GetOffsetReg.' )
+      ErrStat = ErrID_Fatal
+      ErrMsg = 'GetOffsetReg:The value of NumPts cannot be zero.'
       RETURN
-   END IF
-
-   IF ( NumPts == 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, ' >> The value of NumPts cannot be zero when calling GetOffsetReg.' )
-      RETURN
+   ELSE
+      ErrStat = ErrID_None
+      ErrMsg  = ""
    END IF
 
 
@@ -1324,40 +1282,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
    Ind   = INT( ( Val - Ary(1) )/Del ) + 1
    Fract = ( Val - Ary(Ind) )/Del
 
-
-   CALL ExitThisRoutine ( ErrID_None, 'No Problemo' )
-
    RETURN
-
-   !=======================================================================
-   CONTAINS
-   !=======================================================================
-      SUBROUTINE ExitThisRoutine ( ErrID, Msg )
-
-         ! This subroutine cleans up the parent routine before exiting.
-
-
-            ! Argument declarations.
-
-         INTEGER(IntKi), INTENT(IN)       :: ErrID                            ! The error identifier (ErrLev)
-
-         CHARACTER(*),   INTENT(IN)       :: Msg                              ! The error message (ErrMsg)
-
-
-            ! Local declarations.
-
-         LOGICAL                          :: IsOpen                           ! A flag that indicates if the input unit is still open.
-
-
-            ! Set error status/message
-
-         ErrStat = ErrID
-         ErrMsg  = Msg
-
-
-         RETURN
-
-      END SUBROUTINE ExitThisRoutine ! ( ErrID, Msg )
 
    END SUBROUTINE GetOffsetReg ! ( Ary, NumPts, Val, Ind, Fract, ErrStat, ErrMsg )
 !=======================================================================
@@ -1431,7 +1356,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    GetSmllRotAngs = 0.0
    ErrStat        = ErrID_None
-
+   ErrMsg         = ""
 
       ! calculate the small angles
    GetSmllRotAngs(1) = DCMat(2,3) - DCMat(3,2)
@@ -1495,7 +1420,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
       CALL ProgAbort ( ' In function GL_Loc, the number of points used for Gauss-Legendre Quadrature must be between 1 and 6' &
                     //' (inclusive).  Instead, it is "'//TRIM( Int2LStr( NPts ) )//'".', PRESENT(ErrStat) )
       IF ( PRESENT(ErrStat) ) THEN ! this should always be true here
-         ErrStat = 1
+         ErrStat = ErrID_Fatal
          RETURN
       END IF
    END IF
@@ -1504,7 +1429,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
       CALL ProgAbort ( ' In function GL_Loc, the point being used for Gauss-Legendre Quadrature must be between 1 and ' &
                    //TRIM( Int2LStr( NPts ) )//' (inclusive).  Instead, it is "'//TRIM( Int2LStr( Ipt ) )//'".', PRESENT(ErrStat) )
       IF ( PRESENT(ErrStat) ) THEN
-         ErrStat = 1
+         ErrStat = ErrID_Fatal
          RETURN
       END IF
    END IF
@@ -1938,6 +1863,207 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    RETURN
    END FUNCTION InterpStpReal ! ( XVal, XAry, YAry, Ind, AryLen )
+
+!=======================================================================
+!< This routine linearly interpolates Dataset. It is
+!! set for a 2-d interpolation on x and y of the input point.
+!! x and y must be in increasing order. Each dimension may contain only 1 value.
+!! The method is described in this paper: 
+!!   http://www.colorado.edu/engineering/CAS/courses.d/AFEM.d/AFEM.Ch11.d/AFEM.Ch11.pdf
+SUBROUTINE InterpStpReal2D( InCoord, Dataset, x, y, LastIndex, InterpData )
+
+   INTEGER, PARAMETER :: NumDimensions = 2
+
+      ! I/O variables
+
+   REAL(ReKi),                     INTENT(IN   ) :: InCoord(NumDimensions)                       !< Arranged as (x, y)
+   REAL(ReKi),                     INTENT(IN   ) :: Dataset(:,:)                                 !< Arranged as (x, y)
+   REAL(ReKi),                     INTENT(IN   ) :: x(:)                                         !< first dimension in increasing order
+   REAL(ReKi),                     INTENT(IN   ) :: y(:)                                         !< second dimension in increasing order
+   INTEGER(IntKi),                 INTENT(INOUT) :: LastIndex(NumDimensions)                     !< Index for the last (x, y) used
+   REAL(ReKi),                     INTENT(  OUT) :: InterpData                                   !< The interpolated value of Dataset(:,:) at InCoord
+
+
+      ! Local variables
+
+   INTEGER(IntKi)                                :: Indx_Lo(NumDimensions)                       ! index associated with lower bound of dimension 1,2 where val(Indx_lo(i)) <= InCoord(i) <= val(Indx_hi(i))
+   INTEGER(IntKi)                                :: Indx_Hi(NumDimensions)                       ! index associated with upper bound of dimension 1,2 where val(Indx_lo(i)) <= InCoord(i) <= val(Indx_hi(i))
+   REAL(ReKi)                                    :: Pos_Lo(NumDimensions)                        ! coordinate value with lower bound of dimension 1,2
+   REAL(ReKi)                                    :: Pos_Hi(NumDimensions)                        ! coordinate value with upper bound of dimension 1,2
+
+   REAL(ReKi)                                    :: isopc(NumDimensions)                         ! isoparametric coordinates
+
+   REAL(ReKi)                                    :: N(2**NumDimensions)                          ! size 2^n
+   REAL(ReKi)                                    :: u(2**NumDimensions)                          ! size 2^n
+
+   INTEGER(IntKi)                                :: nx, ny
+
+
+      ! find the indices into the arrays representing coordinates of each dimension:
+      !  (by using LocateStp, we do not require equally spaced arrays)
+
+   nx = SIZE(x)
+   ny = SIZE(y)
+
+   CALL LocateStp( InCoord(1), x, LastIndex(1), nx )
+   CALL LocateStp( InCoord(2), y, LastIndex(2), ny )
+
+   Indx_Lo = LastIndex  ! at this point, 0 <= Indx_Lo(i) <= n(i) for all i
+
+
+   ! x (indx 1)
+   IF (Indx_Lo(1) == 0) THEN
+      Indx_Lo(1) = 1
+   ELSEIF (Indx_Lo(1) == nx ) THEN
+      Indx_Lo(1) = max( nx - 1, 1 )                ! make sure it's a valid index
+   END IF
+   Indx_Hi(1) = min( Indx_Lo(1) + 1 , nx )         ! make sure it's a valid index
+
+   ! y (indx 2)
+   IF (Indx_Lo(2) == 0) THEN
+      Indx_Lo(2) = 1
+   ELSEIF (Indx_Lo(2) == ny ) THEN
+      Indx_Lo(2) = max( ny - 1, 1 )                ! make sure it's a valid index
+   END IF
+   Indx_Hi(2) = min( Indx_Lo(2) + 1 , ny )         ! make sure it's a valid index
+
+
+      ! calculate the bounding box; the positions of all dimensions:
+
+   pos_Lo(1) = x( Indx_Lo(1) )
+   pos_Hi(1) = x( Indx_Hi(1) )
+
+   pos_Lo(2) = y( Indx_Lo(2) )
+   pos_Hi(2) = y( Indx_Hi(2) )
+
+
+      ! 2-D linear interpolation:
+
+   CALL IsoparametricCoords( InCoord, pos_Lo, pos_Hi, isopc )      ! Calculate iospc
+
+   N(1)  = ( 1.0_ReKi + isopc(1) )*( 1.0_ReKi - isopc(2) )
+   N(2)  = ( 1.0_ReKi + isopc(1) )*( 1.0_ReKi + isopc(2) )
+   N(3)  = ( 1.0_ReKi - isopc(1) )*( 1.0_ReKi + isopc(2) )
+   N(4)  = ( 1.0_ReKi - isopc(1) )*( 1.0_ReKi - isopc(2) )
+   N     = N / REAL( SIZE(N), ReKi )  ! normalize
+
+
+   u(1)  = Dataset( Indx_Hi(1), Indx_Lo(2) )
+   u(2)  = Dataset( Indx_Hi(1), Indx_Hi(2) )
+   u(3)  = Dataset( Indx_Lo(1), Indx_Hi(2) )
+   u(4)  = Dataset( Indx_Lo(1), Indx_Lo(2) )
+
+   InterpData = SUM ( N * u )
+
+
+END SUBROUTINE InterpStpReal2D   
+!=======================================================================
+!< This routine linearly interpolates Dataset. It is set for a 3-d 
+!! interpolation on x and y of the input point. x, y, and z must be 
+!! in increasing order. Each dimension may contain only 1 value.
+!! The method is described in this paper: 
+!!   http://www.colorado.edu/engineering/CAS/courses.d/AFEM.d/AFEM.Ch11.d/AFEM.Ch11.pdf
+SUBROUTINE InterpStpReal3D( InCoord, Dataset, x, y, z, LastIndex, InterpData )
+! This routine linearly interpolates Dataset. It is set for a 3-d 
+! interpolation on x and y of the input point. x, y, and z must be 
+! in increasing order. Each dimension may contain only 1 value.
+! The method is described in this paper: 
+!   http://www.colorado.edu/engineering/CAS/courses.d/AFEM.d/AFEM.Ch11.d/AFEM.Ch11.pdf
+
+   INTEGER, PARAMETER :: NumDimensions = 3
+
+      ! I/O variables
+
+   REAL(ReKi),                     INTENT(IN   ) :: InCoord(NumDimensions)                       !< Arranged as (x, y, z)
+   REAL(ReKi),                     INTENT(IN   ) :: Dataset(:,:,:)                               !< Arranged as (x, y, z)
+   REAL(ReKi),                     INTENT(IN   ) :: x(:)                                         !< first dimension in increasing order
+   REAL(ReKi),                     INTENT(IN   ) :: y(:)                                         !< second dimension in increasing order
+   REAL(ReKi),                     INTENT(IN   ) :: z(:)                                         !< third dimension in increasing order
+   INTEGER(IntKi),                 INTENT(INOUT) :: LastIndex(NumDimensions)                     !< Index for the last (x, y, z) used
+   REAL(ReKi),                     INTENT(  OUT) :: InterpData                                   !< The interpolated value of Dataset(:,:,:) at InCoord
+
+
+      ! Local variables
+
+   INTEGER(IntKi)                                :: Indx_Lo(NumDimensions)                       ! index associated with lower bound of dimension i where val(Indx_lo(i)) <= InCoord(i) <= val(Indx_hi(i))
+   INTEGER(IntKi)                                :: Indx_Hi(NumDimensions)                       ! index associated with upper bound of dimension i where val(Indx_lo(i)) <= InCoord(i) <= val(Indx_hi(i))
+   REAL(ReKi)                                    :: Pos_Lo(NumDimensions)                        ! coordinate value with lower bound of dimension i
+   REAL(ReKi)                                    :: Pos_Hi(NumDimensions)                        ! coordinate value with upper bound of dimension i
+
+   REAL(ReKi)                                    :: isopc(NumDimensions)                         ! isoparametric coordinates
+
+   REAL(ReKi)                                    :: N(2**NumDimensions)                          ! size 2^NumDimensions
+   REAL(ReKi)                                    :: u(2**NumDimensions)                          ! size 2^NumDimensions
+
+   INTEGER(IntKi)                                :: nd(NumDimensions)                            ! size of each dimension
+   INTEGER(IntKi)                                :: i
+   
+
+      ! find the indices into the arrays representing coordinates of each dimension:
+      !  (by using LocateStp, we do not require equally spaced frequencies or points)
+
+   nd(1) = SIZE(x)
+   nd(2) = SIZE(y)
+   nd(3) = SIZE(z)
+
+   CALL LocateStp( InCoord(1), x, LastIndex(1), nd(1) )
+   CALL LocateStp( InCoord(2), y, LastIndex(2), nd(2) )
+   CALL LocateStp( InCoord(3), z, LastIndex(3), nd(3) )
+
+   Indx_Lo = LastIndex  ! at this point, 0 <= Indx_Lo(i) <= n(i) for all i
+
+
+   DO i=1,NumDimensions
+      IF (Indx_Lo(i) == 0) THEN
+         Indx_Lo(i) = 1
+      ELSEIF (Indx_Lo(i) == nd(i) ) THEN
+         Indx_Lo(i) = max( nd(i) - 1, 1 )                ! make sure it's a valid index
+      END IF
+      Indx_Hi(i) = min( Indx_Lo(i) + 1 , nd(i) )         ! make sure it's a valid index
+   END DO
+   
+ 
+
+      ! calculate the bounding box; the positions of all dimensions:
+
+   pos_Lo(1) = x( Indx_Lo(1) )
+   pos_Hi(1) = x( Indx_Hi(1) )
+
+   pos_Lo(2) = y( Indx_Lo(2) )
+   pos_Hi(2) = y( Indx_Hi(2) )
+
+   pos_Lo(3) = z( Indx_Lo(3) )
+   pos_Hi(3) = z( Indx_Hi(3) )
+   
+
+      ! 2-D linear interpolation:
+
+   CALL IsoparametricCoords( InCoord, pos_Lo, pos_Hi, isopc )      ! Calculate iospc
+
+   
+   N(1)  = ( 1.0_ReKi + isopc(1) )*( 1.0_ReKi - isopc(2) )*( 1.0_ReKi - isopc(3) )
+   N(2)  = ( 1.0_ReKi + isopc(1) )*( 1.0_ReKi + isopc(2) )*( 1.0_ReKi - isopc(3) )
+   N(3)  = ( 1.0_ReKi - isopc(1) )*( 1.0_ReKi + isopc(2) )*( 1.0_ReKi - isopc(3) )
+   N(4)  = ( 1.0_ReKi - isopc(1) )*( 1.0_ReKi - isopc(2) )*( 1.0_ReKi - isopc(3) )
+   N(5)  = ( 1.0_ReKi + isopc(1) )*( 1.0_ReKi - isopc(2) )*( 1.0_ReKi + isopc(3) )
+   N(6)  = ( 1.0_ReKi + isopc(1) )*( 1.0_ReKi + isopc(2) )*( 1.0_ReKi + isopc(3) )
+   N(7)  = ( 1.0_ReKi - isopc(1) )*( 1.0_ReKi + isopc(2) )*( 1.0_ReKi + isopc(3) )
+   N(8)  = ( 1.0_ReKi - isopc(1) )*( 1.0_ReKi - isopc(2) )*( 1.0_ReKi + isopc(3) )
+   N     = N / REAL( SIZE(N), ReKi )  ! normalize
+      
+   u(1)  = Dataset( Indx_Hi(1), Indx_Lo(2), Indx_Lo(3) )
+   u(2)  = Dataset( Indx_Hi(1), Indx_Hi(2), Indx_Lo(3) )
+   u(3)  = Dataset( Indx_Lo(1), Indx_Hi(2), Indx_Lo(3) )
+   u(4)  = Dataset( Indx_Lo(1), Indx_Lo(2), Indx_Lo(3) )
+   u(5)  = Dataset( Indx_Hi(1), Indx_Lo(2), Indx_Hi(3) )
+   u(6)  = Dataset( Indx_Hi(1), Indx_Hi(2), Indx_Hi(3) )
+   u(7)  = Dataset( Indx_Lo(1), Indx_Hi(2), Indx_Hi(3) )
+   u(8)  = Dataset( Indx_Lo(1), Indx_Lo(2), Indx_Hi(3) )   
+   
+   InterpData = SUM ( N * u )     ! could use dot_product, though I'm not sure it's the came for complex numbers
+      
+
+END SUBROUTINE InterpStpReal3D   
 !=======================================================================
    FUNCTION InterpWrappedStpReal( XValIn, XAry, YAry, Ind, AryLen )
 
@@ -1986,9 +2112,14 @@ END SUBROUTINE DCM_SetLogMapForInterp
 !=======================================================================
 !> This subroutine calculates the iosparametric coordinates, isopc, which is a value between -1 and 1 
 !! (for each dimension of a dataset), indicating where InCoord falls between posLo and posHi.
-!!
+!! It is used in InterpStpReal2D and InterpStpReal3D.
    SUBROUTINE IsoparametricCoords( InCoord, posLo, posHi, isopc )
 
+! This subroutine calculates the iosparametric coordinates, isopc, which is a value between -1 and 1 
+! (for each dimension of a dataset), indicating where InCoord falls between posLo and posHi.
+! It is used in InterpStpReal2D and InterpStpReal3D.
+   
+   
       REAL(ReKi),     INTENT(IN   )          :: InCoord(:)                             !< Coordinate values we're interpolating to; (size = number of interpolation dimensions)
       REAL(ReKi),     INTENT(IN   )          :: posLo(:)                               !< coordinate values associated with Indx_Lo; (size = number of interpolation dimensions)
       REAL(ReKi),     INTENT(IN   )          :: posHi(:)                               !< coordinate values associated with Indx_Hi; (size = number of interpolation dimensions)
@@ -2240,19 +2371,6 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    RETURN
    END SUBROUTINE MPi2Pi
-!=======================================================================
-   FUNCTION TwoNorm(v)
-   
-      ! this function returns the 2-norm of a vector v
-      ! fortran 2008 has Norm2() built in
-      
-      REAL(ReKi), INTENT(IN)  :: v(:)      
-      REAL(ReKi)              :: TwoNorm      
-      
-      TwoNorm = SQRT( DOT_PRODUCT(v, v) )
-      
-      
-   END FUNCTION
 !=======================================================================
    FUNCTION PSF ( Npsf, NumPrimes, subtract )
 
@@ -2536,7 +2654,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                    ! Error status.
 
-   CHARACTER(4096), INTENT(OUT) :: ErrMsg                                     ! Error message.
+   CHARACTER(*),   INTENT(OUT)  :: ErrMsg                                     ! Error message.
 
 
       ! Local declarations.
@@ -2552,26 +2670,26 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    INTEGER(IntKi)               :: ErrStatLcL                                 ! Local error status.
    INTEGER                      :: I                                          ! The index into the arrays.
-
+   CHARACTER(*), PARAMETER      :: RoutineName = 'RegCubicSplineInit'
 
 
       ! Allocate the various intermediate arrays.
 
    ALLOCATE ( Slope( AryLen - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the Slope array in RegCubicSplineInit.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the Slope array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( U( AryLen - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the U array in RegCubicSplineInit.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the U array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( V( AryLen - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the V array in RegCubicSplineInit.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the V array.' )
       RETURN
    ENDIF
 
@@ -2675,8 +2793,8 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                    ! Error status.
 
-   CHARACTER(4096), INTENT(OUT) :: ErrMsg                                     ! Error message.
-
+   CHARACTER(*),   INTENT(OUT)  :: ErrMsg                                     ! Error message.
+   
 
       ! Local declarations.
 
@@ -2695,7 +2813,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
    INTEGER                      :: NumCrvs                                    ! Number of curves to be interpolated.
    INTEGER                      :: NumPts                                     ! Number of points in each curve.
 
-
+   CHARACTER(*), PARAMETER      :: RoutineName = 'CubicSplineInitM'
 
       ! How big are the arrays?
 
@@ -2707,31 +2825,31 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    ALLOCATE ( ZLo( NumCrvs ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the ZLo array in CubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the ZLo array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( ZHi( NumCrvs ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the ZHi array in CubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the ZHi array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( Slope( NumPts-1, NumCrvs ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the Slope array in RegCubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the Slope array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( U( NumPts - 1 ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the U array in RegCubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the U array.' )
       RETURN
    ENDIF
 
    ALLOCATE ( V( NumPts-1, NumCrvs ), STAT=ErrStatLcL )
    IF ( ErrStatLcL /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, NewLine//' >> Error allocating memory for the V array in RegCubicSplineInitM.' )
+      CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Error allocating memory for the V array.' )
       RETURN
    ENDIF
 
@@ -2810,6 +2928,8 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
             ! Deallocate the Words array if it had been allocated.
 
+         IF ( ALLOCATED( ZHi   ) )  DEALLOCATE( ZHi   )
+         IF ( ALLOCATED( ZLo   ) )  DEALLOCATE( ZLo   )
          IF ( ALLOCATED( Slope ) )  DEALLOCATE( Slope )
          IF ( ALLOCATED( U     ) )  DEALLOCATE( U     )
          IF ( ALLOCATED( V     ) )  DEALLOCATE( V     )
@@ -2846,7 +2966,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                    ! Error status.
 
-   CHARACTER(4096), INTENT(OUT) :: ErrMsg                                     ! Error message.
+   CHARACTER(*),   INTENT(OUT)  :: ErrMsg                                     ! Error message.
 
 
       ! Local declarations.
@@ -2855,7 +2975,8 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    INTEGER                      :: ILo                                        ! The index into the array for which X is just above or equal to XAry(ILo).
 
-
+   ErrStat = ErrID_None
+   ErrMsg  = ""
 
       ! See if X is within the range of XAry.  Return the end point if it is not.
 
@@ -2877,39 +2998,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
    RegCubicSplineInterp = Coef(ILo,0) + XOff*( Coef(ILo,1) + XOff*( Coef(ILo,2) + XOff*Coef(ILo,3) ) )
 
 
-   CALL ExitThisRoutine ( ErrID_None, 'No Problemo' )
-
    RETURN
-
-   !=======================================================================
-   CONTAINS
-   !=======================================================================
-      SUBROUTINE ExitThisRoutine ( ErrID, Msg )
-
-         ! This subroutine cleans up the parent routine before exiting.
-
-
-            ! Argument declarations.
-
-         INTEGER(IntKi), INTENT(IN)       :: ErrID                            ! The error identifier (ErrLev)
-
-         CHARACTER(*),   INTENT(IN)       :: Msg                              ! The error message (ErrMsg)
-
-
-            ! Local declarations.
-
-         LOGICAL                          :: IsOpen                           ! A flag that indicates if the input unit is still open.
-
-
-            ! Set error status/message
-
-         ErrStat = ErrID
-         ErrMsg  = Msg
-
-
-         RETURN
-
-      END SUBROUTINE ExitThisRoutine ! ( ErrID, Msg )
 
    END FUNCTION RegCubicSplineInterp ! ( X, AryLen, XAry, YAry, DelX, Coef, ErrStat, ErrMsg )
 !=======================================================================
@@ -2937,7 +3026,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                    ! Error status.
 
-   CHARACTER(4096), INTENT(OUT) :: ErrMsg                                     ! Error message.
+   CHARACTER(*),   INTENT(OUT)  :: ErrMsg                                     ! Error message.
 
 
       ! Local declarations.
@@ -2950,6 +3039,8 @@ END SUBROUTINE DCM_SetLogMapForInterp
    INTEGER                      :: NumPts                                     ! Number of points in each curve.
 
 
+   ErrStat = ErrID_None
+   ErrMsg  = ""
 
       ! How big are the arrays?  Use the size to allocate the result.
 
@@ -2958,7 +3049,8 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
    ALLOCATE ( Res( NumCrvs ) , STAT=ErrStatLcl )
    IF ( ErrStatLcl /= 0 )  THEN
-      CALL ExitThisRoutine ( ErrID_Fatal, '  >> Error allocating memory for the function result array in RegCubicSplineInterpM.' )
+      ErrStat = ErrID_Fatal
+      ErrMsg  = "RegCubicSplineInterpM:Error allocating memory for the function result."
       RETURN
    ENDIF
 
@@ -2983,40 +3075,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
    Res(:) = Coef(ILo,:,0) + XOff*( Coef(ILo,:,1) + XOff*( Coef(ILo,:,2) + XOff*Coef(ILo,:,3) ) )
 
 
-   CALL ExitThisRoutine ( ErrID_None, 'No Problemo' )
-
    RETURN
-
-   !=======================================================================
-   CONTAINS
-   !=======================================================================
-      SUBROUTINE ExitThisRoutine ( ErrID, Msg )
-
-         ! This subroutine cleans up the parent routine before exiting.
-
-
-            ! Argument declarations.
-
-         INTEGER(IntKi), INTENT(IN)       :: ErrID                            ! The error identifier (ErrLev)
-
-         CHARACTER(*),   INTENT(IN)       :: Msg                              ! The error message (ErrMsg)
-
-
-            ! Local declarations.
-
-         LOGICAL                          :: IsOpen                           ! A flag that indicates if the input unit is still open.
-
-
-            ! Set error status/message
-
-         ErrStat = ErrID
-         ErrMsg  = Msg
-
-
-         RETURN
-
-      END SUBROUTINE ExitThisRoutine ! ( ErrID, Msg )
-
    END FUNCTION RegCubicSplineInterpM ! ( X, XAry, YAry, DelX, Coef, ErrStat, ErrMsg )
 !=======================================================================
    SUBROUTINE RombergInt(f, a, b, R, err, eps, ErrStat)
@@ -3053,7 +3112,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
 
          ! Local declarations:
 
-      INTEGER                           :: m, i, j, k
+      INTEGER                           :: m, i, j, k, IOS
       INTEGER, PARAMETER                :: mmax = 50       ! Maximum iteration number for m
       INTEGER, PARAMETER                :: imax = 50       ! Maximum iteration number for i
 
@@ -3062,7 +3121,15 @@ END SUBROUTINE DCM_SetLogMapForInterp
       REAL(ReKi)                        :: sumf
 
          ! Initialize T
-      ALLOCATE( T( mmax, imax ) )
+      ALLOCATE( T( mmax, imax ), Stat=ios )
+      IF (IOS /= 0) THEN
+         CALL ProgAbort ( 'RombergInt: Error allocating T.', PRESENT(ErrStat) )
+         IF ( PRESENT(ErrStat) ) THEN
+            ErrStat = ErrID_Fatal
+            RETURN
+         END IF
+      END IF
+      
       T = 0
 
       T(1, 1) = 0.5*(b - a)*( f(a) + f(b) )
@@ -3110,7 +3177,7 @@ END SUBROUTINE DCM_SetLogMapForInterp
       CALL ProgAbort ( ' In subroutine RombergInt, the iteration reaches the maximum number. The integration did NOT converge! ', &
                        PRESENT(ErrStat) )
       IF ( PRESENT(ErrStat) ) THEN
-         ErrStat = 1
+         ErrStat = ErrID_Fatal
          RETURN
       END IF
 
@@ -3447,6 +3514,19 @@ END SUBROUTINE DCM_SetLogMapForInterp
    end do
    
    END FUNCTION trace
+!=======================================================================
+   FUNCTION TwoNorm(v)
+   
+      ! this function returns the 2-norm of a vector v
+      ! fortran 2008 has Norm2() built in
+      
+      REAL(ReKi), INTENT(IN)  :: v(:)      
+      REAL(ReKi)              :: TwoNorm      
+      
+      TwoNorm = SQRT( DOT_PRODUCT(v, v) )
+      
+      
+   END FUNCTION
 !=======================================================================  
    SUBROUTINE Zero2TwoPi ( Angle )
 
