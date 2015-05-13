@@ -206,7 +206,7 @@ program UnsteadyAeroTest
             
  
                ! Prepare states for next time step
-            call UA_UpdateStates(u(1), p, xd, OtherState, AFI_Params%AFInfo(AFIndx(i,j)), errStat, errMsg )
+            call UA_UpdateStates(i, j, u(1), p, xd, OtherState, AFI_Params%AFInfo(AFIndx(i,j)), errStat, errMsg )
                  
          end do
       end do
