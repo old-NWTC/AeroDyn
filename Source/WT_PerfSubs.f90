@@ -12,55 +12,53 @@ module WTP_DvrSubs
 
    
    
-   subroutine Set_AD_InitInp(WTP_Data, AD_Data, errStat, errMsg)
+   subroutine Set_AD_InitInp(WTP_Data, AD_Data, outFileRoot, errStat, errMsg)
 
       type(WTP_InputFileData), intent(in   )   :: WTP_Data             ! Input data for initialization
       type(AD_InitInputType) , intent(  out)   :: AD_Data              ! Input data for initialization
-      integer(IntKi)         , intent(inout)   :: errStat              ! Status of error message
-      character(*)           , intent(inout)   :: errMsg               ! Error message if ErrStat /= ErrID_None
+      integer(IntKi)         , intent(  out)   :: errStat              ! Status of error message
+      character(*)           , intent(  out)   :: errMsg               ! Error message if ErrStat /= ErrID_None
+      character(*)           , intent(in)      :: outFileRoot          ! rootname of output files for AD
 
          ! locals
       integer(IntKi)                           :: i, j
       integer(IntKi)                           :: errStat2             ! local status of error message
       character(len(errMsg))                   :: errMsg2              ! local error message if ErrStat /= ErrID_None
       real(ReKi)                               :: rHub, zTip, deltar
-      errStat2 = ErrID_None
-      errMsg2  = ''
+      
+      errStat = ErrID_None
+      errMsg  = ''
    
+      AD_Data%InputFile      = WTP_Data%AD_InputFile
+      AD_Data%NumBlades      = WTP_Data%numBlade
+      AD_Data%RootName       = outFileRoot
+      
       AD_Data%numBladeNodes  = WTP_Data%numSeg
-      AD_Data%numBlades      = WTP_Data%numBlade
-      AD_Data%NumAF          = WTP_Data%NumAF
       
       
       AD_Data%BEMT%numBladeNodes  = WTP_Data%numSeg
       AD_Data%BEMT%numBlades      = WTP_Data%numBlade
       
    
-      allocate ( AD_Data%chord(AD_Data%numBladeNodes, AD_Data%numBlades), STAT = errStat2 )
+      allocate ( AD_Data%chord(AD_Data%numBladeNodes, AD_Data%NumBlades), STAT = errStat2 )
       if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%chord.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
+         call SetErrStat( ErrID_Fatal, 'Error allocating memory for AD_Data%chord.', errStat, errMsg, 'Set_AD_InitInp' )
          return
       end if 
    
       allocate ( AD_Data%AFindx(AD_Data%numBladeNodes), STAT = errStat2 )
       if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%chord array.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
+         call SetErrStat( ErrID_Fatal, 'Error allocating memory for AD_Data%chord array.', errStat, errMsg, 'Set_AD_InitInp' )
          return
       end if 
       
-      allocate ( AD_Data%zLocal(AD_Data%numBladeNodes, AD_Data%numBlades), STAT = errStat2 )
+      allocate ( AD_Data%zLocal(AD_Data%numBladeNodes, AD_Data%NumBlades), STAT = errStat2 )
       if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%zLocal array.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
+         call SetErrStat( ErrID_Fatal, 'Error allocating memory for AD_Data%zLocal array.', errStat, errMsg, 'Set_AD_InitInp' )
          return
       end if 
    
-      allocate ( AD_Data%zTip(AD_Data%numBlades), STAT = errStat2 )
+      allocate ( AD_Data%zTip(AD_Data%NumBlades), STAT = errStat2 )
       if ( errStat2 /= 0 ) then
          errStat2 = ErrID_Fatal
          errMsg2  = 'Error allocating memory for AD_Data%zTip array.'
@@ -68,7 +66,7 @@ module WTP_DvrSubs
          return
       end if 
       
-      allocate ( AD_Data%zHub(AD_Data%numBlades), STAT = errStat2 )
+      allocate ( AD_Data%zHub(AD_Data%NumBlades), STAT = errStat2 )
       if ( errStat2 /= 0 ) then
          errStat2 = ErrID_Fatal
          errMsg2  = 'Error allocating memory for AD_Data%rHub array.'
@@ -116,27 +114,7 @@ module WTP_DvrSubs
          call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
          return
       end if 
-      
-      allocate ( AD_Data%AF_File(AD_Data%NumAF), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%AF_File array.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
-      
-      allocate ( AD_Data%BEMT%AF_File(AD_Data%NumAF), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%BEMT%AF_File array.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
-      
-      do i=1, AD_Data%NumAF
-         AD_Data%AF_File(i) =  WTP_Data%AF_File(i)
-         AD_Data%BEMT%AF_File(i) =  WTP_Data%AF_File(i)
-      end do
+            
       
       do i=1,AD_Data%numBladeNodes
          

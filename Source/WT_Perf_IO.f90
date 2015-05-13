@@ -9,25 +9,24 @@ module WT_Perf_IO
    
    contains
    
-subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
+subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
    ! This routine opens the gets the data from the input files.
 
-   character(*),                  intent( in    )   :: inputFile
+   character(*),                  intent( in    )   :: fileName
    type(WTP_InputFileData),       intent(   out )   :: inputData
    integer,                       intent(   out )   :: errStat              ! returns a non-zero value when an error occurs  
    character(*),                  intent(   out )   :: errMsg               ! Error message if errStat /= ErrID_None
    
 
       ! Local variables
-   character(1024)              :: fileName
    character(1024)              :: rootName
-   character(1024)              :: AF_File                                  ! String containing the name of an aifoil file.
+   character(1024)              :: PriPath
    character(1024)              :: inpVersion                               ! String containing the input-version information.
    character(1024)              :: line                                     ! String containing a line of input.
    character(1024)              :: subTitle                                 ! String containing the RunTitle of a subsection.
    integer                      :: unIn, unEc, NumElmPr
    integer(IntKi)               :: ErrStat2                                 ! Temporary Error status
-   character(len(errMsg))       :: ErrMsg2                                  ! Temporary Error message
+   character(ErrMsgLen)         :: ErrMsg2                                  ! Temporary Error message
    integer                      :: ISeg, IAF, ICase
    integer                      :: IOS, Sttus
    character( 11)               :: DateNow                                  ! Date shortly after the start of execution.
@@ -35,8 +34,9 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
    real(ReKi)                   :: InpCase(4)                               ! Temporary array to hold combined-case input parameters.
    
    ! Open the input file
-   fileName = trim(inputFile)
    call GetRoot ( fileName, rootName )
+   CALL GetPath( fileName, PriPath )     ! Input files will be relative to the path where the primary input file is located.
+
    call GetNewUnit( unIn )   
    call OpenFInpFile( unIn, fileName, errStat, ErrMsg )
    if ( errStat /= ErrID_None ) then
@@ -89,8 +89,10 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
    call ReadVar ( unIn, fileName, inputData%dimenInp, 'DimenInp', 'Turbine parameters are dimensional?', errStat2, errMsg2 )
       if ( OnCheckErr() ) return
       
-   call ReadVar ( unIn, fileName, inputData%metric,   'Metric',   'Turbine parameters are Metric (MKS vs FPS)?', errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%AD_InputFile,   'AD_InputFile',   'Name of the AeroDyn input file', errStat2, errMsg2 )
       if ( OnCheckErr() ) return
+      IF ( PathIsRelative( inputData%AD_InputFile ) ) inputData%AD_InputFile = TRIM(PriPath)//TRIM(inputData%AD_InputFile)
+
 
 
       ! Read the model-configuration section.
@@ -127,20 +129,9 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
    call ReadCom ( unIn, fileName,                       'the algorithm-configuration subtitle'                           , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%useTipLoss,  'useTipLoss',  'Use the Prandtl tip-loss model?'                , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%useHubLoss,  'useHubLoss',  'Use the Prandtl hub-loss model?'                , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%useTanInd,    'useTanInd',    'Include Swirl effects?'                       , errStat2, errMsg2 )
+   call ReadVar ( unIn, fileName, inputData%useTanInd,    'useTanInd',    'Include Swirl effects?'                       , errStat2, errMsg2 ) !Swirl
    call ReadVar ( unIn, fileName, inputData%skewWakeMod, 'skewWakeMod', 'Skewed-wake correction model'                   , errStat2, errMsg2 )
-!Start of proposed change.  v3.02.00b-mlb 22-August-2006  M. Buhl
-!v3.02.00b-mlb   CALL ReadVar ( unIn, fileName, AdvBrake, 'AdvBrake', 'Use the advanced brake-state model?'                            )
-!End of proposed change.  v3.02.00b-mlb 22-August-2006  M. Buhl
-!Start of proposed change.  v3.02.00a-mlb 03-August-2006  M. Buhl
-!v3.02.00a-mlb   CALL ReadVar ( unIn, fileName, IndProp,  'IndProp',  'Use PROP-PC instead of PROPX induction algorithm?'              )
-!Start of proposed change.  v3.02.00b-mlb 22-August-2006  M. Buhl
-!v3.02.00b-mlb   CALL ReadVar ( unIn, fileName, IndType,  'IndType',  'Use: 0-None, 1-PROPPC, 2-PROPX induction algorithm.'            )
-  ! CALL ReadVar ( unIn, fileName, IndType,  'IndType',  'Use: 0-None, 1-BEM induction algorithm.'                        )
-!3.03.01a00-dcm
    call ReadVar ( unIn, fileName, inputData%useInduction,  'useInduction',  'Use BEM induction algorithm?'                        , errStat2, errMsg2 )
-!End of proposed change.  v3.02.00b-mlb 22-August-2006  M. Buhl
-!End of proposed change.  v3.02.00a-mlb 03-August-2006  M. Buhl
    call ReadVar ( unIn, fileName, inputData%useAIDrag,   'useAIDrag',   'Include the drag term in the axial-induction calculation?'      , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%useTIDrag,   'useTIDrag',   'Include the drag term in the tangential-induction calculation?' , errStat2, errMsg2 )
 
@@ -304,28 +295,21 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
    call ReadVar ( unIn, fileName, inputData%AirDens,  'AirDens',  'Air density.' , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%KinVisc,  'KinVisc',  'Kinesmatic viscosity.' , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%ShearExp, 'ShearExp', 'Shear exponent.' , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%UseCm,    'UseCm',    'Cm data included in airfoil tables?' , errStat2, errMsg2 )
-!Start of proposed change.  v3.03.02a-mlb, 10-Apr-2010,  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%UseCpmin, 'UseCpmin', 'Cp,min data included in airfoil tables?' , errStat2, errMsg2 )
-!End of proposed change.  v3.03.02a-mlb, 10-Apr-2010,  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%NumAF,    'NumAF',    'Number of unique airfoil tables.'     , errStat2, errMsg2 )
 
    if ( inputData%AirDens <= 0.0 )  call Abort ( ' The air density must be greater than zero.' )
    if ( inputData%KinVisc <= 0.0 )  call Abort ( ' The kinesmatic viscosity must be greater than zero.' )
 
-
-      ! Check the list of airfoil tables to make sure they are all within limits.
-
-   if ( inputData%NumAF < 1 )  call Abort ( ' The number of unique airfoil tables (NumAF) must be greater than zero.' )
-
-   do ISeg=1,inputData%numSeg
-      if ( ( inputData%BladeData(ISeg)%AFfile < 1 ) .OR. ( inputData%BladeData(ISeg)%AFfile > inputData%NumAF ) )  then
-         errMsg =  ' Segment #'//trim( Int2LStr( ISeg ) )//' requested airfoil input table #'//trim( Int2LStr( inputData%BladeData(ISeg)%AFfile ) ) &
-                    //'.  However, it must be between 1 and NumAF (='//trim( Int2LStr( inputData%NumAF ) )//'), inclusive.' 
-         errStat = ErrID_Fatal
-         return
-      endif
-   enddo ! ISeg
+!bjj: need to move this to AD, I think
+   !   ! Check the list of airfoil tables to make sure they are all within limits.
+   !
+   !do ISeg=1,inputData%numSeg
+   !   if ( ( inputData%BladeData(ISeg)%AFfile < 1 ) .OR. ( inputData%BladeData(ISeg)%AFfile > inputData%NumAF ) )  then
+   !      errMsg =  ' Segment #'//trim( Int2LStr( ISeg ) )//' requested airfoil input table #'//trim( Int2LStr( inputData%BladeData(ISeg)%AFfile ) ) &
+   !                 //'.  However, it must be between 1 and NumAF (='//trim( Int2LStr( inputData%NumAF ) )//'), inclusive.' 
+   !      errStat = ErrID_Fatal
+   !      return
+   !   endif
+   !enddo ! ISeg
 
 
       ! Allocate the airfoil data super-supertables for both unique data and complete data.
@@ -334,22 +318,6 @@ subroutine WTP_ReadInputFile(inputFile, inputData, errStat, errMsg )
    !IF ( Sttus /= 0 )  THEN
    !   CALL Abort ( ' Error allocating memory for the AF_Uniq super-supertable in T_GetAF.' )
    !ENDIF
-
-
-      ! Read in NumAF unique airfoil data files.
-   allocate ( inputData%AF_File(inputData%NumAF) , STAT=Sttus )
-   if ( Sttus /= 0 )  then
-      errMsg= ' Error allocating memory for the AF_File array.'
-      errStat = ErrID_Fatal
-      return
-   endif
-   
-   do IAF=1,inputData%NumAF
-
-      call ReadVar ( unIn, fileName, inputData%AF_File(IAF), 'AF_File', 'Airfoil file #'//trim( Int2LStr( IAF ) )//'.' , errStat2, errMsg2 )
-      
-
-   enddo
 
 
       ! Make sure we have a minimum of four sectors if we have shear, shaft tilt, or yaw.

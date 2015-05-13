@@ -1,4 +1,4 @@
-!STARTOFREGISTRYGENERATEDFILE './BEMT_Types.f90'
+!STARTOFREGISTRYGENERATEDFILE '..\..\..\Source\dependencies\BEMT/BEMT_Types.f90'
 !
 ! WARNING This file is generated automatically by the FAST registry
 ! Do not edit.  Your changes to this file will be lost.
@@ -57,8 +57,6 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zHub      ! Distance to hub for each blade [m]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: zLocal      ! Distance to blade node, measured along the blade [m]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zTip      ! Distance to blade tip, measured along the blade [m]
-    INTEGER(IntKi)  :: NumAF      ! Parameters for the BEMT module [-]
-    CHARACTER(1024) , DIMENSION(:), ALLOCATABLE  :: AF_File      ! Parameters for the BEMT module [-]
     LOGICAL  :: UA_Flag      ! logical flag indicating whether to use UnsteadyAero [-]
   END TYPE BEMT_InitInputType
 ! =======================
@@ -242,19 +240,6 @@ IF (ALLOCATED(SrcInitInputData%zTip)) THEN
   END IF
     DstInitInputData%zTip = SrcInitInputData%zTip
 ENDIF
-    DstInitInputData%NumAF = SrcInitInputData%NumAF
-IF (ALLOCATED(SrcInitInputData%AF_File)) THEN
-  i1_l = LBOUND(SrcInitInputData%AF_File,1)
-  i1_u = UBOUND(SrcInitInputData%AF_File,1)
-  IF (.NOT. ALLOCATED(DstInitInputData%AF_File)) THEN 
-    ALLOCATE(DstInitInputData%AF_File(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitInputData%AF_File.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DstInitInputData%AF_File = SrcInitInputData%AF_File
-ENDIF
     DstInitInputData%UA_Flag = SrcInitInputData%UA_Flag
  END SUBROUTINE BEMT_CopyInitInput
 
@@ -281,9 +266,6 @@ IF (ALLOCATED(InitInputData%zLocal)) THEN
 ENDIF
 IF (ALLOCATED(InitInputData%zTip)) THEN
   DEALLOCATE(InitInputData%zTip)
-ENDIF
-IF (ALLOCATED(InitInputData%AF_File)) THEN
-  DEALLOCATE(InitInputData%AF_File)
 ENDIF
  END SUBROUTINE BEMT_DestroyInitInput
 
@@ -361,12 +343,6 @@ ENDIF
   IF ( ALLOCATED(InData%zTip) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! zTip upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%zTip)  ! zTip
-  END IF
-      Int_BufSz  = Int_BufSz  + 1  ! NumAF
-  Int_BufSz   = Int_BufSz   + 1     ! AF_File allocated yes/no
-  IF ( ALLOCATED(InData%AF_File) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! AF_File upper/lower bounds for each dimension
-      Int_BufSz  = Int_BufSz  + SIZE(InData%AF_File)*LEN(InData%AF_File)  ! AF_File
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! UA_Flag
   IF ( Re_BufSz  .GT. 0 ) THEN 
@@ -496,25 +472,6 @@ ENDIF
 
       IF (SIZE(InData%zTip)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%zTip))-1 ) = PACK(InData%zTip,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%zTip)
-  END IF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumAF
-      Int_Xferred   = Int_Xferred   + 1
-  IF ( .NOT. ALLOCATED(InData%AF_File) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%AF_File,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%AF_File,1)
-    Int_Xferred = Int_Xferred + 2
-
-    DO i1 = LBOUND(InData%AF_File,1), UBOUND(InData%AF_File,1)
-        DO I = 1, LEN(InData%AF_File)
-          IntKiBuf(Int_Xferred) = ICHAR(InData%AF_File(i1)(I:I), IntKi)
-          Int_Xferred = Int_Xferred   + 1
-        END DO ! I
-    END DO !i1
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%UA_Flag , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
@@ -703,35 +660,6 @@ ENDIF
     mask1 = .TRUE. 
       IF (SIZE(OutData%zTip)>0) OutData%zTip = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%zTip))-1 ), mask1, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%zTip)
-    DEALLOCATE(mask1)
-  END IF
-      OutData%NumAF = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! AF_File not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%AF_File)) DEALLOCATE(OutData%AF_File)
-    ALLOCATE(OutData%AF_File(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%AF_File.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask1 = .TRUE. 
-    DO i1 = LBOUND(OutData%AF_File,1), UBOUND(OutData%AF_File,1)
-        DO I = 1, LEN(OutData%AF_File)
-          OutData%AF_File(i1)(I:I) = CHAR(IntKiBuf(Int_Xferred))
-          Int_Xferred = Int_Xferred   + 1
-        END DO ! I
-    END DO !i1
     DEALLOCATE(mask1)
   END IF
       OutData%UA_Flag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )

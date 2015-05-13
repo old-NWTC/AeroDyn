@@ -22,8 +22,8 @@ module WTP_Types
       logical         :: echo   
       character(1024) :: runTitle
       logical         :: dimenInp
-      logical         :: metric
       integer         :: numSect
+      character(1024) :: AD_InputFile
       integer         :: maxIter
       real(ReKi)      :: ATol
       real(ReKi)      :: ATol2
@@ -63,10 +63,6 @@ module WTP_Types
       real(ReKi)      :: AirDens
       real(ReKi)      :: KinVisc
       real(ReKi)      :: ShearExp
-      logical         :: UseCm
-      logical         :: UseCpmin
-      integer         :: NumAF
-      character(1024), allocatable :: AF_File(:)
       character(1024) :: OutFileRoot
       logical         :: UnfPower
       logical         :: TabDel

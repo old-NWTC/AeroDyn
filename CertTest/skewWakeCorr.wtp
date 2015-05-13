@@ -4,12 +4,11 @@ Compatible with WT_Perf v4.xx
 -----  Input Configuration  ----------------------------------------------------
 False                Echo:                      Echo input parameters to "<rootname>.ech"?
 True                 DimenInp:                  Turbine parameters are dimensional?
-True                 Metric:                    Turbine parameters are Metric (MKS vs FPS)?
+"skewWakeCorr_AeroDyn.dat" AD_InputFile:              Name of the primary AeroDyn input file
 -----  Model Configuration  ----------------------------------------------------
 160                   NumSect:                   Number of circumferential sectors.
 500                    MaxIter:                   Max number of iterations for induction factor.
 1.0e-5               ATol:                      Error tolerance for induction iteration.
-1.0e-5               SWTol:                     Error tolerance for skewed-wake iteration.
 -----  Algorithm Configuration  ------------------------------------------------
 True                 TipLoss:                   Use the Prandtl tip-loss model?
 True                 HubLoss:                   Use the Prandtl hub-loss model?
@@ -18,7 +17,6 @@ True                 Swirl:                     Include Swirl effects?
 True                 IndType:                   Use BEM induction algorithm?
 False True                 AIDrag:                    Use the drag term in the axial induction calculation?
 False True                 TIDrag:                    Use the drag term in the tangential induction calculation?
-False                TISingularity:             Use the singularity avoidance method in the tangential-induction calculation?
 -----  Turbine Data  -----------------------------------------------------------
 2                    NumBlade:                  Number of blades.
 5.029                RotorRad:                  Rotor radius [length].
@@ -28,7 +26,7 @@ False                TISingularity:             Use the singularity avoidance me
 0.0                  Yaw:                       Yaw error [deg].
 12.192               HubHt:                     Hub height [length or div by radius].
 21                   NumSeg:                    Number of blade segments (entire rotor radius).
-   RElm      Twist      Chord  AFfile  PrntElem 
+   RElm      Twist      Chord  AFfile  PrntElem
 0.6060    0.000     0.219     1    true
 0.8801   -0.098     0.181     3    true
 1.2321   19.423     0.714     4    true
@@ -54,17 +52,6 @@ False                TISingularity:             Use the singularity avoidance me
 1.2254            1.2265     1.229                   Rho:                 Air density [mass/volume].   ! Need to get the mean form the experimental UAE data
 1.81206e-5                               KinVisc:             Kinematic air viscosity
 0.0                                      ShearExp:            Wind shear exponent (1/7 law = 0.143).
-True                                     UseCm:               Are Cm data included in the airfoil tables?
-False                                    UseCpmin:            Are Cp,min data included in the airfoil tables?
-8                                        NumAF:               Number of airfoil files.
-"af_files2/cylinder.dat"                 AF_File:             List of NumAF airfoil files.
-"af_files2/S809_CLN_129.dat"
-"af_files2/S809_CLN_185.dat"
-"af_files2/S809_CLN_242.dat"
-"af_files2/S809_CLN_298.dat"
-"af_files2/S809_CLN_354.dat"
-"af_files2/S809_CLN_410.dat"
-"af_files2/S809_CLN_Outboard.dat"  
 -----  I/O Settings  -----------------------------------------------------------
 False                UnfPower:                  Write parametric power to an unformatted file?
 True                 TabDel:                    When generating formatted output (OutForm=True), make output tab-delimited (fixed-width otherwise).
@@ -78,7 +65,7 @@ True                 OutMaxCp:                  Output conditions for the maximu
 -----  Combined-Case Analysis  -------------------------------------------------
 1                   NumCases:                  Number of cases to run.  Enter zero for parametric analysis.
 WS or TSR   RotSpd   Pitch      Yaw                     Remove following block of lines if NumCases is zero.
-7            71.548     3.0       20.0 
+7            71.548     3.0       20.0
 -----  Parametric Analysis (Ignored if NumCases > 0)  --------------------------
 3                    ParRow:                    Row parameter    (1-rpm, 2-pitch, 3-tsr/speed).
 2                    ParCol:                    Column parameter (1-rpm, 2-pitch, 3-tsr/speed).

@@ -4,7 +4,7 @@ Compatible with WT_Perf v4.xx
 -----  Input Configuration  ----------------------------------------------------
 False                Echo:                      Echo input parameters to "<rootname>.ech"?
 True                 DimenInp:                  Turbine parameters are dimensional?
-True                 Metric:                    Turbine parameters are Metric (MKS vs FPS)?
+"Test01_UAE_AeroDyn.dat"  AD_InputFile:              Name of the primary AeroDyn input file
 -----  Model Configuration  ----------------------------------------------------
 21                   NumSect:                   Number of circumferential sectors.
 100                  MaxIter:                   Max number of iterations for induction factor.
@@ -52,19 +52,6 @@ True                  TIDrag:                   Use the drag term in the tangent
 1.246                                    Rho:                 Air density [mass/volume].
 1.4639e-5                                KinVisc:             Kinematic air viscosity
 0.0                                      ShearExp:            Wind shear exponent (1/7 law = 0.143).
-True                                     UseCm:               Are Cm data included in the airfoil tables?
-False                                    UseCpmin:            Are Cp,min data included in the airfoil tables?
-10                                       NumAF:               Number of airfoil files.
-"Airfoils/UAE_VI/cylinder.dat"                  AF_File:             List of NumAF airfoil files.
-"Airfoils/UAE_VI/Mod_S809_129.dat"
-"Airfoils/UAE_VI/Mod_S809_185.dat"
-"Airfoils/UAE_VI/Mod_S809_242.dat"
-"Airfoils/UAE_VI/Mod_S809_298.dat"
-"Airfoils/UAE_VI/Mod_S809_354.dat"
-"Airfoils/UAE_VI/Mod_S809_410.dat"
-"Airfoils/UAE_VI/Mod_S809_600.dat"
-"Airfoils/UAE_VI/Mod_S809_800.dat"
-"Airfoils/UAE_VI/Mod_S809_Outboard.dat"  
 -----  I/O Settings  -----------------------------------------------------------
 "Test01"              OutFileRoot                Root name for any output files
 False                UnfPower:                  Write parametric power to an unformatted file?

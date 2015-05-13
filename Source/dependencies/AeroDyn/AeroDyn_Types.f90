@@ -39,11 +39,10 @@ IMPLICIT NONE
 ! =========  AD_InitInputType  =======
   TYPE, PUBLIC :: AD_InitInputType
     CHARACTER(1024)  :: InputFile      ! Name of the input file [-]
-    INTEGER(IntKi)  :: NumBl      ! Number of blades on the turbine [-]
+    INTEGER(IntKi)  :: NumBlades      ! Number of blades on the turbine [-]
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     REAL(DbKi)  :: DT      ! time step [s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
-    INTEGER(IntKi)  :: numBlades      ! Number of blades [-]
     REAL(ReKi)  :: airDens      ! Air density [kg/m^3]
     REAL(ReKi)  :: kinVisc      ! Kinematic air viscosity [m^2/s]
     INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
@@ -60,9 +59,6 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zHub      ! Distance to hub for each blade [m]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: zLocal      ! Distance to blade node, measured along the blade [m]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zTip      ! Distance to blade tip, measured along the blade [m]
-    TYPE(AFInfoType) , DIMENSION(:), ALLOCATABLE  :: AFInfo      ! Parameters for the airfoils [-]
-    INTEGER(IntKi)  :: NumAF      ! Parameters for the BEMT module [-]
-    CHARACTER(1024) , DIMENSION(:), ALLOCATABLE  :: AF_File      ! Parameters for the BEMT module [-]
     TYPE(BEMT_InitInputType)  :: BEMT      ! Parameters for the BEMT module [-]
     INTEGER(IntKi)  :: BEMT_SkewWakeMod      ! The BEMT module skewed wake model, set to 0 if BEMT is not being used [-]
   END TYPE AD_InitInputType
@@ -160,14 +156,13 @@ IMPLICIT NONE
 ! =========  AD_ParameterType  =======
   TYPE, PUBLIC :: AD_ParameterType
     REAL(DbKi)  :: DT      ! Time step for continuous state integration & discrete state update [seconds]
-    TYPE(AFI_ParameterType)  :: AFI_Params      ! AirfoilInfo parameters [-]
-    INTEGER(IntKi)  :: NumBl      ! Number of blades on the turbine [-]
+    TYPE(AFI_ParameterType)  :: AFI      ! AirfoilInfo parameters [-]
+    INTEGER(IntKi)  :: NumBlades      ! Number of blades on the turbine [-]
     TYPE(BEMT_ParameterType)  :: BEMT      ! Parameters for BEMT module [-]
     INTEGER(IntKi)  :: NumOuts      ! Number of parameters in the output list (number of outputs requested) [-]
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     TYPE(OutParmType) , DIMENSION(:), ALLOCATABLE  :: OutParam      ! Names and units (and other characteristics) of all requested output parameters [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
-    INTEGER(IntKi)  :: numBlades      ! Number of blades [-]
     REAL(ReKi)  :: airDens      ! Air density [kg/m^3]
     REAL(ReKi)  :: kinVisc      ! Kinematic air viscosity [m^2/s]
     INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
@@ -182,9 +177,6 @@ IMPLICIT NONE
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: AFindx      ! Index of airfoil data file for blade node location [array of numBladeNodes] [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: tipLossConst      ! A constant computed during initialization based on B*(zTip-zLocal)/(2*zLocal) [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: hubLossConst      ! A constant computed during initialization based on B*(zLocal-zHub)/(2*zHub) [-]
-    TYPE(AFInfoType) , DIMENSION(:), ALLOCATABLE  :: AFInfo      ! Parameters for the airfoils [-]
-    INTEGER(IntKi)  :: NumAF      ! Parameters for the BEMT module [-]
-    CHARACTER(1024) , DIMENSION(:), ALLOCATABLE  :: AF_File      ! Parameters for the BEMT module [-]
   END TYPE AD_ParameterType
 ! =======================
 ! =========  AD_OutputType  =======
@@ -226,7 +218,7 @@ CONTAINS
    ErrStat = ErrID_None
    ErrMsg  = ""
     DstInitInputData%InputFile = SrcInitInputData%InputFile
-    DstInitInputData%NumBl = SrcInitInputData%NumBl
+    DstInitInputData%NumBlades = SrcInitInputData%NumBlades
     DstInitInputData%RootName = SrcInitInputData%RootName
     DstInitInputData%DT = SrcInitInputData%DT
 IF (ALLOCATED(SrcInitInputData%chord)) THEN
@@ -243,7 +235,6 @@ IF (ALLOCATED(SrcInitInputData%chord)) THEN
   END IF
     DstInitInputData%chord = SrcInitInputData%chord
 ENDIF
-    DstInitInputData%numBlades = SrcInitInputData%numBlades
     DstInitInputData%airDens = SrcInitInputData%airDens
     DstInitInputData%kinVisc = SrcInitInputData%kinVisc
     DstInitInputData%skewWakeMod = SrcInitInputData%skewWakeMod
@@ -306,35 +297,6 @@ IF (ALLOCATED(SrcInitInputData%zTip)) THEN
   END IF
     DstInitInputData%zTip = SrcInitInputData%zTip
 ENDIF
-IF (ALLOCATED(SrcInitInputData%AFInfo)) THEN
-  i1_l = LBOUND(SrcInitInputData%AFInfo,1)
-  i1_u = UBOUND(SrcInitInputData%AFInfo,1)
-  IF (.NOT. ALLOCATED(DstInitInputData%AFInfo)) THEN 
-    ALLOCATE(DstInitInputData%AFInfo(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitInputData%AFInfo.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DO i1 = LBOUND(SrcInitInputData%AFInfo,1), UBOUND(SrcInitInputData%AFInfo,1)
-      CALL AFI_Copyafinfotype( SrcInitInputData%AFInfo(i1), DstInitInputData%AFInfo(i1), CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
-         IF (ErrStat>=AbortErrLev) RETURN
-    ENDDO
-ENDIF
-    DstInitInputData%NumAF = SrcInitInputData%NumAF
-IF (ALLOCATED(SrcInitInputData%AF_File)) THEN
-  i1_l = LBOUND(SrcInitInputData%AF_File,1)
-  i1_u = UBOUND(SrcInitInputData%AF_File,1)
-  IF (.NOT. ALLOCATED(DstInitInputData%AF_File)) THEN 
-    ALLOCATE(DstInitInputData%AF_File(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitInputData%AF_File.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DstInitInputData%AF_File = SrcInitInputData%AF_File
-ENDIF
       CALL BEMT_CopyInitInput( SrcInitInputData%BEMT, DstInitInputData%BEMT, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
@@ -364,15 +326,6 @@ IF (ALLOCATED(InitInputData%zLocal)) THEN
 ENDIF
 IF (ALLOCATED(InitInputData%zTip)) THEN
   DEALLOCATE(InitInputData%zTip)
-ENDIF
-IF (ALLOCATED(InitInputData%AFInfo)) THEN
-DO i1 = LBOUND(InitInputData%AFInfo,1), UBOUND(InitInputData%AFInfo,1)
-  CALL AFI_Destroyafinfotype( InitInputData%AFInfo(i1), ErrStat, ErrMsg )
-ENDDO
-  DEALLOCATE(InitInputData%AFInfo)
-ENDIF
-IF (ALLOCATED(InitInputData%AF_File)) THEN
-  DEALLOCATE(InitInputData%AF_File)
 ENDIF
   CALL BEMT_DestroyInitInput( InitInputData%BEMT, ErrStat, ErrMsg )
  END SUBROUTINE AD_DestroyInitInput
@@ -413,7 +366,7 @@ ENDIF
   Db_BufSz  = 0
   Int_BufSz  = 0
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%InputFile)  ! InputFile
-      Int_BufSz  = Int_BufSz  + 1  ! NumBl
+      Int_BufSz  = Int_BufSz  + 1  ! NumBlades
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%RootName)  ! RootName
       Db_BufSz   = Db_BufSz   + 1  ! DT
   Int_BufSz   = Int_BufSz   + 1     ! chord allocated yes/no
@@ -421,7 +374,6 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! chord upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%chord)  ! chord
   END IF
-      Int_BufSz  = Int_BufSz  + 1  ! numBlades
       Re_BufSz   = Re_BufSz   + 1  ! airDens
       Re_BufSz   = Re_BufSz   + 1  ! kinVisc
       Int_BufSz  = Int_BufSz  + 1  ! skewWakeMod
@@ -454,36 +406,7 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*1  ! zTip upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%zTip)  ! zTip
   END IF
-  Int_BufSz   = Int_BufSz   + 1     ! AFInfo allocated yes/no
-  IF ( ALLOCATED(InData%AFInfo) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! AFInfo upper/lower bounds for each dimension
    ! Allocate buffers for subtypes, if any (we'll get sizes from these) 
-    DO i1 = LBOUND(InData%AFInfo,1), UBOUND(InData%AFInfo,1)
-      Int_BufSz   = Int_BufSz + 3  ! AFInfo: size of buffers for each call to pack subtype
-      CALL AFI_Packafinfotype( Re_Buf, Db_Buf, Int_Buf, InData%AFInfo(i1), ErrStat2, ErrMsg2, .TRUE. ) ! AFInfo 
-        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
-        IF (ErrStat >= AbortErrLev) RETURN
-
-      IF(ALLOCATED(Re_Buf)) THEN ! AFInfo
-         Re_BufSz  = Re_BufSz  + SIZE( Re_Buf  )
-         DEALLOCATE(Re_Buf)
-      END IF
-      IF(ALLOCATED(Db_Buf)) THEN ! AFInfo
-         Db_BufSz  = Db_BufSz  + SIZE( Db_Buf  )
-         DEALLOCATE(Db_Buf)
-      END IF
-      IF(ALLOCATED(Int_Buf)) THEN ! AFInfo
-         Int_BufSz = Int_BufSz + SIZE( Int_Buf )
-         DEALLOCATE(Int_Buf)
-      END IF
-    END DO
-  END IF
-      Int_BufSz  = Int_BufSz  + 1  ! NumAF
-  Int_BufSz   = Int_BufSz   + 1     ! AF_File allocated yes/no
-  IF ( ALLOCATED(InData%AF_File) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! AF_File upper/lower bounds for each dimension
-      Int_BufSz  = Int_BufSz  + SIZE(InData%AF_File)*LEN(InData%AF_File)  ! AF_File
-  END IF
       Int_BufSz   = Int_BufSz + 3  ! BEMT: size of buffers for each call to pack subtype
       CALL BEMT_PackInitInput( Re_Buf, Db_Buf, Int_Buf, InData%BEMT, ErrStat2, ErrMsg2, .TRUE. ) ! BEMT 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
@@ -533,7 +456,7 @@ ENDIF
           IntKiBuf(Int_Xferred) = ICHAR(InData%InputFile(I:I), IntKi)
           Int_Xferred = Int_Xferred   + 1
         END DO ! I
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumBl
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumBlades
       Int_Xferred   = Int_Xferred   + 1
         DO I = 1, LEN(InData%RootName)
           IntKiBuf(Int_Xferred) = ICHAR(InData%RootName(I:I), IntKi)
@@ -557,8 +480,6 @@ ENDIF
       IF (SIZE(InData%chord)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%chord))-1 ) = PACK(InData%chord,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%chord)
   END IF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%numBlades
-      Int_Xferred   = Int_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%airDens
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%kinVisc
@@ -638,66 +559,6 @@ ENDIF
       IF (SIZE(InData%zTip)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%zTip))-1 ) = PACK(InData%zTip,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%zTip)
   END IF
-  IF ( .NOT. ALLOCATED(InData%AFInfo) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%AFInfo,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%AFInfo,1)
-    Int_Xferred = Int_Xferred + 2
-
-    DO i1 = LBOUND(InData%AFInfo,1), UBOUND(InData%AFInfo,1)
-      CALL AFI_Packafinfotype( Re_Buf, Db_Buf, Int_Buf, InData%AFInfo(i1), ErrStat2, ErrMsg2, OnlySize ) ! AFInfo 
-        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
-        IF (ErrStat >= AbortErrLev) RETURN
-
-      IF(ALLOCATED(Re_Buf)) THEN
-        IntKiBuf( Int_Xferred ) = SIZE(Re_Buf); Int_Xferred = Int_Xferred + 1
-        IF (SIZE(Re_Buf) > 0) ReKiBuf( Re_Xferred:Re_Xferred+SIZE(Re_Buf)-1 ) = Re_Buf
-        Re_Xferred = Re_Xferred + SIZE(Re_Buf)
-        DEALLOCATE(Re_Buf)
-      ELSE
-        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
-      ENDIF
-      IF(ALLOCATED(Db_Buf)) THEN
-        IntKiBuf( Int_Xferred ) = SIZE(Db_Buf); Int_Xferred = Int_Xferred + 1
-        IF (SIZE(Db_Buf) > 0) DbKiBuf( Db_Xferred:Db_Xferred+SIZE(Db_Buf)-1 ) = Db_Buf
-        Db_Xferred = Db_Xferred + SIZE(Db_Buf)
-        DEALLOCATE(Db_Buf)
-      ELSE
-        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
-      ENDIF
-      IF(ALLOCATED(Int_Buf)) THEN
-        IntKiBuf( Int_Xferred ) = SIZE(Int_Buf); Int_Xferred = Int_Xferred + 1
-        IF (SIZE(Int_Buf) > 0) IntKiBuf( Int_Xferred:Int_Xferred+SIZE(Int_Buf)-1 ) = Int_Buf
-        Int_Xferred = Int_Xferred + SIZE(Int_Buf)
-        DEALLOCATE(Int_Buf)
-      ELSE
-        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
-      ENDIF
-    END DO
-  END IF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumAF
-      Int_Xferred   = Int_Xferred   + 1
-  IF ( .NOT. ALLOCATED(InData%AF_File) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%AF_File,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%AF_File,1)
-    Int_Xferred = Int_Xferred + 2
-
-    DO i1 = LBOUND(InData%AF_File,1), UBOUND(InData%AF_File,1)
-        DO I = 1, LEN(InData%AF_File)
-          IntKiBuf(Int_Xferred) = ICHAR(InData%AF_File(i1)(I:I), IntKi)
-          Int_Xferred = Int_Xferred   + 1
-        END DO ! I
-    END DO !i1
-  END IF
       CALL BEMT_PackInitInput( Re_Buf, Db_Buf, Int_Buf, InData%BEMT, ErrStat2, ErrMsg2, OnlySize ) ! BEMT 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
         IF (ErrStat >= AbortErrLev) RETURN
@@ -768,7 +629,7 @@ ENDIF
         OutData%InputFile(I:I) = CHAR(IntKiBuf(Int_Xferred))
         Int_Xferred = Int_Xferred   + 1
       END DO ! I
-      OutData%NumBl = IntKiBuf( Int_Xferred ) 
+      OutData%NumBlades = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       DO I = 1, LEN(OutData%RootName)
         OutData%RootName(I:I) = CHAR(IntKiBuf(Int_Xferred))
@@ -802,8 +663,6 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(OutData%chord)
     DEALLOCATE(mask2)
   END IF
-      OutData%numBlades = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
       OutData%airDens = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%kinVisc = ReKiBuf( Re_Xferred )
@@ -921,91 +780,6 @@ ENDIF
     mask1 = .TRUE. 
       IF (SIZE(OutData%zTip)>0) OutData%zTip = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%zTip))-1 ), mask1, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%zTip)
-    DEALLOCATE(mask1)
-  END IF
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! AFInfo not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%AFInfo)) DEALLOCATE(OutData%AFInfo)
-    ALLOCATE(OutData%AFInfo(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%AFInfo.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    DO i1 = LBOUND(OutData%AFInfo,1), UBOUND(OutData%AFInfo,1)
-      Buf_size=IntKiBuf( Int_Xferred )
-      Int_Xferred = Int_Xferred + 1
-      IF(Buf_size > 0) THEN
-        ALLOCATE(Re_Buf(Buf_size),STAT=ErrStat2)
-        IF (ErrStat2 /= 0) THEN 
-           CALL SetErrStat(ErrID_Fatal, 'Error allocating Re_Buf.', ErrStat, ErrMsg,RoutineName)
-           RETURN
-        END IF
-        Re_Buf = ReKiBuf( Re_Xferred:Re_Xferred+Buf_size-1 )
-        Re_Xferred = Re_Xferred + Buf_size
-      END IF
-      Buf_size=IntKiBuf( Int_Xferred )
-      Int_Xferred = Int_Xferred + 1
-      IF(Buf_size > 0) THEN
-        ALLOCATE(Db_Buf(Buf_size),STAT=ErrStat2)
-        IF (ErrStat2 /= 0) THEN 
-           CALL SetErrStat(ErrID_Fatal, 'Error allocating Db_Buf.', ErrStat, ErrMsg,RoutineName)
-           RETURN
-        END IF
-        Db_Buf = DbKiBuf( Db_Xferred:Db_Xferred+Buf_size-1 )
-        Db_Xferred = Db_Xferred + Buf_size
-      END IF
-      Buf_size=IntKiBuf( Int_Xferred )
-      Int_Xferred = Int_Xferred + 1
-      IF(Buf_size > 0) THEN
-        ALLOCATE(Int_Buf(Buf_size),STAT=ErrStat2)
-        IF (ErrStat2 /= 0) THEN 
-           CALL SetErrStat(ErrID_Fatal, 'Error allocating Int_Buf.', ErrStat, ErrMsg,RoutineName)
-           RETURN
-        END IF
-        Int_Buf = IntKiBuf( Int_Xferred:Int_Xferred+Buf_size-1 )
-        Int_Xferred = Int_Xferred + Buf_size
-      END IF
-      CALL AFI_Unpackafinfotype( Re_Buf, Db_Buf, Int_Buf, OutData%AFInfo(i1), ErrStat2, ErrMsg2 ) ! AFInfo 
-        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
-        IF (ErrStat >= AbortErrLev) RETURN
-
-      IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
-      IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
-      IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
-    END DO
-  END IF
-      OutData%NumAF = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! AF_File not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%AF_File)) DEALLOCATE(OutData%AF_File)
-    ALLOCATE(OutData%AF_File(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%AF_File.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask1 = .TRUE. 
-    DO i1 = LBOUND(OutData%AF_File,1), UBOUND(OutData%AF_File,1)
-        DO I = 1, LEN(OutData%AF_File)
-          OutData%AF_File(i1)(I:I) = CHAR(IntKiBuf(Int_Xferred))
-          Int_Xferred = Int_Xferred   + 1
-        END DO ! I
-    END DO !i1
     DEALLOCATE(mask1)
   END IF
       Buf_size=IntKiBuf( Int_Xferred )
@@ -3928,10 +3702,10 @@ ENDIF
    ErrStat = ErrID_None
    ErrMsg  = ""
     DstParamData%DT = SrcParamData%DT
-      CALL AFI_CopyParam( SrcParamData%AFI_Params, DstParamData%AFI_Params, CtrlCode, ErrStat2, ErrMsg2 )
+      CALL AFI_CopyParam( SrcParamData%AFI, DstParamData%AFI, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
-    DstParamData%NumBl = SrcParamData%NumBl
+    DstParamData%NumBlades = SrcParamData%NumBlades
       CALL BEMT_CopyParam( SrcParamData%BEMT, DstParamData%BEMT, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
@@ -3967,7 +3741,6 @@ IF (ALLOCATED(SrcParamData%chord)) THEN
   END IF
     DstParamData%chord = SrcParamData%chord
 ENDIF
-    DstParamData%numBlades = SrcParamData%numBlades
     DstParamData%airDens = SrcParamData%airDens
     DstParamData%kinVisc = SrcParamData%kinVisc
     DstParamData%skewWakeMod = SrcParamData%skewWakeMod
@@ -4019,35 +3792,6 @@ IF (ALLOCATED(SrcParamData%hubLossConst)) THEN
   END IF
     DstParamData%hubLossConst = SrcParamData%hubLossConst
 ENDIF
-IF (ALLOCATED(SrcParamData%AFInfo)) THEN
-  i1_l = LBOUND(SrcParamData%AFInfo,1)
-  i1_u = UBOUND(SrcParamData%AFInfo,1)
-  IF (.NOT. ALLOCATED(DstParamData%AFInfo)) THEN 
-    ALLOCATE(DstParamData%AFInfo(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%AFInfo.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DO i1 = LBOUND(SrcParamData%AFInfo,1), UBOUND(SrcParamData%AFInfo,1)
-      CALL AFI_Copyafinfotype( SrcParamData%AFInfo(i1), DstParamData%AFInfo(i1), CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
-         IF (ErrStat>=AbortErrLev) RETURN
-    ENDDO
-ENDIF
-    DstParamData%NumAF = SrcParamData%NumAF
-IF (ALLOCATED(SrcParamData%AF_File)) THEN
-  i1_l = LBOUND(SrcParamData%AF_File,1)
-  i1_u = UBOUND(SrcParamData%AF_File,1)
-  IF (.NOT. ALLOCATED(DstParamData%AF_File)) THEN 
-    ALLOCATE(DstParamData%AF_File(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%AF_File.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DstParamData%AF_File = SrcParamData%AF_File
-ENDIF
  END SUBROUTINE AD_CopyParam
 
  SUBROUTINE AD_DestroyParam( ParamData, ErrStat, ErrMsg )
@@ -4059,7 +3803,7 @@ ENDIF
 ! 
   ErrStat = ErrID_None
   ErrMsg  = ""
-  CALL AFI_DestroyParam( ParamData%AFI_Params, ErrStat, ErrMsg )
+  CALL AFI_DestroyParam( ParamData%AFI, ErrStat, ErrMsg )
   CALL BEMT_DestroyParam( ParamData%BEMT, ErrStat, ErrMsg )
 IF (ALLOCATED(ParamData%OutParam)) THEN
 DO i1 = LBOUND(ParamData%OutParam,1), UBOUND(ParamData%OutParam,1)
@@ -4078,15 +3822,6 @@ IF (ALLOCATED(ParamData%tipLossConst)) THEN
 ENDIF
 IF (ALLOCATED(ParamData%hubLossConst)) THEN
   DEALLOCATE(ParamData%hubLossConst)
-ENDIF
-IF (ALLOCATED(ParamData%AFInfo)) THEN
-DO i1 = LBOUND(ParamData%AFInfo,1), UBOUND(ParamData%AFInfo,1)
-  CALL AFI_Destroyafinfotype( ParamData%AFInfo(i1), ErrStat, ErrMsg )
-ENDDO
-  DEALLOCATE(ParamData%AFInfo)
-ENDIF
-IF (ALLOCATED(ParamData%AF_File)) THEN
-  DEALLOCATE(ParamData%AF_File)
 ENDIF
  END SUBROUTINE AD_DestroyParam
 
@@ -4127,24 +3862,24 @@ ENDIF
   Int_BufSz  = 0
       Db_BufSz   = Db_BufSz   + 1  ! DT
    ! Allocate buffers for subtypes, if any (we'll get sizes from these) 
-      Int_BufSz   = Int_BufSz + 3  ! AFI_Params: size of buffers for each call to pack subtype
-      CALL AFI_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%AFI_Params, ErrStat2, ErrMsg2, .TRUE. ) ! AFI_Params 
+      Int_BufSz   = Int_BufSz + 3  ! AFI: size of buffers for each call to pack subtype
+      CALL AFI_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%AFI, ErrStat2, ErrMsg2, .TRUE. ) ! AFI 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
         IF (ErrStat >= AbortErrLev) RETURN
 
-      IF(ALLOCATED(Re_Buf)) THEN ! AFI_Params
+      IF(ALLOCATED(Re_Buf)) THEN ! AFI
          Re_BufSz  = Re_BufSz  + SIZE( Re_Buf  )
          DEALLOCATE(Re_Buf)
       END IF
-      IF(ALLOCATED(Db_Buf)) THEN ! AFI_Params
+      IF(ALLOCATED(Db_Buf)) THEN ! AFI
          Db_BufSz  = Db_BufSz  + SIZE( Db_Buf  )
          DEALLOCATE(Db_Buf)
       END IF
-      IF(ALLOCATED(Int_Buf)) THEN ! AFI_Params
+      IF(ALLOCATED(Int_Buf)) THEN ! AFI
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
-      Int_BufSz  = Int_BufSz  + 1  ! NumBl
+      Int_BufSz  = Int_BufSz  + 1  ! NumBlades
       Int_BufSz   = Int_BufSz + 3  ! BEMT: size of buffers for each call to pack subtype
       CALL BEMT_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%BEMT, ErrStat2, ErrMsg2, .TRUE. ) ! BEMT 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
@@ -4192,7 +3927,6 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! chord upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%chord)  ! chord
   END IF
-      Int_BufSz  = Int_BufSz  + 1  ! numBlades
       Re_BufSz   = Re_BufSz   + 1  ! airDens
       Re_BufSz   = Re_BufSz   + 1  ! kinVisc
       Int_BufSz  = Int_BufSz  + 1  ! skewWakeMod
@@ -4218,35 +3952,6 @@ ENDIF
   IF ( ALLOCATED(InData%hubLossConst) ) THEN
     Int_BufSz   = Int_BufSz   + 2*2  ! hubLossConst upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%hubLossConst)  ! hubLossConst
-  END IF
-  Int_BufSz   = Int_BufSz   + 1     ! AFInfo allocated yes/no
-  IF ( ALLOCATED(InData%AFInfo) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! AFInfo upper/lower bounds for each dimension
-    DO i1 = LBOUND(InData%AFInfo,1), UBOUND(InData%AFInfo,1)
-      Int_BufSz   = Int_BufSz + 3  ! AFInfo: size of buffers for each call to pack subtype
-      CALL AFI_Packafinfotype( Re_Buf, Db_Buf, Int_Buf, InData%AFInfo(i1), ErrStat2, ErrMsg2, .TRUE. ) ! AFInfo 
-        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
-        IF (ErrStat >= AbortErrLev) RETURN
-
-      IF(ALLOCATED(Re_Buf)) THEN ! AFInfo
-         Re_BufSz  = Re_BufSz  + SIZE( Re_Buf  )
-         DEALLOCATE(Re_Buf)
-      END IF
-      IF(ALLOCATED(Db_Buf)) THEN ! AFInfo
-         Db_BufSz  = Db_BufSz  + SIZE( Db_Buf  )
-         DEALLOCATE(Db_Buf)
-      END IF
-      IF(ALLOCATED(Int_Buf)) THEN ! AFInfo
-         Int_BufSz = Int_BufSz + SIZE( Int_Buf )
-         DEALLOCATE(Int_Buf)
-      END IF
-    END DO
-  END IF
-      Int_BufSz  = Int_BufSz  + 1  ! NumAF
-  Int_BufSz   = Int_BufSz   + 1     ! AF_File allocated yes/no
-  IF ( ALLOCATED(InData%AF_File) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! AF_File upper/lower bounds for each dimension
-      Int_BufSz  = Int_BufSz  + SIZE(InData%AF_File)*LEN(InData%AF_File)  ! AF_File
   END IF
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
@@ -4277,7 +3982,7 @@ ENDIF
 
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%DT
       Db_Xferred   = Db_Xferred   + 1
-      CALL AFI_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%AFI_Params, ErrStat2, ErrMsg2, OnlySize ) ! AFI_Params 
+      CALL AFI_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%AFI, ErrStat2, ErrMsg2, OnlySize ) ! AFI 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
         IF (ErrStat >= AbortErrLev) RETURN
 
@@ -4305,7 +4010,7 @@ ENDIF
       ELSE
         IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
       ENDIF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumBl
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumBlades
       Int_Xferred   = Int_Xferred   + 1
       CALL BEMT_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%BEMT, ErrStat2, ErrMsg2, OnlySize ) ! BEMT 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
@@ -4398,8 +4103,6 @@ ENDIF
       IF (SIZE(InData%chord)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%chord))-1 ) = PACK(InData%chord,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%chord)
   END IF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%numBlades
-      Int_Xferred   = Int_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%airDens
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%kinVisc
@@ -4466,66 +4169,6 @@ ENDIF
 
       IF (SIZE(InData%hubLossConst)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%hubLossConst))-1 ) = PACK(InData%hubLossConst,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%hubLossConst)
-  END IF
-  IF ( .NOT. ALLOCATED(InData%AFInfo) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%AFInfo,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%AFInfo,1)
-    Int_Xferred = Int_Xferred + 2
-
-    DO i1 = LBOUND(InData%AFInfo,1), UBOUND(InData%AFInfo,1)
-      CALL AFI_Packafinfotype( Re_Buf, Db_Buf, Int_Buf, InData%AFInfo(i1), ErrStat2, ErrMsg2, OnlySize ) ! AFInfo 
-        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
-        IF (ErrStat >= AbortErrLev) RETURN
-
-      IF(ALLOCATED(Re_Buf)) THEN
-        IntKiBuf( Int_Xferred ) = SIZE(Re_Buf); Int_Xferred = Int_Xferred + 1
-        IF (SIZE(Re_Buf) > 0) ReKiBuf( Re_Xferred:Re_Xferred+SIZE(Re_Buf)-1 ) = Re_Buf
-        Re_Xferred = Re_Xferred + SIZE(Re_Buf)
-        DEALLOCATE(Re_Buf)
-      ELSE
-        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
-      ENDIF
-      IF(ALLOCATED(Db_Buf)) THEN
-        IntKiBuf( Int_Xferred ) = SIZE(Db_Buf); Int_Xferred = Int_Xferred + 1
-        IF (SIZE(Db_Buf) > 0) DbKiBuf( Db_Xferred:Db_Xferred+SIZE(Db_Buf)-1 ) = Db_Buf
-        Db_Xferred = Db_Xferred + SIZE(Db_Buf)
-        DEALLOCATE(Db_Buf)
-      ELSE
-        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
-      ENDIF
-      IF(ALLOCATED(Int_Buf)) THEN
-        IntKiBuf( Int_Xferred ) = SIZE(Int_Buf); Int_Xferred = Int_Xferred + 1
-        IF (SIZE(Int_Buf) > 0) IntKiBuf( Int_Xferred:Int_Xferred+SIZE(Int_Buf)-1 ) = Int_Buf
-        Int_Xferred = Int_Xferred + SIZE(Int_Buf)
-        DEALLOCATE(Int_Buf)
-      ELSE
-        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
-      ENDIF
-    END DO
-  END IF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumAF
-      Int_Xferred   = Int_Xferred   + 1
-  IF ( .NOT. ALLOCATED(InData%AF_File) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%AF_File,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%AF_File,1)
-    Int_Xferred = Int_Xferred + 2
-
-    DO i1 = LBOUND(InData%AF_File,1), UBOUND(InData%AF_File,1)
-        DO I = 1, LEN(InData%AF_File)
-          IntKiBuf(Int_Xferred) = ICHAR(InData%AF_File(i1)(I:I), IntKi)
-          Int_Xferred = Int_Xferred   + 1
-        END DO ! I
-    END DO !i1
   END IF
  END SUBROUTINE AD_PackParam
 
@@ -4598,14 +4241,14 @@ ENDIF
         Int_Buf = IntKiBuf( Int_Xferred:Int_Xferred+Buf_size-1 )
         Int_Xferred = Int_Xferred + Buf_size
       END IF
-      CALL AFI_UnpackParam( Re_Buf, Db_Buf, Int_Buf, OutData%AFI_Params, ErrStat2, ErrMsg2 ) ! AFI_Params 
+      CALL AFI_UnpackParam( Re_Buf, Db_Buf, Int_Buf, OutData%AFI, ErrStat2, ErrMsg2 ) ! AFI 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
         IF (ErrStat >= AbortErrLev) RETURN
 
       IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
       IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
-      OutData%NumBl = IntKiBuf( Int_Xferred ) 
+      OutData%NumBlades = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       Buf_size=IntKiBuf( Int_Xferred )
       Int_Xferred = Int_Xferred + 1
@@ -4735,8 +4378,6 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(OutData%chord)
     DEALLOCATE(mask2)
   END IF
-      OutData%numBlades = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
       OutData%airDens = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%kinVisc = ReKiBuf( Re_Xferred )
@@ -4833,91 +4474,6 @@ ENDIF
       IF (SIZE(OutData%hubLossConst)>0) OutData%hubLossConst = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%hubLossConst))-1 ), mask2, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%hubLossConst)
     DEALLOCATE(mask2)
-  END IF
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! AFInfo not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%AFInfo)) DEALLOCATE(OutData%AFInfo)
-    ALLOCATE(OutData%AFInfo(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%AFInfo.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    DO i1 = LBOUND(OutData%AFInfo,1), UBOUND(OutData%AFInfo,1)
-      Buf_size=IntKiBuf( Int_Xferred )
-      Int_Xferred = Int_Xferred + 1
-      IF(Buf_size > 0) THEN
-        ALLOCATE(Re_Buf(Buf_size),STAT=ErrStat2)
-        IF (ErrStat2 /= 0) THEN 
-           CALL SetErrStat(ErrID_Fatal, 'Error allocating Re_Buf.', ErrStat, ErrMsg,RoutineName)
-           RETURN
-        END IF
-        Re_Buf = ReKiBuf( Re_Xferred:Re_Xferred+Buf_size-1 )
-        Re_Xferred = Re_Xferred + Buf_size
-      END IF
-      Buf_size=IntKiBuf( Int_Xferred )
-      Int_Xferred = Int_Xferred + 1
-      IF(Buf_size > 0) THEN
-        ALLOCATE(Db_Buf(Buf_size),STAT=ErrStat2)
-        IF (ErrStat2 /= 0) THEN 
-           CALL SetErrStat(ErrID_Fatal, 'Error allocating Db_Buf.', ErrStat, ErrMsg,RoutineName)
-           RETURN
-        END IF
-        Db_Buf = DbKiBuf( Db_Xferred:Db_Xferred+Buf_size-1 )
-        Db_Xferred = Db_Xferred + Buf_size
-      END IF
-      Buf_size=IntKiBuf( Int_Xferred )
-      Int_Xferred = Int_Xferred + 1
-      IF(Buf_size > 0) THEN
-        ALLOCATE(Int_Buf(Buf_size),STAT=ErrStat2)
-        IF (ErrStat2 /= 0) THEN 
-           CALL SetErrStat(ErrID_Fatal, 'Error allocating Int_Buf.', ErrStat, ErrMsg,RoutineName)
-           RETURN
-        END IF
-        Int_Buf = IntKiBuf( Int_Xferred:Int_Xferred+Buf_size-1 )
-        Int_Xferred = Int_Xferred + Buf_size
-      END IF
-      CALL AFI_Unpackafinfotype( Re_Buf, Db_Buf, Int_Buf, OutData%AFInfo(i1), ErrStat2, ErrMsg2 ) ! AFInfo 
-        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
-        IF (ErrStat >= AbortErrLev) RETURN
-
-      IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
-      IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
-      IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
-    END DO
-  END IF
-      OutData%NumAF = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! AF_File not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%AF_File)) DEALLOCATE(OutData%AF_File)
-    ALLOCATE(OutData%AF_File(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%AF_File.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask1 = .TRUE. 
-    DO i1 = LBOUND(OutData%AF_File,1), UBOUND(OutData%AF_File,1)
-        DO I = 1, LEN(OutData%AF_File)
-          OutData%AF_File(i1)(I:I) = CHAR(IntKiBuf(Int_Xferred))
-          Int_Xferred = Int_Xferred   + 1
-        END DO ! I
-    END DO !i1
-    DEALLOCATE(mask1)
   END IF
  END SUBROUTINE AD_UnPackParam
 

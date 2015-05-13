@@ -152,7 +152,7 @@ program WT_Perf
    !call Alloc_AD_u( u, numInp, errStat, errMsg)
    
       ! Set the Initialization input data for AeroDyn based on the WT_Perf input file data
-   call Set_AD_InitInp(WTP_FileData, AD_InitInData, errStat, errMsg)
+   call Set_AD_InitInp(WTP_FileData, AD_InitInData, outFileRoot, errStat, errMsg)
       if (ErrStat >= AbortErrLev) call WTP_DvrCleanup
    
       ! Initialize AeroDyn
@@ -283,7 +283,7 @@ program WT_Perf
                     
          call WrScr(ErrMsg)
          call ProgAbort( 'WT_Perf encountered an error '//trim(errMsg)//'.'//NewLine//' Simulation error level: '&
-                         //trim(GetErrStr(errStat)), TrapErrors=.FALSE., TimeWait=20._ReKi )  ! wait 3 seconds (in case they double-clicked and got an error)
+                         //trim(GetErrStr(errStat)), TrapErrors=.FALSE., TimeWait=3._ReKi )  ! wait 3 seconds (in case they double-clicked and got an error)
       end if
       
       
