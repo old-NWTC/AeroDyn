@@ -67,6 +67,7 @@ module BladeElement
          u_UA%alpha = AOA
          u_UA%Re    = Re
          u_UA%U     = W
+         !bjj: this gets called element-by-element (not all at once). Are OtherState%iBladeNode and OtherState%iBlade set properly?
          call UA_CalcOutput(u_UA, p_UA, xd_UA, OtherState_UA, AFInfo, y_UA, errStat, errMsg )
          Cl         = y_UA%Cl
          Cd         = y_UA%Cd

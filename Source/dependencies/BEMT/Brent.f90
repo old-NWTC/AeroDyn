@@ -175,7 +175,7 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
           if (xm > 0) then 
             BB = BB + abs(Tol1)
           else 
-	         BB = BB - abs(Tol1)
+            BB = BB - abs(Tol1)
           endif
         endif
       !---------------------------------------------------------- 
@@ -193,7 +193,7 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
                               ErrStat, ErrMsg)
         i=i+1
       endif
-	end do
+   end do
    if (i >= maxIndIterations) then
       ErrStat = ErrID_Fatal
       ErrMsg  = 'Too many iterations! No solution found to induction factor solve.'
