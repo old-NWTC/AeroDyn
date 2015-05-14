@@ -60,19 +60,15 @@ module WTP_Types
       logical         :: SWconv
       real(ReKi)      :: SWcorr
       type(WTP_Blade), allocatable :: BladeData(:)
-      real(ReKi)      :: AirDens
-      real(ReKi)      :: KinVisc
       real(ReKi)      :: ShearExp
       character(1024) :: OutFileRoot
       logical         :: UnfPower
       logical         :: TabDel
       logical         :: OutNines
-      logical         :: Beep
       logical         :: KFact
       logical         :: InputTSR
       logical         :: OutMaxCp
       logical         :: WriteBED
-      character(10)   :: SpdUnits
       integer         :: NumCases
       type(WTP_Case), allocatable  :: Cases(:)
       

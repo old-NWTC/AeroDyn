@@ -120,8 +120,6 @@ IMPLICIT NONE
   TYPE, PUBLIC :: AFI_InitInputType
     INTEGER(IntKi)  :: NumAFfiles      ! The number of airfoil files [-]
     CHARACTER(1024) , DIMENSION(:), ALLOCATABLE  :: FileNames      ! The name of the file the data were read from [-]
-    INTEGER(IntKi)  :: UA_Model      ! The type of unsteady aero model (1-Beddoes-Leishman) [-]
-    INTEGER(IntKi)  :: NumCoefs      ! The number of aerodynamic coefficients to be stored in the coefficients arrays [-]
     INTEGER(IntKi)  :: InCol_Alfa      ! The column of the coefficient tables that holds the angle of attack [-]
     INTEGER(IntKi)  :: InCol_Cl      ! The column of the coefficient tables that holds the lift coefficient [-]
     INTEGER(IntKi)  :: InCol_Cd      ! The column of the coefficient tables that holds the minimum pressure coefficient [-]
@@ -2409,8 +2407,6 @@ IF (ALLOCATED(SrcInitInputData%FileNames)) THEN
   END IF
     DstInitInputData%FileNames = SrcInitInputData%FileNames
 ENDIF
-    DstInitInputData%UA_Model = SrcInitInputData%UA_Model
-    DstInitInputData%NumCoefs = SrcInitInputData%NumCoefs
     DstInitInputData%InCol_Alfa = SrcInitInputData%InCol_Alfa
     DstInitInputData%InCol_Cl = SrcInitInputData%InCol_Cl
     DstInitInputData%InCol_Cd = SrcInitInputData%InCol_Cd
@@ -2473,8 +2469,6 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*1  ! FileNames upper/lower bounds for each dimension
       Int_BufSz  = Int_BufSz  + SIZE(InData%FileNames)*LEN(InData%FileNames)  ! FileNames
   END IF
-      Int_BufSz  = Int_BufSz  + 1  ! UA_Model
-      Int_BufSz  = Int_BufSz  + 1  ! NumCoefs
       Int_BufSz  = Int_BufSz  + 1  ! InCol_Alfa
       Int_BufSz  = Int_BufSz  + 1  ! InCol_Cl
       Int_BufSz  = Int_BufSz  + 1  ! InCol_Cd
@@ -2526,10 +2520,6 @@ ENDIF
         END DO ! I
     END DO !i1
   END IF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%UA_Model
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumCoefs
-      Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%InCol_Alfa
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%InCol_Cl
@@ -2604,10 +2594,6 @@ ENDIF
     END DO !i1
     DEALLOCATE(mask1)
   END IF
-      OutData%UA_Model = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-      OutData%NumCoefs = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
       OutData%InCol_Alfa = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%InCol_Cl = IntKiBuf( Int_Xferred ) 

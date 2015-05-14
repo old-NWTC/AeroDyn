@@ -43,8 +43,6 @@ IMPLICIT NONE
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     REAL(DbKi)  :: DT      ! time step [s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
-    REAL(ReKi)  :: airDens      ! Air density [kg/m^3]
-    REAL(ReKi)  :: kinVisc      ! Kinematic air viscosity [m^2/s]
     INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
     LOGICAL  :: useTipLoss      ! Use the Prandtl tip-loss model?  [flag] [-]
     LOGICAL  :: useHubLoss      ! Use the Prandtl hub-loss model?  [flag] [-]
@@ -103,7 +101,7 @@ IMPLICIT NONE
     LOGICAL  :: TIDrag      ! Include the drag term in the tangential-induction calculation? [used only when WakeMod=1 and TanInd=TRUE] [flag]
     REAL(ReKi)  :: IndToler      ! Convergence tolerance for BEM induction factors [used only when WakeMod=1] [-]
     REAL(ReKi)  :: MaxIter      ! Maximum number of iteration steps [used only when WakeMod=1] [-]
-    REAL(ReKi)  :: DSMod      ! Unsteady Aero Model Switch (switch) {1=Baseline model (Original), 2=Gonzalez's variant (changes in Cn,Cc,Cm), 3=Minemma/Pierce variant (changes in Cc and Cm)} [used only when AFAreoMod=2] [-]
+    REAL(ReKi)  :: UAMod      ! Unsteady Aero Model Switch (switch) {1=Baseline model (Original), 2=Gonzalez's variant (changes in Cn,Cc,Cm), 3=Minemma/Pierce variant (changes in Cc and Cm)} [used only when AFAreoMod=2] [-]
     LOGICAL  :: FLookup      ! Flag to indicate whether a lookup for f' will be calculated (TRUE) or whether best-fit exponential equations will be used (FALSE); if FALSE S1-S4 must be provided in airfoil input files [used only when AFAreoMod=2] [flag]
     REAL(ReKi)  :: InCol_Alfa      ! The column in the airfoil tables that contains the angle of attack [-]
     REAL(ReKi)  :: InCol_Cl      ! The column in the airfoil tables that contains the lift coefficient [-]
@@ -159,12 +157,13 @@ IMPLICIT NONE
     TYPE(AFI_ParameterType)  :: AFI      ! AirfoilInfo parameters [-]
     INTEGER(IntKi)  :: NumBlades      ! Number of blades on the turbine [-]
     TYPE(BEMT_ParameterType)  :: BEMT      ! Parameters for BEMT module [-]
+    REAL(ReKi)  :: AirDens      ! Air density [kg/m^3]
+    REAL(ReKi)  :: KinVisc      ! Kinematic air viscosity [m^2/s]
+    REAL(ReKi)  :: SpdSound      ! Speed of sound [m/s]
     INTEGER(IntKi)  :: NumOuts      ! Number of parameters in the output list (number of outputs requested) [-]
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     TYPE(OutParmType) , DIMENSION(:), ALLOCATABLE  :: OutParam      ! Names and units (and other characteristics) of all requested output parameters [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
-    REAL(ReKi)  :: airDens      ! Air density [kg/m^3]
-    REAL(ReKi)  :: kinVisc      ! Kinematic air viscosity [m^2/s]
     INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
     LOGICAL  :: useTipLoss      ! Use the Prandtl tip-loss model?  [flag] [-]
     LOGICAL  :: useHubLoss      ! Use the Prandtl hub-loss model?  [flag] [-]
@@ -235,8 +234,6 @@ IF (ALLOCATED(SrcInitInputData%chord)) THEN
   END IF
     DstInitInputData%chord = SrcInitInputData%chord
 ENDIF
-    DstInitInputData%airDens = SrcInitInputData%airDens
-    DstInitInputData%kinVisc = SrcInitInputData%kinVisc
     DstInitInputData%skewWakeMod = SrcInitInputData%skewWakeMod
     DstInitInputData%useTipLoss = SrcInitInputData%useTipLoss
     DstInitInputData%useHubLoss = SrcInitInputData%useHubLoss
@@ -374,8 +371,6 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! chord upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%chord)  ! chord
   END IF
-      Re_BufSz   = Re_BufSz   + 1  ! airDens
-      Re_BufSz   = Re_BufSz   + 1  ! kinVisc
       Int_BufSz  = Int_BufSz  + 1  ! skewWakeMod
       Int_BufSz  = Int_BufSz  + 1  ! useTipLoss
       Int_BufSz  = Int_BufSz  + 1  ! useHubLoss
@@ -480,10 +475,6 @@ ENDIF
       IF (SIZE(InData%chord)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%chord))-1 ) = PACK(InData%chord,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%chord)
   END IF
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%airDens
-      Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%kinVisc
-      Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%skewWakeMod
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useTipLoss , IntKiBuf(1), 1)
@@ -663,10 +654,6 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(OutData%chord)
     DEALLOCATE(mask2)
   END IF
-      OutData%airDens = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
-      OutData%kinVisc = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
       OutData%skewWakeMod = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%useTipLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
@@ -1813,7 +1800,7 @@ ENDIF
     DstInputFileData%TIDrag = SrcInputFileData%TIDrag
     DstInputFileData%IndToler = SrcInputFileData%IndToler
     DstInputFileData%MaxIter = SrcInputFileData%MaxIter
-    DstInputFileData%DSMod = SrcInputFileData%DSMod
+    DstInputFileData%UAMod = SrcInputFileData%UAMod
     DstInputFileData%FLookup = SrcInputFileData%FLookup
     DstInputFileData%InCol_Alfa = SrcInputFileData%InCol_Alfa
     DstInputFileData%InCol_Cl = SrcInputFileData%InCol_Cl
@@ -2011,7 +1998,7 @@ ENDIF
       Int_BufSz  = Int_BufSz  + 1  ! TIDrag
       Re_BufSz   = Re_BufSz   + 1  ! IndToler
       Re_BufSz   = Re_BufSz   + 1  ! MaxIter
-      Re_BufSz   = Re_BufSz   + 1  ! DSMod
+      Re_BufSz   = Re_BufSz   + 1  ! UAMod
       Int_BufSz  = Int_BufSz  + 1  ! FLookup
       Re_BufSz   = Re_BufSz   + 1  ! InCol_Alfa
       Re_BufSz   = Re_BufSz   + 1  ! InCol_Cl
@@ -2149,7 +2136,7 @@ ENDIF
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%MaxIter
       Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%DSMod
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%UAMod
       Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%FLookup , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
@@ -2387,7 +2374,7 @@ ENDIF
       Re_Xferred   = Re_Xferred + 1
       OutData%MaxIter = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
-      OutData%DSMod = ReKiBuf( Re_Xferred )
+      OutData%UAMod = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%FLookup = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
@@ -3709,6 +3696,9 @@ ENDIF
       CALL BEMT_CopyParam( SrcParamData%BEMT, DstParamData%BEMT, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
+    DstParamData%AirDens = SrcParamData%AirDens
+    DstParamData%KinVisc = SrcParamData%KinVisc
+    DstParamData%SpdSound = SrcParamData%SpdSound
     DstParamData%NumOuts = SrcParamData%NumOuts
     DstParamData%RootName = SrcParamData%RootName
 IF (ALLOCATED(SrcParamData%OutParam)) THEN
@@ -3741,8 +3731,6 @@ IF (ALLOCATED(SrcParamData%chord)) THEN
   END IF
     DstParamData%chord = SrcParamData%chord
 ENDIF
-    DstParamData%airDens = SrcParamData%airDens
-    DstParamData%kinVisc = SrcParamData%kinVisc
     DstParamData%skewWakeMod = SrcParamData%skewWakeMod
     DstParamData%useTipLoss = SrcParamData%useTipLoss
     DstParamData%useHubLoss = SrcParamData%useHubLoss
@@ -3897,6 +3885,9 @@ ENDIF
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
+      Re_BufSz   = Re_BufSz   + 1  ! AirDens
+      Re_BufSz   = Re_BufSz   + 1  ! KinVisc
+      Re_BufSz   = Re_BufSz   + 1  ! SpdSound
       Int_BufSz  = Int_BufSz  + 1  ! NumOuts
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%RootName)  ! RootName
   Int_BufSz   = Int_BufSz   + 1     ! OutParam allocated yes/no
@@ -3927,8 +3918,6 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! chord upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%chord)  ! chord
   END IF
-      Re_BufSz   = Re_BufSz   + 1  ! airDens
-      Re_BufSz   = Re_BufSz   + 1  ! kinVisc
       Int_BufSz  = Int_BufSz  + 1  ! skewWakeMod
       Int_BufSz  = Int_BufSz  + 1  ! useTipLoss
       Int_BufSz  = Int_BufSz  + 1  ! useHubLoss
@@ -4040,6 +4029,12 @@ ENDIF
       ELSE
         IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
       ENDIF
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%AirDens
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%KinVisc
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%SpdSound
+      Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumOuts
       Int_Xferred   = Int_Xferred   + 1
         DO I = 1, LEN(InData%RootName)
@@ -4103,10 +4098,6 @@ ENDIF
       IF (SIZE(InData%chord)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%chord))-1 ) = PACK(InData%chord,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%chord)
   END IF
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%airDens
-      Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%kinVisc
-      Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%skewWakeMod
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useTipLoss , IntKiBuf(1), 1)
@@ -4290,6 +4281,12 @@ ENDIF
       IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
       IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
+      OutData%AirDens = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%KinVisc = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%SpdSound = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
       OutData%NumOuts = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       DO I = 1, LEN(OutData%RootName)
@@ -4378,10 +4375,6 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(OutData%chord)
     DEALLOCATE(mask2)
   END IF
-      OutData%airDens = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
-      OutData%kinVisc = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
       OutData%skewWakeMod = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%useTipLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )

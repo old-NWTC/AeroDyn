@@ -27,7 +27,7 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
    integer                      :: unIn, unEc, NumElmPr
    integer(IntKi)               :: ErrStat2                                 ! Temporary Error status
    character(ErrMsgLen)         :: ErrMsg2                                  ! Temporary Error message
-   integer                      :: ISeg, IAF, ICase
+   integer                      :: ISeg, ICase
    integer                      :: IOS, Sttus
    character( 11)               :: DateNow                                  ! Date shortly after the start of execution.
    character(  8)               :: TimeNow                                  ! Time of day shortly after the start of execution.
@@ -271,7 +271,6 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
       ! Compute the segment lengths and check their validity.
 !TODO
-   !CALL CompDR ( inputData%numSeg, inputData%BladeData, inputData%HubRad, inputData%RotorRad, inputData%DimenInp, DelRLoc )
 
 
        ! The Tim Olsen memorial hub-radius check.
@@ -292,24 +291,8 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
       ! Read the aerodynamic-data section.
 
    call ReadCom ( unIn, fileName, 'the aerodynamic-data subtitle'   , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%AirDens,  'AirDens',  'Air density.' , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%KinVisc,  'KinVisc',  'Kinesmatic viscosity.' , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%ShearExp, 'ShearExp', 'Shear exponent.' , errStat2, errMsg2 )
 
-   if ( inputData%AirDens <= 0.0 )  call Abort ( ' The air density must be greater than zero.' )
-   if ( inputData%KinVisc <= 0.0 )  call Abort ( ' The kinesmatic viscosity must be greater than zero.' )
-
-!bjj: need to move this to AD, I think
-   !   ! Check the list of airfoil tables to make sure they are all within limits.
-   !
-   !do ISeg=1,inputData%numSeg
-   !   if ( ( inputData%BladeData(ISeg)%AFfile < 1 ) .OR. ( inputData%BladeData(ISeg)%AFfile > inputData%NumAF ) )  then
-   !      errMsg =  ' Segment #'//trim( Int2LStr( ISeg ) )//' requested airfoil input table #'//trim( Int2LStr( inputData%BladeData(ISeg)%AFfile ) ) &
-   !                 //'.  However, it must be between 1 and NumAF (='//trim( Int2LStr( inputData%NumAF ) )//'), inclusive.' 
-   !      errStat = ErrID_Fatal
-   !      return
-   !   endif
-   !enddo ! ISeg
 
 
       ! Allocate the airfoil data super-supertables for both unique data and complete data.
@@ -333,26 +316,14 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
    call ReadCom ( unIn, fileName, 'the I/O-configuration subtitle'                                                                          , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%OutFileRoot, 'OutFileRoot', 'Root name for any output files'                                    , errStat2, errMsg2 )
-!Start of proposed change.  v3.03.02a-mlb, 04-Dec-2009  M. Buhl
    call ReadVar ( unIn, fileName, inputData%UnfPower, 'UnfPower', 'Write Power to an unformatted file?'                                     , errStat2, errMsg2 )
-!End of proposed change.  v3.03.02a-mlb, 04-Dec-2009  M. Buhl
    call ReadVar ( unIn, fileName, inputData%TabDel,   'TabDel',   'Make output tab-delimited (fixed-width otherwise)?'                      , errStat2, errMsg2 )
-!Start of proposed change.  v3.02.00c-mlb 24-August-2006  M. Buhl
    call ReadVar ( unIn, fileName, inputData%OutNines, 'OutNines', 'Output nines for cases that fail to satisfy the convergence criterion?'  , errStat2, errMsg2 )
-!Start of proposed change.  v3.03.02a-mlb, 01-Dec-2009  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%Beep,     'Beep',     'Beep on exit?'                                                           , errStat2, errMsg2 )
-!End of proposed change.  v3.03.02a-mlb, 01-Dec-2009  M. Buhl
-!#IFDEF debug2
-!#print *, "fileName:   Solution, Converge, OutNines = ", Solution, Converge, OutNines
-!#ENDIF
-!End of proposed change.  v3.02.00c-mlb 24-August-2006  M. Buhl
+   call ReadVar ( unIn, fileName, Beep,               'Beep',     'Beep on exit?'                                                           , errStat2, errMsg2 ) !bjj: this is a global variable in NWTC_Library
    call ReadVar ( unIn, fileName, inputData%KFact,    'KFact',    'Output dimensional parameters in K?'                                    , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%WriteBED, 'WriteBED', 'Write out blade element data to "bladelem.dat"?'                        , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%InputTSR, 'InputTSR', 'Input speeds as TSRs?'                                                  , errStat2, errMsg2 )
-!Start of proposed change.  v3.03.02a-mlb, 10-Dec-2009  M. Buhl
    call ReadVar ( unIn, fileName, inputData%OutMaxCp, 'OutMaxCp', 'Output conditions leading to maximum Cp?'                                , errStat2, errMsg2 )
-!End of proposed change.  v3.03.02a-mlb, 10-Dec-2009  M. Buhl
-   call ReadVar ( unIn, fileName, inputData%SpdUnits, 'SpdUnits', 'Wind-speed units (mps, fps, mph).'                                       , errStat2, errMsg2 )
 
 
       ! Set units conversion and compute TSR parameters.
@@ -617,7 +588,7 @@ subroutine WTP_InitializeOutputFile( version, delim, outFmtS, outFileRoot, Write
       character(*)           ,  intent(inout)   :: errMsg               ! Error message if ErrStat /= ErrID_None
 
          ! locals
-      integer(IntKi)                            :: i, j
+      integer(IntKi)                            ::  j
       
       integer(IntKi)                            :: numOuts
       

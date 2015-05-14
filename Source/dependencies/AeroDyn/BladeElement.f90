@@ -4,6 +4,8 @@ module BladeElement
    use UnsteadyAero
    use UnsteadyAero_Types
    
+   implicit none
+   
    public :: BE_CalcCxCyCoefs
    public :: BE_CalcOutputs
    

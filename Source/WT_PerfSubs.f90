@@ -139,9 +139,6 @@ module WTP_DvrSubs
          end do
       end do
       
-      AD_Data%DT               = 0.25 ! seconds   - not currently used                    
-      AD_Data%airDens          = WTP_Data%AirDens  !  1.246 kg/m^3    
-      AD_Data%kinVisc          = WTP_Data%KinVisc  !  1.4639e-5 ! m^2/s
       AD_Data%skewWakeMod      = WTP_Data%skewWakeMod 
       AD_Data%useTipLoss       = WTP_Data%useTipLoss
       AD_Data%useHubLoss       = WTP_Data%useHubLoss
@@ -153,9 +150,6 @@ module WTP_DvrSubs
       !AD_Data%BEMT_SkewWakeMod = WTP_Data%skewWakeMod    ! This is needed because AD needs to branch according to the solution technique used within BEMT
       
       
-      AD_Data%BEMT%DT               = 0.25 ! seconds   - not currently used                    
-      AD_Data%BEMT%airDens          = WTP_Data%AirDens  !  1.246 kg/m^3    
-      AD_Data%BEMT%kinVisc          = WTP_Data%KinVisc  !  1.4639e-5 ! m^2/s
       AD_Data%BEMT%skewWakeMod      = WTP_Data%skewWakeMod 
       AD_Data%BEMT%useTipLoss       = WTP_Data%useTipLoss
       AD_Data%BEMT%useHubLoss       = WTP_Data%useHubLoss

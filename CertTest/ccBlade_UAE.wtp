@@ -49,8 +49,6 @@ True                 TIDrag:                    Use the drag term in the tangent
 4.7776   -1.466     0.381     8    true
 4.9536   -1.711     0.363     8    true
 -----  Aerodynamic Data  -------------------------------------------------------
-1.2254            1.2265     1.229                   Rho:                 Air density [mass/volume].   ! Need to get the mean form the experimental UAE data
-1.81206e-5                               KinVisc:             Kinematic air viscosity
 0.0                                      ShearExp:            Wind shear exponent (1/7 law = 0.143).
 -----  I/O Settings  -----------------------------------------------------------
 False                UnfPower:                  Write parametric power to an unformatted file?
@@ -61,7 +59,6 @@ False                KFact:                     Output dimensional parameters in
 True                 WriteBED:                  Write out blade element data to "<rootname>.bed"?
 False                InputTSR:                  Input speeds as TSRs?
 True                 OutMaxCp:                  Output conditions for the maximum Cp?
-"fps"                SpdUnits:                  Wind-speed units (mps, fps, mph).
 -----  Combined-Case Analysis  -------------------------------------------------
 18                   NumCases:                  Number of cases to run.  Enter zero for parametric analysis.
 WS or TSR   RotSpd   Pitch      Yaw                     Remove following block of lines if NumCases is zero.

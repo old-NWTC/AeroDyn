@@ -52,8 +52,6 @@ True                 TIDrag:                    Use the drag term in the tangent
   4.780      -1.469    0.381     8    True
   5.000      -1.775    0.358     8    True
 -----  Aerodynamic Data  -------------------------------------------------------
-1.2254            1.2265     1.229                   Rho:                 Air density [mass/volume].   ! Need to get the mean form the experimental UAE data
-1.81206e-5                               KinVisc:             Kinematic air viscosity
 0.0                                      ShearExp:            Wind shear exponent (1/7 law = 0.143).
 -----  I/O Settings  -----------------------------------------------------------
 False                UnfPower:                  Write parametric power to an unformatted file?
