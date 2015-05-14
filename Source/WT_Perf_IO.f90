@@ -127,9 +127,6 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
       ! Read the algorithm-configuration section.
 
    call ReadCom ( unIn, fileName,                       'the algorithm-configuration subtitle'                           , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%useTipLoss,  'useTipLoss',  'Use the Prandtl tip-loss model?'                , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%useHubLoss,  'useHubLoss',  'Use the Prandtl hub-loss model?'                , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%useTanInd,    'useTanInd',    'Include Swirl effects?'                       , errStat2, errMsg2 ) !Swirl
    call ReadVar ( unIn, fileName, inputData%skewWakeMod, 'skewWakeMod', 'Skewed-wake correction model'                   , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%useInduction,  'useInduction',  'Use BEM induction algorithm?'                        , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%useAIDrag,   'useAIDrag',   'Include the drag term in the axial-induction calculation?'      , errStat2, errMsg2 )

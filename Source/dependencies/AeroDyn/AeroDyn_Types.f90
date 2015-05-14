@@ -44,10 +44,7 @@ IMPLICIT NONE
     REAL(DbKi)  :: DT      ! time step [s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
     INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
-    LOGICAL  :: useTipLoss      ! Use the Prandtl tip-loss model?  [flag] [-]
-    LOGICAL  :: useHubLoss      ! Use the Prandtl hub-loss model?  [flag] [-]
     LOGICAL  :: useInduction      ! Include induction in BEM calculations [flag] { If FALSE then useTanInd will be set to FALSE} [-]
-    LOGICAL  :: useTanInd      ! Include tangential induction in BEM calculations [flag] [-]
     LOGICAL  :: useAIDrag      ! Include the drag term in the axial-induction calculation?  [flag] [-]
     LOGICAL  :: useTIDrag      ! Include the drag term in the tangential-induction calculation?  Ignored if TanInd is False.  [flag] [-]
     INTEGER(IntKi)  :: numBladeNodes      ! Number of blade nodes used in the analysis [-]
@@ -160,14 +157,14 @@ IMPLICIT NONE
     REAL(ReKi)  :: AirDens      ! Air density [kg/m^3]
     REAL(ReKi)  :: KinVisc      ! Kinematic air viscosity [m^2/s]
     REAL(ReKi)  :: SpdSound      ! Speed of sound [m/s]
+    LOGICAL  :: TipLoss      ! Use the Prandtl tip-loss model? [used only when WakeMod=1] [flag]
+    LOGICAL  :: HubLoss      ! Use the Prandtl hub-loss model? [used only when WakeMod=1] [flag]
+    LOGICAL  :: TanInd      ! Include tangential induction in BEMT calculations? [used only when WakeMod=1] [flag]
     INTEGER(IntKi)  :: NumOuts      ! Number of parameters in the output list (number of outputs requested) [-]
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     TYPE(OutParmType) , DIMENSION(:), ALLOCATABLE  :: OutParam      ! Names and units (and other characteristics) of all requested output parameters [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
     INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
-    LOGICAL  :: useTipLoss      ! Use the Prandtl tip-loss model?  [flag] [-]
-    LOGICAL  :: useHubLoss      ! Use the Prandtl hub-loss model?  [flag] [-]
-    LOGICAL  :: useTanInd      ! Include tangential induction in BEM calculations [flag] [-]
     LOGICAL  :: useAIDrag      ! Include the drag term in the axial-induction calculation?  [flag] [-]
     LOGICAL  :: useTIDrag      ! Include the drag term in the tangential-induction calculation?  Ignored if TanInd is False.  [flag] [-]
     INTEGER(IntKi)  :: numBladeNodes      ! Number of blade nodes used in the analysis [-]
@@ -235,10 +232,7 @@ IF (ALLOCATED(SrcInitInputData%chord)) THEN
     DstInitInputData%chord = SrcInitInputData%chord
 ENDIF
     DstInitInputData%skewWakeMod = SrcInitInputData%skewWakeMod
-    DstInitInputData%useTipLoss = SrcInitInputData%useTipLoss
-    DstInitInputData%useHubLoss = SrcInitInputData%useHubLoss
     DstInitInputData%useInduction = SrcInitInputData%useInduction
-    DstInitInputData%useTanInd = SrcInitInputData%useTanInd
     DstInitInputData%useAIDrag = SrcInitInputData%useAIDrag
     DstInitInputData%useTIDrag = SrcInitInputData%useTIDrag
     DstInitInputData%numBladeNodes = SrcInitInputData%numBladeNodes
@@ -372,10 +366,7 @@ ENDIF
       Re_BufSz   = Re_BufSz   + SIZE(InData%chord)  ! chord
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! skewWakeMod
-      Int_BufSz  = Int_BufSz  + 1  ! useTipLoss
-      Int_BufSz  = Int_BufSz  + 1  ! useHubLoss
       Int_BufSz  = Int_BufSz  + 1  ! useInduction
-      Int_BufSz  = Int_BufSz  + 1  ! useTanInd
       Int_BufSz  = Int_BufSz  + 1  ! useAIDrag
       Int_BufSz  = Int_BufSz  + 1  ! useTIDrag
       Int_BufSz  = Int_BufSz  + 1  ! numBladeNodes
@@ -477,13 +468,7 @@ ENDIF
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%skewWakeMod
       Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useTipLoss , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useHubLoss , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useInduction , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useTanInd , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useAIDrag , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
@@ -656,13 +641,7 @@ ENDIF
   END IF
       OutData%skewWakeMod = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
-      OutData%useTipLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useHubLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
       OutData%useInduction = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useTanInd = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
       OutData%useAIDrag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
@@ -3699,6 +3678,9 @@ ENDIF
     DstParamData%AirDens = SrcParamData%AirDens
     DstParamData%KinVisc = SrcParamData%KinVisc
     DstParamData%SpdSound = SrcParamData%SpdSound
+    DstParamData%TipLoss = SrcParamData%TipLoss
+    DstParamData%HubLoss = SrcParamData%HubLoss
+    DstParamData%TanInd = SrcParamData%TanInd
     DstParamData%NumOuts = SrcParamData%NumOuts
     DstParamData%RootName = SrcParamData%RootName
 IF (ALLOCATED(SrcParamData%OutParam)) THEN
@@ -3732,9 +3714,6 @@ IF (ALLOCATED(SrcParamData%chord)) THEN
     DstParamData%chord = SrcParamData%chord
 ENDIF
     DstParamData%skewWakeMod = SrcParamData%skewWakeMod
-    DstParamData%useTipLoss = SrcParamData%useTipLoss
-    DstParamData%useHubLoss = SrcParamData%useHubLoss
-    DstParamData%useTanInd = SrcParamData%useTanInd
     DstParamData%useAIDrag = SrcParamData%useAIDrag
     DstParamData%useTIDrag = SrcParamData%useTIDrag
     DstParamData%numBladeNodes = SrcParamData%numBladeNodes
@@ -3888,6 +3867,9 @@ ENDIF
       Re_BufSz   = Re_BufSz   + 1  ! AirDens
       Re_BufSz   = Re_BufSz   + 1  ! KinVisc
       Re_BufSz   = Re_BufSz   + 1  ! SpdSound
+      Int_BufSz  = Int_BufSz  + 1  ! TipLoss
+      Int_BufSz  = Int_BufSz  + 1  ! HubLoss
+      Int_BufSz  = Int_BufSz  + 1  ! TanInd
       Int_BufSz  = Int_BufSz  + 1  ! NumOuts
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%RootName)  ! RootName
   Int_BufSz   = Int_BufSz   + 1     ! OutParam allocated yes/no
@@ -3919,9 +3901,6 @@ ENDIF
       Re_BufSz   = Re_BufSz   + SIZE(InData%chord)  ! chord
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! skewWakeMod
-      Int_BufSz  = Int_BufSz  + 1  ! useTipLoss
-      Int_BufSz  = Int_BufSz  + 1  ! useHubLoss
-      Int_BufSz  = Int_BufSz  + 1  ! useTanInd
       Int_BufSz  = Int_BufSz  + 1  ! useAIDrag
       Int_BufSz  = Int_BufSz  + 1  ! useTIDrag
       Int_BufSz  = Int_BufSz  + 1  ! numBladeNodes
@@ -4035,6 +4014,12 @@ ENDIF
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%SpdSound
       Re_Xferred   = Re_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%TipLoss , IntKiBuf(1), 1)
+      Int_Xferred   = Int_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%HubLoss , IntKiBuf(1), 1)
+      Int_Xferred   = Int_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%TanInd , IntKiBuf(1), 1)
+      Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumOuts
       Int_Xferred   = Int_Xferred   + 1
         DO I = 1, LEN(InData%RootName)
@@ -4099,12 +4084,6 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(InData%chord)
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%skewWakeMod
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useTipLoss , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useHubLoss , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useTanInd , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useAIDrag , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
@@ -4287,6 +4266,12 @@ ENDIF
       Re_Xferred   = Re_Xferred + 1
       OutData%SpdSound = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
+      OutData%TipLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
+      Int_Xferred   = Int_Xferred + 1
+      OutData%HubLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
+      Int_Xferred   = Int_Xferred + 1
+      OutData%TanInd = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
+      Int_Xferred   = Int_Xferred + 1
       OutData%NumOuts = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       DO I = 1, LEN(OutData%RootName)
@@ -4376,12 +4361,6 @@ ENDIF
     DEALLOCATE(mask2)
   END IF
       OutData%skewWakeMod = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useTipLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useHubLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useTanInd = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
       OutData%useAIDrag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1

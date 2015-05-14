@@ -140,9 +140,6 @@ module WTP_DvrSubs
       end do
       
       AD_Data%skewWakeMod      = WTP_Data%skewWakeMod 
-      AD_Data%useTipLoss       = WTP_Data%useTipLoss
-      AD_Data%useHubLoss       = WTP_Data%useHubLoss
-      AD_Data%useTanInd        = WTP_Data%useTanInd
       AD_Data%useAIDrag        = WTP_Data%useAIDrag
       AD_Data%useTIDrag        = WTP_Data%useTIDrag    
       AD_Data%numReIterations  = 1                   ! This is currently not available in the input file and is only for testing
@@ -151,10 +148,7 @@ module WTP_DvrSubs
       
       
       AD_Data%BEMT%skewWakeMod      = WTP_Data%skewWakeMod 
-      AD_Data%BEMT%useTipLoss       = WTP_Data%useTipLoss
-      AD_Data%BEMT%useHubLoss       = WTP_Data%useHubLoss
       AD_Data%BEMT%useInduction     = WTP_Data%useInduction
-      AD_Data%BEMT%useTanInd        = WTP_Data%useTanInd
       AD_Data%BEMT%useAIDrag        = WTP_Data%useAIDrag
       AD_Data%BEMT%useTIDrag        = WTP_Data%useTIDrag    
       AD_Data%BEMT%numReIterations  = 1                   ! This is currently not available in the input file and is only for testing

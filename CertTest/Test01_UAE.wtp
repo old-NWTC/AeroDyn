@@ -10,9 +10,6 @@ True                 DimenInp:                  Turbine parameters are dimension
 100                  MaxIter:                   Max number of iterations for induction factor.
 1.0e-5               ATol:                      Error tolerance for induction iteration.
 -----  Algorithm Configuration  ------------------------------------------------
-True                  useTipLoss:               Use the Prandtl tip-loss model?
-True                  useHubLoss:               Use the Prandtl hub-loss model?
-True                  useTanInd:                Include Swirl effects (calculate tangential induction factor)?
 0                     SkewWakeMod:              Which skewed-wake correction model? ( 0 = none, 1 = Pitt/Peters, 2 = unused, 3 = Coupled element-level)
 False                  useInduction:             Use the BEMT induction algorithm?
 True                  AIDrag:                   Use the drag term in the axial induction calculation?

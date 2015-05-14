@@ -28,9 +28,6 @@ module WTP_Types
       real(ReKi)      :: ATol
       real(ReKi)      :: ATol2
       real(ReKi)      :: SWTol
-      logical         :: useTipLoss           ! BEM input
-      logical         :: useHubLoss           ! BEM input
-      logical         :: useTanInd             ! BEM input useTanInd
       integer         :: skewWakeMod
       logical         :: useInduction
       logical         :: useAIDrag            ! BEM input
