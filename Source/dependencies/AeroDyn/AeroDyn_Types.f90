@@ -41,6 +41,7 @@ IMPLICIT NONE
     CHARACTER(1024)  :: InputFile      ! Name of the input file [-]
     INTEGER(IntKi)  :: NumBlades      ! Number of blades on the turbine [-]
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
+    LOGICAL  :: MustUseBEMT      ! whether or not the BEMT model is required (i.e., WT_Perf) [(flag)]
     REAL(DbKi)  :: DT      ! time step [s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
     INTEGER(IntKi)  :: numBladeNodes      ! Number of blade nodes used in the analysis [-]
@@ -143,12 +144,13 @@ IMPLICIT NONE
 ! =========  AD_ParameterType  =======
   TYPE, PUBLIC :: AD_ParameterType
     REAL(DbKi)  :: DT      ! Time step for continuous state integration & discrete state update [seconds]
-    TYPE(AFI_ParameterType)  :: AFI      ! AirfoilInfo parameters [-]
+    INTEGER(IntKi)  :: WakeMod      ! Type of wake/induction model {0=none, 1=BEMT} [-]
     INTEGER(IntKi)  :: NumBlades      ! Number of blades on the turbine [-]
-    TYPE(BEMT_ParameterType)  :: BEMT      ! Parameters for BEMT module [-]
     REAL(ReKi)  :: AirDens      ! Air density [kg/m^3]
     REAL(ReKi)  :: KinVisc      ! Kinematic air viscosity [m^2/s]
     REAL(ReKi)  :: SpdSound      ! Speed of sound [m/s]
+    TYPE(AFI_ParameterType)  :: AFI      ! AirfoilInfo parameters [-]
+    TYPE(BEMT_ParameterType)  :: BEMT      ! Parameters for BEMT module [-]
     INTEGER(IntKi)  :: NumOuts      ! Number of parameters in the output list (number of outputs requested) [-]
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     TYPE(OutParmType) , DIMENSION(:), ALLOCATABLE  :: OutParam      ! Names and units (and other characteristics) of all requested output parameters [-]
@@ -200,6 +202,7 @@ CONTAINS
     DstInitInputData%InputFile = SrcInitInputData%InputFile
     DstInitInputData%NumBlades = SrcInitInputData%NumBlades
     DstInitInputData%RootName = SrcInitInputData%RootName
+    DstInitInputData%MustUseBEMT = SrcInitInputData%MustUseBEMT
     DstInitInputData%DT = SrcInitInputData%DT
 IF (ALLOCATED(SrcInitInputData%chord)) THEN
   i1_l = LBOUND(SrcInitInputData%chord,1)
@@ -337,6 +340,7 @@ ENDIF
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%InputFile)  ! InputFile
       Int_BufSz  = Int_BufSz  + 1  ! NumBlades
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%RootName)  ! RootName
+      Int_BufSz  = Int_BufSz  + 1  ! MustUseBEMT
       Db_BufSz   = Db_BufSz   + 1  ! DT
   Int_BufSz   = Int_BufSz   + 1     ! chord allocated yes/no
   IF ( ALLOCATED(InData%chord) ) THEN
@@ -420,6 +424,8 @@ ENDIF
           IntKiBuf(Int_Xferred) = ICHAR(InData%RootName(I:I), IntKi)
           Int_Xferred = Int_Xferred   + 1
         END DO ! I
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%MustUseBEMT , IntKiBuf(1), 1)
+      Int_Xferred   = Int_Xferred   + 1
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%DT
       Db_Xferred   = Db_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%chord) ) THEN
@@ -571,6 +577,8 @@ ENDIF
         OutData%RootName(I:I) = CHAR(IntKiBuf(Int_Xferred))
         Int_Xferred = Int_Xferred   + 1
       END DO ! I
+      OutData%MustUseBEMT = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
+      Int_Xferred   = Int_Xferred + 1
       OutData%DT = DbKiBuf( Db_Xferred ) 
       Db_Xferred   = Db_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! chord not allocated
@@ -3521,16 +3529,17 @@ ENDIF
    ErrStat = ErrID_None
    ErrMsg  = ""
     DstParamData%DT = SrcParamData%DT
-      CALL AFI_CopyParam( SrcParamData%AFI, DstParamData%AFI, CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
-         IF (ErrStat>=AbortErrLev) RETURN
+    DstParamData%WakeMod = SrcParamData%WakeMod
     DstParamData%NumBlades = SrcParamData%NumBlades
-      CALL BEMT_CopyParam( SrcParamData%BEMT, DstParamData%BEMT, CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
-         IF (ErrStat>=AbortErrLev) RETURN
     DstParamData%AirDens = SrcParamData%AirDens
     DstParamData%KinVisc = SrcParamData%KinVisc
     DstParamData%SpdSound = SrcParamData%SpdSound
+      CALL AFI_CopyParam( SrcParamData%AFI, DstParamData%AFI, CtrlCode, ErrStat2, ErrMsg2 )
+         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
+         IF (ErrStat>=AbortErrLev) RETURN
+      CALL BEMT_CopyParam( SrcParamData%BEMT, DstParamData%BEMT, CtrlCode, ErrStat2, ErrMsg2 )
+         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
+         IF (ErrStat>=AbortErrLev) RETURN
     DstParamData%NumOuts = SrcParamData%NumOuts
     DstParamData%RootName = SrcParamData%RootName
 IF (ALLOCATED(SrcParamData%OutParam)) THEN
@@ -3673,6 +3682,11 @@ ENDIF
   Db_BufSz  = 0
   Int_BufSz  = 0
       Db_BufSz   = Db_BufSz   + 1  ! DT
+      Int_BufSz  = Int_BufSz  + 1  ! WakeMod
+      Int_BufSz  = Int_BufSz  + 1  ! NumBlades
+      Re_BufSz   = Re_BufSz   + 1  ! AirDens
+      Re_BufSz   = Re_BufSz   + 1  ! KinVisc
+      Re_BufSz   = Re_BufSz   + 1  ! SpdSound
    ! Allocate buffers for subtypes, if any (we'll get sizes from these) 
       Int_BufSz   = Int_BufSz + 3  ! AFI: size of buffers for each call to pack subtype
       CALL AFI_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%AFI, ErrStat2, ErrMsg2, .TRUE. ) ! AFI 
@@ -3691,7 +3705,6 @@ ENDIF
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
-      Int_BufSz  = Int_BufSz  + 1  ! NumBlades
       Int_BufSz   = Int_BufSz + 3  ! BEMT: size of buffers for each call to pack subtype
       CALL BEMT_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%BEMT, ErrStat2, ErrMsg2, .TRUE. ) ! BEMT 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
@@ -3709,9 +3722,6 @@ ENDIF
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
-      Re_BufSz   = Re_BufSz   + 1  ! AirDens
-      Re_BufSz   = Re_BufSz   + 1  ! KinVisc
-      Re_BufSz   = Re_BufSz   + 1  ! SpdSound
       Int_BufSz  = Int_BufSz  + 1  ! NumOuts
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%RootName)  ! RootName
   Int_BufSz   = Int_BufSz   + 1     ! OutParam allocated yes/no
@@ -3787,6 +3797,16 @@ ENDIF
 
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%DT
       Db_Xferred   = Db_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%WakeMod
+      Int_Xferred   = Int_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumBlades
+      Int_Xferred   = Int_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%AirDens
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%KinVisc
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%SpdSound
+      Re_Xferred   = Re_Xferred   + 1
       CALL AFI_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%AFI, ErrStat2, ErrMsg2, OnlySize ) ! AFI 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
         IF (ErrStat >= AbortErrLev) RETURN
@@ -3815,8 +3835,6 @@ ENDIF
       ELSE
         IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
       ENDIF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumBlades
-      Int_Xferred   = Int_Xferred   + 1
       CALL BEMT_PackParam( Re_Buf, Db_Buf, Int_Buf, InData%BEMT, ErrStat2, ErrMsg2, OnlySize ) ! BEMT 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
         IF (ErrStat >= AbortErrLev) RETURN
@@ -3845,12 +3863,6 @@ ENDIF
       ELSE
         IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
       ENDIF
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%AirDens
-      Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%KinVisc
-      Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%SpdSound
-      Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumOuts
       Int_Xferred   = Int_Xferred   + 1
         DO I = 1, LEN(InData%RootName)
@@ -3999,6 +4011,16 @@ ENDIF
   Int_Xferred  = 1
       OutData%DT = DbKiBuf( Db_Xferred ) 
       Db_Xferred   = Db_Xferred + 1
+      OutData%WakeMod = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
+      OutData%NumBlades = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
+      OutData%AirDens = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%KinVisc = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%SpdSound = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
       Buf_size=IntKiBuf( Int_Xferred )
       Int_Xferred = Int_Xferred + 1
       IF(Buf_size > 0) THEN
@@ -4039,8 +4061,6 @@ ENDIF
       IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
       IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
-      OutData%NumBlades = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
       Buf_size=IntKiBuf( Int_Xferred )
       Int_Xferred = Int_Xferred + 1
       IF(Buf_size > 0) THEN
@@ -4081,12 +4101,6 @@ ENDIF
       IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
       IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
-      OutData%AirDens = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
-      OutData%KinVisc = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
-      OutData%SpdSound = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
       OutData%NumOuts = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       DO I = 1, LEN(OutData%RootName)

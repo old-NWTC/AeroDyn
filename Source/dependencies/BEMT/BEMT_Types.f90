@@ -37,7 +37,6 @@ USE NWTC_Library
 IMPLICIT NONE
 ! =========  BEMT_InitInputType  =======
   TYPE, PUBLIC :: BEMT_InitInputType
-    REAL(DbKi)  :: DT      ! time step [s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
     INTEGER(IntKi)  :: numBlades      ! Number of blades [-]
     REAL(ReKi)  :: airDens      ! Air density [kg/m^3]
@@ -161,7 +160,6 @@ CONTAINS
 ! 
    ErrStat = ErrID_None
    ErrMsg  = ""
-    DstInitInputData%DT = SrcInitInputData%DT
 IF (ALLOCATED(SrcInitInputData%chord)) THEN
   i1_l = LBOUND(SrcInitInputData%chord,1)
   i1_u = UBOUND(SrcInitInputData%chord,1)
@@ -304,7 +302,6 @@ ENDIF
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
-      Db_BufSz   = Db_BufSz   + 1  ! DT
   Int_BufSz   = Int_BufSz   + 1     ! chord allocated yes/no
   IF ( ALLOCATED(InData%chord) ) THEN
     Int_BufSz   = Int_BufSz   + 2*2  ! chord upper/lower bounds for each dimension
@@ -372,8 +369,6 @@ ENDIF
   Db_Xferred  = 1
   Int_Xferred = 1
 
-      DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%DT
-      Db_Xferred   = Db_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%chord) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -511,8 +506,6 @@ ENDIF
   Re_Xferred  = 1
   Db_Xferred  = 1
   Int_Xferred  = 1
-      OutData%DT = DbKiBuf( Db_Xferred ) 
-      Db_Xferred   = Db_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! chord not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE

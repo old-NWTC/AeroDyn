@@ -34,11 +34,8 @@ module WTP_DvrSubs
       AD_Data%RootName       = outFileRoot
       
       AD_Data%numBladeNodes  = WTP_Data%numSeg
-      
-      
-      AD_Data%BEMT%numBladeNodes  = WTP_Data%numSeg
-      AD_Data%BEMT%numBlades      = WTP_Data%numBlade
-      
+      AD_Data%MustUseBEMT    = .TRUE.  ! gdw model is not valid in WT_Perf
+                  
    
       allocate ( AD_Data%chord(AD_Data%numBladeNodes, AD_Data%NumBlades), STAT = errStat2 )
       if ( errStat2 /= 0 ) then
@@ -98,23 +95,7 @@ module WTP_DvrSubs
          call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
          return
       end if 
-   
-      allocate ( AD_Data%BEMT%zTip(AD_Data%numBlades), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%zTip array.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
-      
-      allocate ( AD_Data%BEMT%zHub(AD_Data%numBlades), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%rHub array.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
-            
+               
       
       do i=1,AD_Data%numBladeNodes
          
@@ -128,8 +109,6 @@ module WTP_DvrSubs
       do j=1,AD_Data%numBlades
          AD_Data%zTip(j)  = WTP_Data%rotorRad  ! zTip
          AD_Data%zHub(j)  = WTP_Data%hubRad    ! rHub
-         AD_Data%BEMT%zTip(j)  = WTP_Data%rotorRad  ! zTip
-         AD_Data%BEMT%zHub(j)  = WTP_Data%hubRad    ! rHub
          
          do i=1,AD_Data%numBladeNodes
             AD_Data%chord (i,j)  = WTP_Data%BladeData(i)%Chord   ! 0.5 !real(i) 
@@ -139,8 +118,6 @@ module WTP_DvrSubs
          end do
       end do
       
-      AD_Data%numReIterations  = 1                   ! This is currently not available in the input file and is only for testing           
-
      
    end subroutine Set_AD_InitInp
 
