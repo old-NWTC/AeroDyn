@@ -20,8 +20,8 @@ Description line that will be printed in the output file and written to the scre
    True             TanInd             - Include tangential induction in BEMT calculations? (flag) [used only when WakeMod=1]
   False             AIDrag             - Include the drag term in the axial-induction calculation? (flag) [used only when WakeMod=1]
   False             TIDrag             - Include the drag term in the tangential-induction calculation? (flag) [used only when WakeMod=1 and TanInd=TRUE]
-      0.005         IndToler           - Convergence tolerance for BEM induction factors (-) [used only when WakeMod=1]
-       100          MaxIter            - Maximum number of iteration steps (-) [used only when WakeMod=1]
+   1.0e-5           IndToler           - Convergence tolerance for BEM induction factors (-) [used only when WakeMod=1]
+     500            MaxIter            - Maximum number of iteration steps (-) [used only when WakeMod=1]
 ======  Beddoes-Leishman Unsteady Airfoil Aerodynamics Options  ===================================== [used only when AFAreoMod=2]
        1            UAMod              - Unsteady Aero Model Switch (switch) {1=Baseline model (Original), 2=Gonzalez’s variant (changes in Cn,Cc,Cm), 3=Minemma/Pierce variant (changes in Cc and Cm)} [used only when AFAreoMod=2]
    FALSE            FLookup            - Flag to indicate whether a lookup for f' will be calculated (TRUE) or whether best-fit exponential equations will be used (FALSE); if FALSE S1-S4 must be provided in airfoil input files (flag) [used only when AFAreoMod=2]
@@ -42,10 +42,9 @@ Description line that will be printed in the output file and written to the scre
 "af_files2/S809_CLN_Outboard.dat"
 ======  Rotor/Blade Properties  =====================================================================
    True             UseBlCm            - Include aerodynamic pitching moment in calculations?  (flag)
-    6               NumBlNds           - Number of blade nodes used in the analysis (-)
-"skewWakeCorr_AeroDyn_blade.dat" ADBlFile(1)        - Name of file containing distributed aerodynamic properties for Blade #1 (-)
-"skewWakeCorr_AeroDyn_blade.dat" ADBlFile(2)        - Name of file containing distributed aerodynamic properties for Blade #2 (-)
-"skewWakeCorr_AeroDyn_blade.dat" ADBlFile(3)        - Name of file containing distributed aerodynamic properties for Blade #3 (-) [unused if NumBl < 3]
+"ccBlade_UAE_AeroDyn_blade.dat" ADBlFile(1)        - Name of file containing distributed aerodynamic properties for Blade #1 (-)
+"ccBlade_UAE_AeroDyn_blade.dat" ADBlFile(2)        - Name of file containing distributed aerodynamic properties for Blade #2 (-)
+"ccBlade_UAE_AeroDyn_blade.dat" ADBlFile(3)        - Name of file containing distributed aerodynamic properties for Blade #3 (-) [unused if NumBl < 3]
 ======  Tower Influence and Aerodynamics ============================================================= [used only when TwrPotent=True, TwrShadow=True, or TwrAero=True]
  0.0                TwrWakeCnst        - Tower wake constant (-) {0.0 - full potential flow, 0.1 - Bak model} [used only when TwrPotent=True]
 False               TwrUseCm           - Include aerodynamic pitching moment in tower aerodynamic load calculations?  (flag) [used only when TwrAero=True]

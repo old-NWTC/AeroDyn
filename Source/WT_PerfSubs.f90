@@ -139,21 +139,8 @@ module WTP_DvrSubs
          end do
       end do
       
-      AD_Data%skewWakeMod      = WTP_Data%skewWakeMod 
-      AD_Data%useAIDrag        = WTP_Data%useAIDrag
-      AD_Data%useTIDrag        = WTP_Data%useTIDrag    
-      AD_Data%numReIterations  = 1                   ! This is currently not available in the input file and is only for testing
-      AD_Data%maxIndIterations = WTP_Data%maxIter
-      !AD_Data%BEMT_SkewWakeMod = WTP_Data%skewWakeMod    ! This is needed because AD needs to branch according to the solution technique used within BEMT
-      
-      
-      AD_Data%BEMT%skewWakeMod      = WTP_Data%skewWakeMod 
-      AD_Data%BEMT%useInduction     = WTP_Data%useInduction
-      AD_Data%BEMT%useAIDrag        = WTP_Data%useAIDrag
-      AD_Data%BEMT%useTIDrag        = WTP_Data%useTIDrag    
-      AD_Data%BEMT%numReIterations  = 1                   ! This is currently not available in the input file and is only for testing
-      AD_Data%BEMT%maxIndIterations = WTP_Data%maxIter
-      AD_Data%BEMT%aTol             = WTP_Data%ATol
+      AD_Data%numReIterations  = 1                   ! This is currently not available in the input file and is only for testing           
+
      
    end subroutine Set_AD_InitInp
 

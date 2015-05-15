@@ -80,15 +80,10 @@ program WT_Perf
    !type(AFI_ParameterType)                        :: AFI_Params                              ! The derived type for holding the airfoil parameter information.
    real(ReKi)                                     :: psiRotor, velocityHub, deltar
    integer                                        :: iSect, iCase
-   INTEGER                                :: UnEc                             ! Unit number for the echo file.
    CHARACTER(1000)                        :: inputFile                        ! String to hold the file name.
    CHARACTER(1000)                        :: RootName                         ! String to hold the root of the input file name.
-   CHARACTER(1000)                        :: EchoFile                         ! String to hold the Echo file name.
    TYPE(ProgDesc), PARAMETER              :: version    = &                  ! The version number of this program.
                                                 ProgDesc( 'WT_Perf', 'v0.01.00', '28-Aug-2014' ) 
-   INTEGER(IntKi)                 :: i1
-   INTEGER(IntKi)                 :: i1_l  ! lower bounds for an array dimension
-   INTEGER(IntKi)                 :: i1_u  ! upper bounds for an array dimension
    
                             
 
@@ -199,7 +194,7 @@ program WT_Perf
             !u(1)%Vy    (i,j)  = u(1)%omega*u(1)%rLocal(i,j) 
            ! temp1             = velocityHub*((cos(u(1)%gamma)*sin(WTP_FileData%tilt)*sin(u(1)%psi(j)) - sin(u(1)%gamma)*cos(u(1)%psi(j)) )
            ! temp2             = u(1)%omega*u(1)%rLocal(i,j)*WTP_FileData%CosCone)
-            if (p%skewWakeMod < 2 ) then
+            if (p%BEMT%skewWakeMod < 2 ) then
                   ! This is incomplete and doesn't include all possible geometries or blade elastic motions
                u(1)%Vx    (i,j)  = velocityHub*((cos(u(1)%gamma)*sin(WTP_FileData%tilt)*cos(u(1)%psi(j))+sin(u(1)%gamma)*sin(u(1)%psi(j)))*WTP_FileData%SinCone + cos(u(1)%gamma)*cos(WTP_FileData%tilt)*WTP_FileData%CosCone)
                u(1)%Vy    (i,j)  = velocityHub*( cos(u(1)%gamma)*sin(WTP_FileData%tilt)*sin(u(1)%psi(j)) - sin(u(1)%gamma)*cos(u(1)%psi(j)) ) + u(1)%omega*u(1)%rLocal(i,j)*WTP_FileData%CosCone

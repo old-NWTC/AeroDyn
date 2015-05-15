@@ -15,26 +15,16 @@ module WTP_Types
       real(ReKi)      :: Twist
       real(ReKi)      :: Chord
       logical         :: PrntElem
-      real(ReKi)      :: RLocND
    end type WTP_Blade
    
    type, public ::  WTP_InputFileData
       logical         :: echo   
       character(1024) :: runTitle
-      logical         :: dimenInp
       integer         :: numSect
       character(1024) :: AD_InputFile
-      integer         :: maxIter
-      real(ReKi)      :: ATol
-      real(ReKi)      :: ATol2
       real(ReKi)      :: SWTol
-      integer         :: skewWakeMod
-      logical         :: useInduction
-      logical         :: useAIDrag            ! BEM input
-      logical         :: useTIDrag            ! BEM input
-      real(ReKi)      :: AIDragM
-      real(ReKi)      :: TIDragM
-      logical         :: TISingularity
+      !real(ReKi)      :: AIDragM
+      !real(ReKi)      :: TIDragM
       integer         :: numBlade
       real(ReKi)      :: rotorRad
       real(ReKi)      :: hubRad

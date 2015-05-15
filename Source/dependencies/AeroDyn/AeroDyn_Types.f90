@@ -43,19 +43,13 @@ IMPLICIT NONE
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     REAL(DbKi)  :: DT      ! time step [s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
-    INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
-    LOGICAL  :: useInduction      ! Include induction in BEM calculations [flag] { If FALSE then useTanInd will be set to FALSE} [-]
-    LOGICAL  :: useAIDrag      ! Include the drag term in the axial-induction calculation?  [flag] [-]
-    LOGICAL  :: useTIDrag      ! Include the drag term in the tangential-induction calculation?  Ignored if TanInd is False.  [flag] [-]
     INTEGER(IntKi)  :: numBladeNodes      ! Number of blade nodes used in the analysis [-]
     INTEGER(IntKi)  :: numReIterations      ! Number of iterations for finding the Reynolds number [-]
-    INTEGER(IntKi)  :: maxIndIterations      ! Maximum number of iterations of induction factor solve [-]
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: AFindx      ! Index of airfoil data file for blade node location [array of numBladeNodes] [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zHub      ! Distance to hub for each blade [m]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: zLocal      ! Distance to blade node, measured along the blade [m]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zTip      ! Distance to blade tip, measured along the blade [m]
     TYPE(BEMT_InitInputType)  :: BEMT      ! Parameters for the BEMT module [-]
-    INTEGER(IntKi)  :: BEMT_SkewWakeMod      ! The BEMT module skewed wake model, set to 0 if BEMT is not being used [-]
   END TYPE AD_InitInputType
 ! =======================
 ! =========  AD_InitOutputType  =======
@@ -63,11 +57,11 @@ IMPLICIT NONE
     CHARACTER(ChanLen) , DIMENSION(:), ALLOCATABLE  :: WriteOutputHdr      ! Names of the output-to-file channels [-]
     CHARACTER(ChanLen) , DIMENSION(:), ALLOCATABLE  :: WriteOutputUnt      ! Units of the output-to-file channels [-]
     TYPE(ProgDesc)  :: Ver      ! This module's name, version, and date [-]
-    TYPE(ProgDesc)  :: Version      !  [-]
   END TYPE AD_InitOutputType
 ! =======================
 ! =========  AD_BladePropsType  =======
   TYPE, PUBLIC :: AD_BladePropsType
+    INTEGER(IntKi)  :: NumBlNds      ! Number of blade nodes used in the analysis [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: BlSpn      ! Span at blade node [m]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: BlCrvAC      ! Curve at blade node [m]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: BlSwpAC      ! Sweep at blade node [m]
@@ -79,7 +73,6 @@ IMPLICIT NONE
 ! =======================
 ! =========  AD_InputFile  =======
   TYPE, PUBLIC :: AD_InputFile
-    LOGICAL  :: Echo      ! Echo the input to "<rootname>.AD.ech"? [flag]
     REAL(DbKi)  :: DTAero      ! Time interval for aerodynamic calculations {or "default"} [s]
     INTEGER(IntKi)  :: WakeMod      ! Type of wake/induction model {0=none, 1=BEMT} [-]
     INTEGER(IntKi)  :: AFAeroBladeMod      ! Type of blade airfoil aerodynamics model {1=steady model, 2=Beddoes-Leishman unsteady model} [-]
@@ -108,7 +101,6 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: NumAFfiles      ! Number of airfoil files used [-]
     CHARACTER(1024) , DIMENSION(:), ALLOCATABLE  :: AFNames      ! Airfoil file names (NumAF lines) [quoted strings]
     LOGICAL  :: UseBlCm      ! Include aerodynamic pitching moment in calculations? [flag]
-    INTEGER(IntKi)  :: NumBlNds      ! Number of blade nodes used in the analysis [-]
     TYPE(AD_BladePropsType) , DIMENSION(:), ALLOCATABLE  :: BladeProps      ! blade property information from blade input files [-]
     REAL(ReKi)  :: TwrWakeCnst      ! Tower wake constant {0.0 - full potential flow, 0.1 - Bak model} [used only when TwrPotent=True] [-]
     LOGICAL  :: TwrUseCm      ! Include aerodynamic pitching moment in tower aerodynamic load calculations? [used only when TwrAero=True] [flag]
@@ -157,19 +149,11 @@ IMPLICIT NONE
     REAL(ReKi)  :: AirDens      ! Air density [kg/m^3]
     REAL(ReKi)  :: KinVisc      ! Kinematic air viscosity [m^2/s]
     REAL(ReKi)  :: SpdSound      ! Speed of sound [m/s]
-    LOGICAL  :: TipLoss      ! Use the Prandtl tip-loss model? [used only when WakeMod=1] [flag]
-    LOGICAL  :: HubLoss      ! Use the Prandtl hub-loss model? [used only when WakeMod=1] [flag]
-    LOGICAL  :: TanInd      ! Include tangential induction in BEMT calculations? [used only when WakeMod=1] [flag]
     INTEGER(IntKi)  :: NumOuts      ! Number of parameters in the output list (number of outputs requested) [-]
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     TYPE(OutParmType) , DIMENSION(:), ALLOCATABLE  :: OutParam      ! Names and units (and other characteristics) of all requested output parameters [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chord      ! Chord length at node [m]
-    INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
-    LOGICAL  :: useAIDrag      ! Include the drag term in the axial-induction calculation?  [flag] [-]
-    LOGICAL  :: useTIDrag      ! Include the drag term in the tangential-induction calculation?  Ignored if TanInd is False.  [flag] [-]
     INTEGER(IntKi)  :: numBladeNodes      ! Number of blade nodes used in the analysis [-]
-    INTEGER(IntKi)  :: numReIterations      ! Number of iterations for finding the Reynolds number [-]
-    INTEGER(IntKi)  :: maxIndIterations      ! Maximum number of iterations of induction factor solve [-]
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: AFindx      ! Index of airfoil data file for blade node location [array of numBladeNodes] [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: tipLossConst      ! A constant computed during initialization based on B*(zTip-zLocal)/(2*zLocal) [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: hubLossConst      ! A constant computed during initialization based on B*(zLocal-zHub)/(2*zHub) [-]
@@ -231,13 +215,8 @@ IF (ALLOCATED(SrcInitInputData%chord)) THEN
   END IF
     DstInitInputData%chord = SrcInitInputData%chord
 ENDIF
-    DstInitInputData%skewWakeMod = SrcInitInputData%skewWakeMod
-    DstInitInputData%useInduction = SrcInitInputData%useInduction
-    DstInitInputData%useAIDrag = SrcInitInputData%useAIDrag
-    DstInitInputData%useTIDrag = SrcInitInputData%useTIDrag
     DstInitInputData%numBladeNodes = SrcInitInputData%numBladeNodes
     DstInitInputData%numReIterations = SrcInitInputData%numReIterations
-    DstInitInputData%maxIndIterations = SrcInitInputData%maxIndIterations
 IF (ALLOCATED(SrcInitInputData%AFindx)) THEN
   i1_l = LBOUND(SrcInitInputData%AFindx,1)
   i1_u = UBOUND(SrcInitInputData%AFindx,1)
@@ -291,7 +270,6 @@ ENDIF
       CALL BEMT_CopyInitInput( SrcInitInputData%BEMT, DstInitInputData%BEMT, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
-    DstInitInputData%BEMT_SkewWakeMod = SrcInitInputData%BEMT_SkewWakeMod
  END SUBROUTINE AD_CopyInitInput
 
  SUBROUTINE AD_DestroyInitInput( InitInputData, ErrStat, ErrMsg )
@@ -365,13 +343,8 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! chord upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%chord)  ! chord
   END IF
-      Int_BufSz  = Int_BufSz  + 1  ! skewWakeMod
-      Int_BufSz  = Int_BufSz  + 1  ! useInduction
-      Int_BufSz  = Int_BufSz  + 1  ! useAIDrag
-      Int_BufSz  = Int_BufSz  + 1  ! useTIDrag
       Int_BufSz  = Int_BufSz  + 1  ! numBladeNodes
       Int_BufSz  = Int_BufSz  + 1  ! numReIterations
-      Int_BufSz  = Int_BufSz  + 1  ! maxIndIterations
   Int_BufSz   = Int_BufSz   + 1     ! AFindx allocated yes/no
   IF ( ALLOCATED(InData%AFindx) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! AFindx upper/lower bounds for each dimension
@@ -410,7 +383,6 @@ ENDIF
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
-      Int_BufSz  = Int_BufSz  + 1  ! BEMT_SkewWakeMod
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -466,19 +438,9 @@ ENDIF
       IF (SIZE(InData%chord)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%chord))-1 ) = PACK(InData%chord,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%chord)
   END IF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%skewWakeMod
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useInduction , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useAIDrag , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useTIDrag , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%numBladeNodes
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%numReIterations
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%maxIndIterations
       Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%AFindx) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -563,8 +525,6 @@ ENDIF
       ELSE
         IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
       ENDIF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%BEMT_SkewWakeMod
-      Int_Xferred   = Int_Xferred   + 1
  END SUBROUTINE AD_PackInitInput
 
  SUBROUTINE AD_UnPackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -639,19 +599,9 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(OutData%chord)
     DEALLOCATE(mask2)
   END IF
-      OutData%skewWakeMod = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useInduction = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useAIDrag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useTIDrag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
       OutData%numBladeNodes = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%numReIterations = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-      OutData%maxIndIterations = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! AFindx not allocated
     Int_Xferred = Int_Xferred + 1
@@ -788,8 +738,6 @@ ENDIF
       IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
       IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
-      OutData%BEMT_SkewWakeMod = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
  END SUBROUTINE AD_UnPackInitInput
 
  SUBROUTINE AD_CopyInitOutput( SrcInitOutputData, DstInitOutputData, CtrlCode, ErrStat, ErrMsg )
@@ -834,9 +782,6 @@ ENDIF
       CALL NWTC_Library_Copyprogdesc( SrcInitOutputData%Ver, DstInitOutputData%Ver, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
-      CALL NWTC_Library_Copyprogdesc( SrcInitOutputData%Version, DstInitOutputData%Version, CtrlCode, ErrStat2, ErrMsg2 )
-         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
-         IF (ErrStat>=AbortErrLev) RETURN
  END SUBROUTINE AD_CopyInitOutput
 
  SUBROUTINE AD_DestroyInitOutput( InitOutputData, ErrStat, ErrMsg )
@@ -855,7 +800,6 @@ IF (ALLOCATED(InitOutputData%WriteOutputUnt)) THEN
   DEALLOCATE(InitOutputData%WriteOutputUnt)
 ENDIF
   CALL NWTC_Library_Destroyprogdesc( InitOutputData%Ver, ErrStat, ErrMsg )
-  CALL NWTC_Library_Destroyprogdesc( InitOutputData%Version, ErrStat, ErrMsg )
  END SUBROUTINE AD_DestroyInitOutput
 
  SUBROUTINE AD_PackInitOutput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
@@ -921,23 +865,6 @@ ENDIF
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
-      Int_BufSz   = Int_BufSz + 3  ! Version: size of buffers for each call to pack subtype
-      CALL NWTC_Library_Packprogdesc( Re_Buf, Db_Buf, Int_Buf, InData%Version, ErrStat2, ErrMsg2, .TRUE. ) ! Version 
-        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
-        IF (ErrStat >= AbortErrLev) RETURN
-
-      IF(ALLOCATED(Re_Buf)) THEN ! Version
-         Re_BufSz  = Re_BufSz  + SIZE( Re_Buf  )
-         DEALLOCATE(Re_Buf)
-      END IF
-      IF(ALLOCATED(Db_Buf)) THEN ! Version
-         Db_BufSz  = Db_BufSz  + SIZE( Db_Buf  )
-         DEALLOCATE(Db_Buf)
-      END IF
-      IF(ALLOCATED(Int_Buf)) THEN ! Version
-         Int_BufSz = Int_BufSz + SIZE( Int_Buf )
-         DEALLOCATE(Int_Buf)
-      END IF
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -1000,34 +927,6 @@ ENDIF
     END DO !i1
   END IF
       CALL NWTC_Library_Packprogdesc( Re_Buf, Db_Buf, Int_Buf, InData%Ver, ErrStat2, ErrMsg2, OnlySize ) ! Ver 
-        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
-        IF (ErrStat >= AbortErrLev) RETURN
-
-      IF(ALLOCATED(Re_Buf)) THEN
-        IntKiBuf( Int_Xferred ) = SIZE(Re_Buf); Int_Xferred = Int_Xferred + 1
-        IF (SIZE(Re_Buf) > 0) ReKiBuf( Re_Xferred:Re_Xferred+SIZE(Re_Buf)-1 ) = Re_Buf
-        Re_Xferred = Re_Xferred + SIZE(Re_Buf)
-        DEALLOCATE(Re_Buf)
-      ELSE
-        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
-      ENDIF
-      IF(ALLOCATED(Db_Buf)) THEN
-        IntKiBuf( Int_Xferred ) = SIZE(Db_Buf); Int_Xferred = Int_Xferred + 1
-        IF (SIZE(Db_Buf) > 0) DbKiBuf( Db_Xferred:Db_Xferred+SIZE(Db_Buf)-1 ) = Db_Buf
-        Db_Xferred = Db_Xferred + SIZE(Db_Buf)
-        DEALLOCATE(Db_Buf)
-      ELSE
-        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
-      ENDIF
-      IF(ALLOCATED(Int_Buf)) THEN
-        IntKiBuf( Int_Xferred ) = SIZE(Int_Buf); Int_Xferred = Int_Xferred + 1
-        IF (SIZE(Int_Buf) > 0) IntKiBuf( Int_Xferred:Int_Xferred+SIZE(Int_Buf)-1 ) = Int_Buf
-        Int_Xferred = Int_Xferred + SIZE(Int_Buf)
-        DEALLOCATE(Int_Buf)
-      ELSE
-        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
-      ENDIF
-      CALL NWTC_Library_Packprogdesc( Re_Buf, Db_Buf, Int_Buf, InData%Version, ErrStat2, ErrMsg2, OnlySize ) ! Version 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
         IF (ErrStat >= AbortErrLev) RETURN
 
@@ -1184,46 +1083,6 @@ ENDIF
       IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
       IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
-      Buf_size=IntKiBuf( Int_Xferred )
-      Int_Xferred = Int_Xferred + 1
-      IF(Buf_size > 0) THEN
-        ALLOCATE(Re_Buf(Buf_size),STAT=ErrStat2)
-        IF (ErrStat2 /= 0) THEN 
-           CALL SetErrStat(ErrID_Fatal, 'Error allocating Re_Buf.', ErrStat, ErrMsg,RoutineName)
-           RETURN
-        END IF
-        Re_Buf = ReKiBuf( Re_Xferred:Re_Xferred+Buf_size-1 )
-        Re_Xferred = Re_Xferred + Buf_size
-      END IF
-      Buf_size=IntKiBuf( Int_Xferred )
-      Int_Xferred = Int_Xferred + 1
-      IF(Buf_size > 0) THEN
-        ALLOCATE(Db_Buf(Buf_size),STAT=ErrStat2)
-        IF (ErrStat2 /= 0) THEN 
-           CALL SetErrStat(ErrID_Fatal, 'Error allocating Db_Buf.', ErrStat, ErrMsg,RoutineName)
-           RETURN
-        END IF
-        Db_Buf = DbKiBuf( Db_Xferred:Db_Xferred+Buf_size-1 )
-        Db_Xferred = Db_Xferred + Buf_size
-      END IF
-      Buf_size=IntKiBuf( Int_Xferred )
-      Int_Xferred = Int_Xferred + 1
-      IF(Buf_size > 0) THEN
-        ALLOCATE(Int_Buf(Buf_size),STAT=ErrStat2)
-        IF (ErrStat2 /= 0) THEN 
-           CALL SetErrStat(ErrID_Fatal, 'Error allocating Int_Buf.', ErrStat, ErrMsg,RoutineName)
-           RETURN
-        END IF
-        Int_Buf = IntKiBuf( Int_Xferred:Int_Xferred+Buf_size-1 )
-        Int_Xferred = Int_Xferred + Buf_size
-      END IF
-      CALL NWTC_Library_Unpackprogdesc( Re_Buf, Db_Buf, Int_Buf, OutData%Version, ErrStat2, ErrMsg2 ) ! Version 
-        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
-        IF (ErrStat >= AbortErrLev) RETURN
-
-      IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
-      IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
-      IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
  END SUBROUTINE AD_UnPackInitOutput
 
  SUBROUTINE AD_CopyBladePropsType( SrcBladePropsTypeData, DstBladePropsTypeData, CtrlCode, ErrStat, ErrMsg )
@@ -1241,6 +1100,7 @@ ENDIF
 ! 
    ErrStat = ErrID_None
    ErrMsg  = ""
+    DstBladePropsTypeData%NumBlNds = SrcBladePropsTypeData%NumBlNds
 IF (ALLOCATED(SrcBladePropsTypeData%BlSpn)) THEN
   i1_l = LBOUND(SrcBladePropsTypeData%BlSpn,1)
   i1_u = UBOUND(SrcBladePropsTypeData%BlSpn,1)
@@ -1394,6 +1254,7 @@ ENDIF
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
+      Int_BufSz  = Int_BufSz  + 1  ! NumBlNds
   Int_BufSz   = Int_BufSz   + 1     ! BlSpn allocated yes/no
   IF ( ALLOCATED(InData%BlSpn) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! BlSpn upper/lower bounds for each dimension
@@ -1456,6 +1317,8 @@ ENDIF
   Db_Xferred  = 1
   Int_Xferred = 1
 
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumBlNds
+      Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%BlSpn) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -1582,6 +1445,8 @@ ENDIF
   Re_Xferred  = 1
   Db_Xferred  = 1
   Int_Xferred  = 1
+      OutData%NumBlNds = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! BlSpn not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
@@ -1760,7 +1625,6 @@ ENDIF
 ! 
    ErrStat = ErrID_None
    ErrMsg  = ""
-    DstInputFileData%Echo = SrcInputFileData%Echo
     DstInputFileData%DTAero = SrcInputFileData%DTAero
     DstInputFileData%WakeMod = SrcInputFileData%WakeMod
     DstInputFileData%AFAeroBladeMod = SrcInputFileData%AFAeroBladeMod
@@ -1800,7 +1664,6 @@ IF (ALLOCATED(SrcInputFileData%AFNames)) THEN
     DstInputFileData%AFNames = SrcInputFileData%AFNames
 ENDIF
     DstInputFileData%UseBlCm = SrcInputFileData%UseBlCm
-    DstInputFileData%NumBlNds = SrcInputFileData%NumBlNds
 IF (ALLOCATED(SrcInputFileData%BladeProps)) THEN
   i1_l = LBOUND(SrcInputFileData%BladeProps,1)
   i1_u = UBOUND(SrcInputFileData%BladeProps,1)
@@ -1958,7 +1821,6 @@ ENDIF
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
-      Int_BufSz  = Int_BufSz  + 1  ! Echo
       Db_BufSz   = Db_BufSz   + 1  ! DTAero
       Int_BufSz  = Int_BufSz  + 1  ! WakeMod
       Int_BufSz  = Int_BufSz  + 1  ! AFAeroBladeMod
@@ -1991,7 +1853,6 @@ ENDIF
       Int_BufSz  = Int_BufSz  + SIZE(InData%AFNames)*LEN(InData%AFNames)  ! AFNames
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! UseBlCm
-      Int_BufSz  = Int_BufSz  + 1  ! NumBlNds
   Int_BufSz   = Int_BufSz   + 1     ! BladeProps allocated yes/no
   IF ( ALLOCATED(InData%BladeProps) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! BladeProps upper/lower bounds for each dimension
@@ -2077,8 +1938,6 @@ ENDIF
   Db_Xferred  = 1
   Int_Xferred = 1
 
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%Echo , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%DTAero
       Db_Xferred   = Db_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%WakeMod
@@ -2149,8 +2008,6 @@ ENDIF
     END DO !i1
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%UseBlCm , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumBlNds
       Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%BladeProps) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -2315,8 +2172,6 @@ ENDIF
   Re_Xferred  = 1
   Db_Xferred  = 1
   Int_Xferred  = 1
-      OutData%Echo = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
       OutData%DTAero = DbKiBuf( Db_Xferred ) 
       Db_Xferred   = Db_Xferred + 1
       OutData%WakeMod = IntKiBuf( Int_Xferred ) 
@@ -2397,8 +2252,6 @@ ENDIF
     DEALLOCATE(mask1)
   END IF
       OutData%UseBlCm = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%NumBlNds = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! BladeProps not allocated
     Int_Xferred = Int_Xferred + 1
@@ -3678,9 +3531,6 @@ ENDIF
     DstParamData%AirDens = SrcParamData%AirDens
     DstParamData%KinVisc = SrcParamData%KinVisc
     DstParamData%SpdSound = SrcParamData%SpdSound
-    DstParamData%TipLoss = SrcParamData%TipLoss
-    DstParamData%HubLoss = SrcParamData%HubLoss
-    DstParamData%TanInd = SrcParamData%TanInd
     DstParamData%NumOuts = SrcParamData%NumOuts
     DstParamData%RootName = SrcParamData%RootName
 IF (ALLOCATED(SrcParamData%OutParam)) THEN
@@ -3713,12 +3563,7 @@ IF (ALLOCATED(SrcParamData%chord)) THEN
   END IF
     DstParamData%chord = SrcParamData%chord
 ENDIF
-    DstParamData%skewWakeMod = SrcParamData%skewWakeMod
-    DstParamData%useAIDrag = SrcParamData%useAIDrag
-    DstParamData%useTIDrag = SrcParamData%useTIDrag
     DstParamData%numBladeNodes = SrcParamData%numBladeNodes
-    DstParamData%numReIterations = SrcParamData%numReIterations
-    DstParamData%maxIndIterations = SrcParamData%maxIndIterations
 IF (ALLOCATED(SrcParamData%AFindx)) THEN
   i1_l = LBOUND(SrcParamData%AFindx,1)
   i1_u = UBOUND(SrcParamData%AFindx,1)
@@ -3867,9 +3712,6 @@ ENDIF
       Re_BufSz   = Re_BufSz   + 1  ! AirDens
       Re_BufSz   = Re_BufSz   + 1  ! KinVisc
       Re_BufSz   = Re_BufSz   + 1  ! SpdSound
-      Int_BufSz  = Int_BufSz  + 1  ! TipLoss
-      Int_BufSz  = Int_BufSz  + 1  ! HubLoss
-      Int_BufSz  = Int_BufSz  + 1  ! TanInd
       Int_BufSz  = Int_BufSz  + 1  ! NumOuts
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%RootName)  ! RootName
   Int_BufSz   = Int_BufSz   + 1     ! OutParam allocated yes/no
@@ -3900,12 +3742,7 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! chord upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%chord)  ! chord
   END IF
-      Int_BufSz  = Int_BufSz  + 1  ! skewWakeMod
-      Int_BufSz  = Int_BufSz  + 1  ! useAIDrag
-      Int_BufSz  = Int_BufSz  + 1  ! useTIDrag
       Int_BufSz  = Int_BufSz  + 1  ! numBladeNodes
-      Int_BufSz  = Int_BufSz  + 1  ! numReIterations
-      Int_BufSz  = Int_BufSz  + 1  ! maxIndIterations
   Int_BufSz   = Int_BufSz   + 1     ! AFindx allocated yes/no
   IF ( ALLOCATED(InData%AFindx) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! AFindx upper/lower bounds for each dimension
@@ -4014,12 +3851,6 @@ ENDIF
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%SpdSound
       Re_Xferred   = Re_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%TipLoss , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%HubLoss , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%TanInd , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumOuts
       Int_Xferred   = Int_Xferred   + 1
         DO I = 1, LEN(InData%RootName)
@@ -4083,17 +3914,7 @@ ENDIF
       IF (SIZE(InData%chord)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%chord))-1 ) = PACK(InData%chord,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%chord)
   END IF
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%skewWakeMod
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useAIDrag , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%useTIDrag , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%numBladeNodes
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%numReIterations
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%maxIndIterations
       Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%AFindx) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -4266,12 +4087,6 @@ ENDIF
       Re_Xferred   = Re_Xferred + 1
       OutData%SpdSound = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
-      OutData%TipLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%HubLoss = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%TanInd = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
       OutData%NumOuts = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       DO I = 1, LEN(OutData%RootName)
@@ -4360,17 +4175,7 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(OutData%chord)
     DEALLOCATE(mask2)
   END IF
-      OutData%skewWakeMod = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useAIDrag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
-      OutData%useTIDrag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
       OutData%numBladeNodes = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-      OutData%numReIterations = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-      OutData%maxIndIterations = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! AFindx not allocated
     Int_Xferred = Int_Xferred + 1

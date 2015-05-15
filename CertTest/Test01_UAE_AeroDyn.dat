@@ -3,7 +3,7 @@ Description line that will be printed in the output file and written to the scre
 ======  General Options  ============================================================================
     True            Echo               - Echo the input to "<rootname>.AD.ech"?  (flag)
  default            DTAero             - Time interval for aerodynamic calculations {or "default"} (s)
-       1            WakeMod            - Type of wake/induction model (switch) {0=none, 1=BEMT}
+       0            WakeMod            - Type of wake/induction model (switch) {0=none, 1=BEMT}
        1            AFAeroBladeMod     - Type of blade airfoil aerodynamics model (switch) {1=steady model, 2=Beddoes-Leishman unsteady model}
        1            AFAeroTwrMod       - Type of tower airfoil aerodynamics model (switch) {1=steady model, 2=Beddoes-Leishman unsteady model}
    True             TwrPotent          - Calculate tower influence on wind based on potential flow around the tower? (flag)
@@ -14,14 +14,14 @@ Description line that will be printed in the output file and written to the scre
        1.4639e-5    KinVisc            - Kinematic air viscosity (m^2/s)
    333.3            SpdSound           - Speed of sound (m/s)
 ======  Blade-Element/Momentum Theory Options  ====================================================== [used only when WakeMod=1]
-      1             SkewMod            - Type of skewed-wake correction model (switch) {1=uncoupled, 2=Pitt/Peters, 3=coupled} [used only when WakeMod=1]
+      0             SkewMod            - Type of skewed-wake correction model (switch) {1=uncoupled, 2=Pitt/Peters, 3=coupled} [used only when WakeMod=1]
    True             TipLoss            - Use the Prandtl tip-loss model? (flag) [used only when WakeMod=1]
    True             HubLoss            - Use the Prandtl hub-loss model? (flag) [used only when WakeMod=1]
    True             TanInd             - Include tangential induction in BEMT calculations? (flag) [used only when WakeMod=1]
-  False             AIDrag             - Include the drag term in the axial-induction calculation? (flag) [used only when WakeMod=1]
-  False             TIDrag             - Include the drag term in the tangential-induction calculation? (flag) [used only when WakeMod=1 and TanInd=TRUE]
+   True             AIDrag             - Include the drag term in the axial-induction calculation? (flag) [used only when WakeMod=1]
+   True             TIDrag             - Include the drag term in the tangential-induction calculation? (flag) [used only when WakeMod=1 and TanInd=TRUE]
       0.005         IndToler           - Convergence tolerance for BEM induction factors (-) [used only when WakeMod=1]
-       100          MaxIter            - Maximum number of iteration steps (-) [used only when WakeMod=1]
+   1.0e-5           MaxIter            - Maximum number of iteration steps (-) [used only when WakeMod=1]
 ======  Beddoes-Leishman Unsteady Airfoil Aerodynamics Options  ===================================== [used only when AFAreoMod=2]
        1            UAMod              - Unsteady Aero Model Switch (switch) {1=Baseline model (Original), 2=Gonzalez’s variant (changes in Cn,Cc,Cm), 3=Minemma/Pierce variant (changes in Cc and Cm)} [used only when AFAreoMod=2]
    FALSE            FLookup            - Flag to indicate whether a lookup for f' will be calculated (TRUE) or whether best-fit exponential equations will be used (FALSE); if FALSE S1-S4 must be provided in airfoil input files (flag) [used only when AFAreoMod=2]
@@ -44,7 +44,6 @@ Description line that will be printed in the output file and written to the scre
 "Airfoils/UAE_VI/Mod_S809_Outboard.dat"
 ======  Rotor/Blade Properties  =====================================================================
    True             UseBlCm            - Include aerodynamic pitching moment in calculations?  (flag)
-    6               NumBlNds           - Number of blade nodes used in the analysis (-)
 "Test01_UAE_AeroDyn_blade.dat" ADBlFile(1)        - Name of file containing distributed aerodynamic properties for Blade #1 (-)
 "Test01_UAE_AeroDyn_blade.dat" ADBlFile(2)        - Name of file containing distributed aerodynamic properties for Blade #2 (-)
 "Test01_UAE_AeroDyn_blade.dat" ADBlFile(3)        - Name of file containing distributed aerodynamic properties for Blade #3 (-) [unused if NumBl < 3]

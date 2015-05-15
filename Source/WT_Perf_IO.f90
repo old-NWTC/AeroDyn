@@ -85,9 +85,6 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
 
       ! Read the rest of input-configuration section.
-
-   call ReadVar ( unIn, fileName, inputData%dimenInp, 'DimenInp', 'Turbine parameters are dimensional?', errStat2, errMsg2 )
-      if ( OnCheckErr() ) return
       
    call ReadVar ( unIn, fileName, inputData%AD_InputFile,   'AD_InputFile',   'Name of the AeroDyn input file', errStat2, errMsg2 )
       if ( OnCheckErr() ) return
@@ -99,12 +96,7 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
    call ReadCom ( unIn, fileName,                                 'the model-configuration subtitle'                , errStat2, errMsg2 )
    call ReadVar ( unIn, fileName, inputData%numSect,  'numSect',  'Number of circumferential sectors.'              , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%maxIter,  'maxIter',  'Max number of iterations for induction factor.'  , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%ATol,     'ATol',     'Error tolerance for induction iteration.'        , errStat2, errMsg2 )
    !call ReadVar ( unIn, fileName, inputData%SWTol,    'SWTol',    'Error tolerance for skewed-wake iteration.'      )
-
-
-   inputData%ATol2 = inputData%ATol**2
 
 
       ! Check for valid choices.
@@ -112,60 +104,38 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
    if ( inputData%NumSect < 1 )  then
       call Abort ( ' Variable "numSect" must be greater than 0.  Instead, it is "'//trim( Int2LStr( inputData%numSect ) )//'".' )
    endif
-   if ( inputData%maxIter < 1 )  then
-      call Abort ( ' Variable "maxIter" must be greater than 0.  Instead, it is "'//trim( Int2LStr( inputData%maxIter ) )//'".' )
-   endif
 
-   if ( inputData%ATol <= 0.0 )  then
-      call Abort ( ' Variable "ATol" must be greater than 0.  Instead, it is "'//trim( Num2LStr( inputData%ATol ) )//'".' )
-   endif
 
-   !if ( inputData%SWTol <= 0.0 )  then
-   !   call Abort ( ' Variable "SWTol" must be greater than 0.  Instead, it is "'//trim( Num2LStr( inputData%SWTol ) )//'".' )
-   !endif
    
       ! Read the algorithm-configuration section.
 
-   call ReadCom ( unIn, fileName,                       'the algorithm-configuration subtitle'                           , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%skewWakeMod, 'skewWakeMod', 'Skewed-wake correction model'                   , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%useInduction,  'useInduction',  'Use BEM induction algorithm?'                        , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%useAIDrag,   'useAIDrag',   'Include the drag term in the axial-induction calculation?'      , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%useTIDrag,   'useTIDrag',   'Include the drag term in the tangential-induction calculation?' , errStat2, errMsg2 )
-
-
-   if ( inputData%useAIDrag )  then
-      inputData%AIDragM = 1.0
-   else
-      inputData%AIDragM = 0.0
-   endif
-
-   if ( inputData%useTIDrag )  then
-      inputData%TIDragM = 1.0
-   else
-      inputData%TIDragM = 0.0
-   endif
+   !if ( inputData%useAIDrag )  then
+   !   inputData%AIDragM = 1.0
+   !else
+   !   inputData%AIDragM = 0.0
+   !endif
+   !
+   !if ( inputData%useTIDrag )  then
+   !   inputData%TIDragM = 1.0
+   !else
+   !   inputData%TIDragM = 0.0
+   !endif
 
    !call ReadVar ( unIn, fileName, inputData%TISingularity,   'TISingularity',   'Use the singularity avoidance method in the tangential-induction calculation?' )
 
       ! Check for valid choices.
 
 
-!Start Proposed Changes 3.03.01a00-dcm, 27-Jul-2009
-!Start of proposed change.  v3.02.00b-mlb 22-August-2006  M. Buhl
-!v3.02.00b-mlb   IF ( ( IndType < 0 ) .OR. ( IndType > 2 ) )  THEN
-!v3.02.00b-mlb      CALL Abort ( ' Variable "IndType" must be 0, 1, or 2.  Instead, it is "'//Trim( Int2LStr( IndType ) )//'".' )
  !  IF ( ( IndType < 0 ) .OR. ( IndType > 1 ) )  THEN
   !    CALL Abort ( ' Variable "IndType" must be 0 or 1.  Instead, it is '//Trim( Int2LStr( IndType ) )//'.' )
-!!End of proposed change.  v3.02.00b-mlb 22-August-2006  M. Buhl
  !  ELSEIF ( IndType == 0 )  THEN    ! Don't do skewed wakes if induction calculations are disabled.
   !    SkewWake = .FALSE.
   ! ENDIF
 
-   if ( .NOT. inputData%useInduction )  then    ! Don't do skewed wakes if induction calculations are disabled.
-      inputData%skewWakeMod = 0
-   endif
+   !if ( .NOT. inputData%useInduction )  then    ! Don't do skewed wakes if induction calculations are disabled.
+   !   inputData%skewWakeMod = 0
+   !endif
 
-!End Proposed Changes 3.03.01a00-dcm, 27-Jul-2009
 
       ! Read the turbine-data section.
 
@@ -179,18 +149,6 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
    call ReadVar ( unIn, fileName, inputData%HubHt,    'HubHt',    'Hub height.' , errStat2, errMsg2 )
 
   
-   if ( inputData%dimenInp )  then
-      inputData%HubRadND = inputData%HubRad/inputData%RotorRad
-      inputData%HubHtND  = inputData%HubHt /inputData%RotorRad
-   else
-!Start of proposed change.  v3.04.00c-mlb, 12-Jan-2011,  M. Buhl
-      inputData%HubRadND = inputData%HubRad
-      inputData%HubHtND  = inputData%HubHt
-!End of proposed change.  v3.04.00c-mlb, 12-Jan-2011,  M. Buhl
-      inputData%HubRad = inputData%HubRadND*inputData%RotorRad
-      inputData%HubHt  = inputData%HubHtND *inputData%RotorRad
-   endif
-
    inputData%BldLen  = inputData%RotorRad - inputData%HubRad
    inputData%PreCone = inputData%PreCone*D2R
    inputData%SinCone = sin( inputData%PreCone )
@@ -243,21 +201,7 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
       call CheckIOS ( IOS, fileName, 'line #'//trim( Int2LStr( ISeg ) )//' of the blade-element data table.' , NumType )
 
-      if ( inputData%BladeData(ISeg)%Chord <= 0.0 )  then
-         call Abort ( ' The chord for segment #'//trim( Int2LStr( inputData%NumSect ) )//' must be > 0.  Instead, it is "' &
-                    //trim( Num2LStr( inputData%BladeData(ISeg)%Chord ) )//'".' )
-      endif
-
-
          ! Convert to or from dimensional data.
-
-      if (inputData%DimenInp )  then
-         inputData%BladeData(ISeg)%RLocND = inputData%BladeData(ISeg)%RLoc /inputData%RotorRad
-        ! inputData%BladeData(ISeg)%ChordND  = inputData%BladeData(ISeg)%Chord/inputData%RotorRad
-      else
-         inputData%BladeData(ISeg)%RLocND = inputData%BladeData(ISeg)%RLoc
-         inputData%BladeData(ISeg)%RLoc   = inputData%BladeData(ISeg)%RLocND*inputData%RotorRad
-      endif
 
       inputData%BladeData(ISeg)%Twist = inputData%BladeData(ISeg)%Twist*D2R
 

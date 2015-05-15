@@ -1,19 +1,11 @@
------  WT_Perf Input File  -----------------------------------------------------
-WT_Perf BEMT input file.  UAE Phase 3 turbine (Non-dimen, English, Space, BEM).
+-----  WT_Perf v4.xx Input File  -----------------------------------------------
+WT_Perf BEMT input file.  UAE Phase 3 turbine (Space, BEM).
 Compatible with WT_Perf v4.xx
 -----  Input Configuration  ----------------------------------------------------
 False                Echo:                      Echo input parameters to "<rootname>.ech"?
-True                 DimenInp:                  Turbine parameters are dimensional?
 "ccBlade_UAE_AeroDyn.dat" AD_InputFile:              Name of the primary AeroDyn input file
 -----  Model Configuration  ----------------------------------------------------
 160                   NumSect:                   Number of circumferential sectors.
-500                    MaxIter:                   Max number of iterations for induction factor.
-1.0e-5               ATol:                      Error tolerance for induction iteration.
------  Algorithm Configuration  ------------------------------------------------
-1                    SkewWakeMod:               Skewed wake model [ 0: no skewed-wake correction to induction, 1: Pitt-Peters, 2: Coupled 1, 3: Coupled entire disc
-True                 IndType:                   Use BEM induction algorithm?
-True                 AIDrag:                    Use the drag term in the axial induction calculation?
-True                 TIDrag:                    Use the drag term in the tangential induction calculation?
 -----  Turbine Data  -----------------------------------------------------------
 2                    NumBlade:                  Number of blades.
 5.029                RotorRad:                  Rotor radius [length].
