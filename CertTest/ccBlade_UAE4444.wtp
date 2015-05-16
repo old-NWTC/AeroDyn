@@ -1,5 +1,5 @@
 -----  WT_Perf v4.xx Input File  -----------------------------------------------
-WT_Perf BEMT input file.  UAE Phase 3 turbine (Space, BEM).
+WT_Perf BEMT input file.  UAE Phase 3 turbine (BEM).
 Compatible with WT_Perf v4.xx
 -----  Input Configuration  ----------------------------------------------------
 False                Echo:                      Echo input parameters to "<rootname>.ech"?
@@ -51,7 +51,6 @@ False                KFact:                     Output dimensional parameters in
 True                 WriteBED:                  Write out blade element data to "<rootname>.bed"?
 False                InputTSR:                  Input speeds as TSRs?
 True                 OutMaxCp:                  Output conditions for the maximum Cp?
-"fps"                SpdUnits:                  Wind-speed units (mps, fps, mph).
 -----  Combined-Case Analysis  -------------------------------------------------
 18                   NumCases:                  Number of cases to run.  Enter zero for parametric analysis.
 WS or TSR   RotSpd   Pitch      Yaw                     Remove following block of lines if NumCases is zero.

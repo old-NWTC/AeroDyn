@@ -1,5 +1,5 @@
 -----  WT_Perf v4.xx Input File  -----------------------------------------------
-WT_Perf BEMT input file.  UAE Phase 3 turbine (Space, BEM).
+WT_Perf BEMT input file.  UAE Phase 3 turbine (BEM).
 Compatible with WT_Perf v4.xx
 -----  Input Configuration  ----------------------------------------------------
 False                Echo:                      Echo input parameters to "<rootname>.ech"?
