@@ -14,12 +14,10 @@ False                Echo:                      Echo input parameters to "<rootn
 0.0                  Tilt:                      Shaft tilt [deg].
 0.0                  Yaw:                       Yaw error [deg].
 12.192               HubHt:                     Hub height [length or div by radius].
-1                   NumSeg:                    Number of blade segments (entire rotor radius).
-   RElm      Twist      Chord  AFfile  PrntElem
-  5.000      -1.775    0.358     8    True
 -----  Aerodynamic Data  -------------------------------------------------------
 0.0                                      ShearExp:            Wind shear exponent (1/7 law = 0.143).
 -----  I/O Settings  -----------------------------------------------------------
+''                   OutFileRoot:               rootname of output file
 False                UnfPower:                  Write parametric power to an unformatted file?
 True                 TabDel:                    When generating formatted output (OutForm=True), make output tab-delimited (fixed-width otherwise).
 True                 OutNines:                  Output nines if the solution doesn't fully converge to the specified tolerences.

@@ -19,30 +19,35 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
    
 
       ! Local variables
-   character(1024)              :: rootName
    character(1024)              :: PriPath
    character(1024)              :: inpVersion                               ! String containing the input-version information.
    character(1024)              :: line                                     ! String containing a line of input.
    character(1024)              :: subTitle                                 ! String containing the RunTitle of a subsection.
    integer                      :: unIn, unEc, NumElmPr
-   integer(IntKi)               :: ErrStat2                                 ! Temporary Error status
-   character(ErrMsgLen)         :: ErrMsg2                                  ! Temporary Error message
    integer                      :: ISeg, ICase
    integer                      :: IOS, Sttus
    character( 11)               :: DateNow                                  ! Date shortly after the start of execution.
    character(  8)               :: TimeNow                                  ! Time of day shortly after the start of execution.
    real(ReKi)                   :: InpCase(4)                               ! Temporary array to hold combined-case input parameters.
    
+   INTEGER(IntKi)               :: ErrStat2                                        ! Temporary Error status
+   CHARACTER(ErrMsgLen)         :: ErrMsg2                                         ! Temporary Err msg
+   CHARACTER(*), PARAMETER      :: RoutineName = 'WTP_ReadInputFile'
+   
+   
+   ErrStat = ErrID_None
+   ErrMsg  = ''
+   UnIn = -1
+   UnEc = -1
+   
    ! Open the input file
-   call GetRoot ( fileName, rootName )
    CALL GetPath( fileName, PriPath )     ! Input files will be relative to the path where the primary input file is located.
 
    call GetNewUnit( unIn )   
-   call OpenFInpFile( unIn, fileName, errStat, ErrMsg )
-   if ( errStat /= ErrID_None ) then
-      errMsg  = ' Failed to open WT_Perf input file: '//fileName
-      errStat = ErrID_Fatal
-      close( unIn )
+   call OpenFInpFile( unIn, fileName, errStat2, ErrMsg2 )
+   call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   if ( errStat >= AbortErrLev ) then
+      call cleanup()
       return
    end if
 
@@ -51,58 +56,77 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
       ! Skip a line, read the run title and the version information.
 
-   read (unIn,'(/,A,/,A)',IOSTAT=IOS)  inputData%runTitle, inpVersion
-
-   if ( IOS < 0 )  call PremEOF ( fileName , 'runTitle' )
-
+   CALL ReadStr( UnIn, fileName, inpVersion, 'inpVersion', 'File Header: (line 1)', ErrStat2, ErrMsg2 )
+      CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
+   
+   CALL ReadStr( UnIn, fileName, inputData%runTitle, 'runTitle', 'File Header: File Description (line 2)', ErrStat2, ErrMsg2 )
+      CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
+   
    call WrScr1 ( ' '//inputData%runTitle )
 
+   CALL ReadStr( UnIn, fileName, subTitle, 'subTitle', 'File Header: (line 3)', ErrStat2, ErrMsg2 )
+      CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
    
       ! Read in the title line for the input-configuration subsection.
+   CALL ReadStr( UnIn, fileName, line, 'line', 'File Header: (line 4)', ErrStat2, ErrMsg2 )
+      CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
 
-   read (unIn,'(A)',IOSTAT=IOS)  subTitle
-
-   if ( IOS < 0 )  call PremEOF ( fileName , 'the input-configuration subtitle' )
 
       ! See if we should echo the output.     
    call ReadVar ( unIn, fileName, inputData%echo, 'Echo', 'Echo Input', errStat2, errMsg2 )
-      if ( OnCheckErr() ) return
+      CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
 
    if ( inputData%echo )  then
          ! Get date and time.
       dateNow = CurDate()
       timeNow = CurTime()
       call GetNewUnit( unEc ) 
-      call  OpenFOutFile ( unEc, trim( rootName )//'.ech', errStat2, errMsg2 )
-         if ( OnCheckErr() ) return
-      write (unEc,'(A)')                        'Echo of WT_Perf Input File:'
-      write (unEc,'(A)')                        ' "'//fileName//'"'
-      write (unEc,'(A)')                        'Generated on: '//trim( dateNow )//' at '//trim( timeNow )//'.'
-      write (unEc,'(A,/,A)')                    inputData%runTitle, inpVersion
-      write (unEc,'(A)')                        subTitle
-      write (unEc,"(2X,L11,2X,A,T27,' - ',A)")  inputData%echo, 'Echo', 'Echo input parameters to "rootname.ech"?'
+      call getroot(fileName,inputData%OutFileRoot)      
+      call  OpenFOutFile ( unEc, trim( inputData%OutFileRoot )//'.ech', errStat2, errMsg2 )
+         call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+         if ( errStat >= AbortErrLev ) then
+            call cleanup()
+            return
+         end if
+      
+      write (unEc,'(A)')      'Echo of WT_Perf Input File:'
+      write (unEc,'(A)')      ' "'//fileName//'"'
+      write (unEc,'(A)')      'Generated on: '//trim( dateNow )//' at '//trim( timeNow )//'.'
+      write (unEc,'(A)')      inpVersion
+      write (unEc,'(A)')      inputData%runTitle
+      write (unEc,'(A)')      subTitle
+      write (unEc,'(A)')      line
+      write (unEc,Ec_LgFrmt)  inputData%echo, 'Echo', 'Echo input parameters to "rootname.ech"?'
    end if
 
 
       ! Read the rest of input-configuration section.
       
-   call ReadVar ( unIn, fileName, inputData%AD_InputFile,   'AD_InputFile',   'Name of the AeroDyn input file', errStat2, errMsg2 )
-      if ( OnCheckErr() ) return
-      IF ( PathIsRelative( inputData%AD_InputFile ) ) inputData%AD_InputFile = TRIM(PriPath)//TRIM(inputData%AD_InputFile)
+   call ReadVar ( unIn, fileName, inputData%AD_InputFile,   'AD_InputFile',   'Name of the AeroDyn input file', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+      if ( errStat >= AbortErrLev ) then
+         call cleanup()
+         return
+      end if
+   IF ( PathIsRelative( inputData%AD_InputFile ) ) inputData%AD_InputFile = TRIM(PriPath)//TRIM(inputData%AD_InputFile)
 
 
 
       ! Read the model-configuration section.
 
-   call ReadCom ( unIn, fileName,                                 'the model-configuration subtitle'                , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%numSect,  'numSect',  'Number of circumferential sectors.'              , errStat2, errMsg2 )
+   call ReadCom ( unIn, fileName,                                 'the model-configuration subtitle', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%numSect,  'numSect',  'Number of circumferential sectors.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
    !call ReadVar ( unIn, fileName, inputData%SWTol,    'SWTol',    'Error tolerance for skewed-wake iteration.'      )
 
 
       ! Check for valid choices.
 
    if ( inputData%NumSect < 1 )  then
-      call Abort ( ' Variable "numSect" must be greater than 0.  Instead, it is "'//trim( Int2LStr( inputData%numSect ) )//'".' )
+      call SetErrStat ( ErrID_Fatal,'Variable "numSect" must be greater than 0.  Instead, it is "'//trim( Int2LStr( inputData%numSect ) )//'".',ErrStat,ErrMsg,RoutineName )
+      call cleanup()
+      return
    endif
 
 
@@ -139,15 +163,28 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
       ! Read the turbine-data section.
 
-   call ReadCom ( unIn, fileName, 'the turbine-data subtitle' , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%NumBlade, 'NumBlade', 'Number of blades.'     , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%RotorRad, 'RotorRad', 'Unconed rotor radius.' , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%HubRad,   'HubRad',   'Hub radius.' , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%PreCone,  'PreCone',  'Cone angle.' , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%Tilt,     'Tilt',     'Shaft tilt.' , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%Yaw,      'Yaw',      'Yaw error.' , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%HubHt,    'HubHt',    'Hub height.' , errStat2, errMsg2 )
+   call ReadCom ( unIn, fileName, 'the turbine-data subtitle', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%NumBlade, 'NumBlade', 'Number of blades.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%RotorRad, 'RotorRad', 'Unconed rotor radius.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%HubRad,   'HubRad',   'Hub radius.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%PreCone,  'PreCone',  'Cone angle.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%Tilt,     'Tilt',     'Shaft tilt.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%Yaw,      'Yaw',      'Yaw error.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%HubHt,    'HubHt',    'Hub height.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
 
+      if ( errStat >= AbortErrLev ) then
+         call cleanup()
+         return
+      end if
+      
   
    inputData%BldLen  = inputData%RotorRad - inputData%HubRad
    inputData%PreCone = inputData%PreCone*D2R
@@ -171,43 +208,7 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
    !endif
    
   
-      ! Read in the number of segments and allocate the property arrays.
-
-   call ReadVar ( unIn, fileName, inputData%numSeg,   'numSeg',   'Number of blade segments (entire rotor radius).' , errStat2, errMsg2 )
-
-   if ( inputData%numSeg < 1 )  call Abort ( ' Variable "numSeg" must be greater than 0.  Instead, it is "'//Int2LStr( inputData%numSeg )//'".' )
-
-   ! TODO Implement this!
-   !CALL AllocProp
-   allocate ( inputData%BladeData(inputData%numSeg) , STAT=Sttus )
-   if ( Sttus /= 0 )  then
-      call Abort(' Error allocating memory for the BladeData array.')
-   endif
-
-   
-      ! Read in the distributed blade properties.
-
-   call ReadCom  ( unIn, fileName, 'the header for the blade-element data' , errStat2, errMsg2 )
-
    NumElmPr = 0
-
-   do ISeg=1,inputData%numSeg
-
-      read (unIn,'(A)',IOSTAT=IOS)  Line
-
-      call CheckIOS ( IOS, fileName, 'line #'//trim( Int2LStr( ISeg ) )//' of the blade-element data table.' , StrType )
-
-      read (Line,*,IOSTAT=IOS)  inputData%BladeData(ISeg)%RLoc, inputData%BladeData(ISeg)%Twist, inputData%BladeData(ISeg)%Chord, inputData%BladeData(ISeg)%AFfile, inputData%BladeData(ISeg)%PrntElem
-
-      call CheckIOS ( IOS, fileName, 'line #'//trim( Int2LStr( ISeg ) )//' of the blade-element data table.' , NumType )
-
-         ! Convert to or from dimensional data.
-
-      inputData%BladeData(ISeg)%Twist = inputData%BladeData(ISeg)%Twist*D2R
-
-      if ( inputData%BladeData(ISeg)%PrntElem )  NumElmPr = NumElmPr +1
-
-   enddo ! ISeg
 
 
       ! Compute the segment lengths and check their validity.
@@ -216,12 +217,12 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
        ! The Tim Olsen memorial hub-radius check.
 
-   if ( ( inputData%HubRadND < 0.0 ) .OR. ( 1.0 <= inputData%HubRadND ) )  then
-      errMsg = ' The hub radius must be positive and less than the rotor radius.  Instead it is ' &
-                 //trim( Num2LStr( inputData%HubRad ) )//'meters.' 
-      errStat = ErrID_Fatal
-      return
-   endif
+   !if ( ( inputData%HubRadND < 0.0 ) .OR. ( 1.0 <= inputData%HubRadND ) )  then
+   !   errMsg = ' The hub radius must be positive and less than the rotor radius.  Instead it is ' &
+   !              //trim( Num2LStr( inputData%HubRad ) )//'meters.' 
+   !   errStat = ErrID_Fatal
+   !   return
+   !endif
 !TODO
 
       ! Make sure hub is high enough so the blade doesn't hit the ground.  We wouldn't want to get it dirty.  :-)
@@ -231,8 +232,10 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
       ! Read the aerodynamic-data section.
 
-   call ReadCom ( unIn, fileName, 'the aerodynamic-data subtitle'   , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%ShearExp, 'ShearExp', 'Shear exponent.' , errStat2, errMsg2 )
+   call ReadCom ( unIn, fileName, 'the aerodynamic-data subtitle', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%ShearExp, 'ShearExp', 'Shear exponent.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
 
 
 
@@ -255,16 +258,34 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
       ! Read the I/O-configuration section.
 
-   call ReadCom ( unIn, fileName, 'the I/O-configuration subtitle'                                                                          , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%OutFileRoot, 'OutFileRoot', 'Root name for any output files'                                    , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%UnfPower, 'UnfPower', 'Write Power to an unformatted file?'                                     , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%TabDel,   'TabDel',   'Make output tab-delimited (fixed-width otherwise)?'                      , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%OutNines, 'OutNines', 'Output nines for cases that fail to satisfy the convergence criterion?'  , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, Beep,               'Beep',     'Beep on exit?'                                                           , errStat2, errMsg2 ) !bjj: this is a global variable in NWTC_Library
-   call ReadVar ( unIn, fileName, inputData%KFact,    'KFact',    'Output dimensional parameters in K?'                                    , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%WriteBED, 'WriteBED', 'Write out blade element data to "bladelem.dat"?'                        , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%InputTSR, 'InputTSR', 'Input speeds as TSRs?'                                                  , errStat2, errMsg2 )
-   call ReadVar ( unIn, fileName, inputData%OutMaxCp, 'OutMaxCp', 'Output conditions leading to maximum Cp?'                                , errStat2, errMsg2 )
+   call ReadCom ( unIn, fileName, 'the I/O-configuration subtitle', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%OutFileRoot, 'OutFileRoot', 'Root name for any output files', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   if (len_trim(inputData%OutFileRoot) == 0) then
+      call getroot(fileName,inputData%OutFileRoot)
+   end if
+   
+   call ReadVar ( unIn, fileName, inputData%UnfPower, 'UnfPower', 'Write Power to an unformatted file?', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%TabDel,   'TabDel',   'Make output tab-delimited (fixed-width otherwise)?', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%OutNines, 'OutNines', 'Output nines for cases that fail to satisfy the convergence criterion?', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, Beep,               'Beep',     'Beep on exit?', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName ) !bjj: this is a global variable in NWTC_Library
+   call ReadVar ( unIn, fileName, inputData%KFact,    'KFact',    'Output dimensional parameters in K?', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%WriteBED, 'WriteBED', 'Write out blade element data to "bladelem.dat"?', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%InputTSR, 'InputTSR', 'Input speeds as TSRs?', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar ( unIn, fileName, inputData%OutMaxCp, 'OutMaxCp', 'Output conditions leading to maximum Cp?', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+      if ( errStat >= AbortErrLev ) then
+         call cleanup()
+         return
+      end if
 
 
       ! Set units conversion and compute TSR parameters.
@@ -279,26 +300,38 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
       ! Read the combined-case section.
 
-   call ReadCom  ( unIn, fileName,                       'the combined-case subtitle'     , errStat2, errMsg2 )
-   call ReadVar  ( unIn, fileName, inputData%NumCases, 'NumCases', 'Number of cases to run.'        , errStat2, errMsg2 )
-   call ReadCom  ( unIn, fileName,                       'the combined-case-block header' , errStat2, errMsg2 )
+   call ReadCom  ( unIn, fileName, 'the combined-case subtitle', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadVar  ( unIn, fileName, inputData%NumCases, 'NumCases', 'Number of cases to run.', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
+   call ReadCom  ( unIn, fileName, 'the combined-case-block header', errStat2, errMsg2, UnEc )
+      call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
 
+      if ( errStat >= AbortErrLev ) then
+         call cleanup()
+         return
+      end if
+      
    IF ( inputData%NumCases < 0 )  THEN
 
-      CALL Abort ( ' Variable "NumCases" must be >= 0.  Instead, it is "'//TRIM( Int2LStr( inputData%NumCases ) )//'".' )
+      call setErrStat( ErrID_Fatal,'Variable "NumCases" must be >= 0.  Instead, it is "'//TRIM( Int2LStr( inputData%NumCases ) )//'".' ,errstat,errmsg,routinename)
+      call cleanup()
+      return
 
    ELSEIF ( inputData%NumCases > 0 )  THEN
 
       ALLOCATE ( inputData%Cases(inputData%NumCases) , STAT=Sttus )
       IF ( Sttus /= 0 )  THEN
-         CALL Abort(' Error allocating memory for the Cases array.')
+         call setErrStat( ErrID_Fatal,'Error allocating memory for the Cases array.',errstat,errmsg,routinename)
+         call cleanup()
+         return
       ENDIF
 
       DO ICase=1,inputData%NumCases
 
          CALL ReadAry ( unIn, fileName, InpCase,  4, 'InpCase',  'Wind Speed or TSR, Rotor Speed, and Pitch for Case #' &
-                       //TRIM( Int2LStr( ICase ) )//'.', ErrStat2, ErrMsg2 )
-
+                       //TRIM( Int2LStr( ICase ) )//'.', errStat2, errMsg2, UnEc )
+            call setErrStat( errStat2, ErrMsg2 , errStat, ErrMsg , RoutineName )
          IF ( inputData%InputTSR )  THEN
             inputData%Cases(ICase)%TSR      = InpCase(1)
             inputData%Cases(ICase)%WndSpeed = inputData%RotorRad*InpCase(2)*Pi/( 30.0*InpCase(1) )
@@ -458,25 +491,15 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 !
 !      ! Close the input and echo files.
 
-   CLOSE ( unIn )
-
-  ! IF ( Echo )  CLOSE ( UnEc )
+   call cleanup ( )
 
 
    RETURN
-   
 contains
-
-logical function OnCheckErr()
-
-   if ( errStat2 >= AbortErrLev ) then
-      OnCheckErr = .TRUE.
-   else
-      OnCheckErr = .FALSE.
-   end if
-
-end function OnCheckErr
-
+   subroutine cleanup()
+      if (UnIn>0) close(UnIn)
+      if (UnEc>0) close(UnEc)
+   end subroutine cleanup
 END SUBROUTINE WTP_ReadInputFile
 
 

@@ -52,7 +52,7 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: numBladeNodes      ! Number of blade nodes used in the analysis [-]
     INTEGER(IntKi)  :: numReIterations      ! Number of iterations for finding the Reynolds number [-]
     INTEGER(IntKi)  :: maxIndIterations      ! Maximum number of iterations of induction factor solve [-]
-    INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: AFindx      ! Index of airfoil data file for blade node location [array of numBladeNodes] [-]
+    INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFindx      ! Index of airfoil data file for blade node location [array of numBladeNodes] [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zHub      ! Distance to hub for each blade [m]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: zLocal      ! Distance to blade node, measured along the blade [m]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zTip      ! Distance to blade tip, measured along the blade [m]
@@ -106,7 +106,7 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: numBladeNodes      ! Number of blade nodes used in the analysis [-]
     INTEGER(IntKi)  :: numReIterations      ! Number of iterations for finding the Reynolds number [-]
     INTEGER(IntKi)  :: maxIndIterations      ! Maximum number of iterations of induction factor solve [-]
-    INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: AFindx      ! Index of airfoil data file for blade node location [array of numBladeNodes] [-]
+    INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: AFindx      ! Index of airfoil data file for blade node location [array of numBladeNodes] [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: tipLossConst      ! A constant computed during initialization based on B*(zTip-zLocal)/(2*zLocal) [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: hubLossConst      ! A constant computed during initialization based on B*(zLocal-zHub)/(2*zHub) [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zHub      ! Distance to hub for each blade [m]
@@ -191,8 +191,10 @@ ENDIF
 IF (ALLOCATED(SrcInitInputData%AFindx)) THEN
   i1_l = LBOUND(SrcInitInputData%AFindx,1)
   i1_u = UBOUND(SrcInitInputData%AFindx,1)
+  i2_l = LBOUND(SrcInitInputData%AFindx,2)
+  i2_u = UBOUND(SrcInitInputData%AFindx,2)
   IF (.NOT. ALLOCATED(DstInitInputData%AFindx)) THEN 
-    ALLOCATE(DstInitInputData%AFindx(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstInitInputData%AFindx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInitInputData%AFindx.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -323,7 +325,7 @@ ENDIF
       Int_BufSz  = Int_BufSz  + 1  ! maxIndIterations
   Int_BufSz   = Int_BufSz   + 1     ! AFindx allocated yes/no
   IF ( ALLOCATED(InData%AFindx) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! AFindx upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! AFindx upper/lower bounds for each dimension
       Int_BufSz  = Int_BufSz  + SIZE(InData%AFindx)  ! AFindx
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! zHub allocated yes/no
@@ -421,6 +423,9 @@ ENDIF
     Int_Xferred = Int_Xferred + 1
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%AFindx,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%AFindx,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%AFindx,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%AFindx,2)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%AFindx)>0) IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(InData%AFindx))-1 ) = PACK(InData%AFindx,.TRUE.)
@@ -567,21 +572,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%AFindx)) DEALLOCATE(OutData%AFindx)
-    ALLOCATE(OutData%AFindx(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%AFindx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%AFindx.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%AFindx)>0) OutData%AFindx = UNPACK( IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(OutData%AFindx))-1 ), mask1, 0_IntKi )
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%AFindx)>0) OutData%AFindx = UNPACK( IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(OutData%AFindx))-1 ), mask2, 0_IntKi )
       Int_Xferred   = Int_Xferred   + SIZE(OutData%AFindx)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! zHub not allocated
     Int_Xferred = Int_Xferred + 1
@@ -1816,8 +1824,10 @@ ENDIF
 IF (ALLOCATED(SrcParamData%AFindx)) THEN
   i1_l = LBOUND(SrcParamData%AFindx,1)
   i1_u = UBOUND(SrcParamData%AFindx,1)
+  i2_l = LBOUND(SrcParamData%AFindx,2)
+  i2_u = UBOUND(SrcParamData%AFindx,2)
   IF (.NOT. ALLOCATED(DstParamData%AFindx)) THEN 
-    ALLOCATE(DstParamData%AFindx(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstParamData%AFindx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%AFindx.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -1955,7 +1965,7 @@ ENDIF
       Int_BufSz  = Int_BufSz  + 1  ! maxIndIterations
   Int_BufSz   = Int_BufSz   + 1     ! AFindx allocated yes/no
   IF ( ALLOCATED(InData%AFindx) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! AFindx upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! AFindx upper/lower bounds for each dimension
       Int_BufSz  = Int_BufSz  + SIZE(InData%AFindx)  ! AFindx
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! tipLossConst allocated yes/no
@@ -2073,6 +2083,9 @@ ENDIF
     Int_Xferred = Int_Xferred + 1
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%AFindx,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%AFindx,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%AFindx,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%AFindx,2)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%AFindx)>0) IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(InData%AFindx))-1 ) = PACK(InData%AFindx,.TRUE.)
@@ -2252,21 +2265,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%AFindx)) DEALLOCATE(OutData%AFindx)
-    ALLOCATE(OutData%AFindx(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%AFindx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%AFindx.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%AFindx)>0) OutData%AFindx = UNPACK( IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(OutData%AFindx))-1 ), mask1, 0_IntKi )
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%AFindx)>0) OutData%AFindx = UNPACK( IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(OutData%AFindx))-1 ), mask2, 0_IntKi )
       Int_Xferred   = Int_Xferred   + SIZE(OutData%AFindx)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! tipLossConst not allocated
     Int_Xferred = Int_Xferred + 1

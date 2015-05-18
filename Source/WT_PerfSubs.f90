@@ -12,13 +12,12 @@ module WTP_DvrSubs
 
    
    
-   subroutine Set_AD_InitInp(WTP_Data, AD_Data, outFileRoot, errStat, errMsg)
+   subroutine Set_AD_InitInp(WTP_Data, AD_Data, errStat, errMsg)
 
       type(WTP_InputFileData), intent(in   )   :: WTP_Data             ! Input data for initialization
       type(AD_InitInputType) , intent(  out)   :: AD_Data              ! Input data for initialization
       integer(IntKi)         , intent(  out)   :: errStat              ! Status of error message
       character(*)           , intent(  out)   :: errMsg               ! Error message if ErrStat /= ErrID_None
-      character(*)           , intent(in)      :: outFileRoot          ! rootname of output files for AD
 
          ! locals
       integer(IntKi)                           :: i, j
@@ -31,29 +30,10 @@ module WTP_DvrSubs
    
       AD_Data%InputFile      = WTP_Data%AD_InputFile
       AD_Data%NumBlades      = WTP_Data%numBlade
-      AD_Data%RootName       = outFileRoot
+      AD_Data%RootName       = WTP_Data%outFileRoot
       
-      AD_Data%numBladeNodes  = WTP_Data%numSeg
       AD_Data%MustUseBEMT    = .TRUE.  ! gdw model is not valid in WT_Perf
                   
-   
-      allocate ( AD_Data%chord(AD_Data%numBladeNodes, AD_Data%NumBlades), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         call SetErrStat( ErrID_Fatal, 'Error allocating memory for AD_Data%chord.', errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
-   
-      allocate ( AD_Data%AFindx(AD_Data%numBladeNodes), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         call SetErrStat( ErrID_Fatal, 'Error allocating memory for AD_Data%chord array.', errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
-      
-      allocate ( AD_Data%zLocal(AD_Data%numBladeNodes, AD_Data%NumBlades), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         call SetErrStat( ErrID_Fatal, 'Error allocating memory for AD_Data%zLocal array.', errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
    
       allocate ( AD_Data%zTip(AD_Data%NumBlades), STAT = errStat2 )
       if ( errStat2 /= 0 ) then
@@ -70,52 +50,11 @@ module WTP_DvrSubs
          call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
          return
       end if 
-   
-      
-      allocate ( AD_Data%BEMT%chord(AD_Data%numBladeNodes, AD_Data%numBlades), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%chord.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
-   
-      allocate ( AD_Data%BEMT%AFindx(AD_Data%numBladeNodes), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%chord array.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
-      
-      allocate ( AD_Data%BEMT%zLocal(AD_Data%numBladeNodes, AD_Data%numBlades), STAT = errStat2 )
-      if ( errStat2 /= 0 ) then
-         errStat2 = ErrID_Fatal
-         errMsg2  = 'Error allocating memory for AD_Data%zLocal array.'
-         call SetErrStat( errStat2, errMsg2, errStat, errMsg, 'Set_AD_InitInp' )
-         return
-      end if 
-               
-      
-      do i=1,AD_Data%numBladeNodes
-         
-         AD_Data%AFindx(i) = WTP_Data%BladeData(i)%AFfile  
-         AD_Data%BEMT%AFindx(i) = WTP_Data%BladeData(i)%AFfile  
-      end do
-   
-      !zTip = 40.0
-      !rHub =  2.0
-      !deltar     = ( zTip-rHub ) / real(AD_Data%numBladeNodes + 1) 
+     
+        
       do j=1,AD_Data%numBlades
          AD_Data%zTip(j)  = WTP_Data%rotorRad  ! zTip
          AD_Data%zHub(j)  = WTP_Data%hubRad    ! rHub
-         
-         do i=1,AD_Data%numBladeNodes
-            AD_Data%chord (i,j)  = WTP_Data%BladeData(i)%Chord   ! 0.5 !real(i) 
-            AD_Data%zLocal(i,j)  = WTP_Data%BladeData(i)%RLoc    ! AD_Data%zHub(j) + real(i)*(deltar)
-            AD_Data%BEMT%chord (i,j)  = WTP_Data%BladeData(i)%Chord   ! 0.5 !real(i) 
-            AD_Data%BEMT%zLocal(i,j)  = WTP_Data%BladeData(i)%RLoc    ! AD_Data%zHub(j) + real(i)*(deltar)
-         end do
       end do
       
      

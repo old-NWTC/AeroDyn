@@ -9,13 +9,6 @@ module WTP_Types
       real(ReKi)      :: Yaw
    end type WTP_Case
    
-   type, public ::  WTP_Blade
-      integer         :: AFfile
-      real(ReKi)      :: RLoc
-      real(ReKi)      :: Twist
-      real(ReKi)      :: Chord
-      logical         :: PrntElem
-   end type WTP_Blade
    
    type, public ::  WTP_InputFileData
       logical         :: echo   
@@ -46,7 +39,9 @@ module WTP_Types
       real(ReKi)      :: SWconst
       logical         :: SWconv
       real(ReKi)      :: SWcorr
-      type(WTP_Blade), allocatable :: BladeData(:)
+      real(ReKi),allocatable :: Twist(:,:)
+      real(ReKi),allocatable :: rLoc(:,:)
+      
       real(ReKi)      :: ShearExp
       character(1024) :: OutFileRoot
       logical         :: UnfPower

@@ -14,35 +14,10 @@ False                Echo:                      Echo input parameters to "<rootn
 0.0                  Tilt:                      Shaft tilt [deg].
 0.0                  Yaw:                       Yaw error [deg].
 12.192               HubHt:                     Hub height [length or div by radius].
-24                   NumSeg:                    Number of blade segments (entire rotor radius).
-   RElm      Twist      Chord  AFfile  PrntElem
-  0.660       0.0      0.218     1    True
-  0.883       0.0      0.183     1    True
-  1.008       6.7      0.349     1    True
-  1.067       9.9      0.441     1    True
-  1.133      13.4      0.544     1    True
-  1.257      20.04     0.737     4    True
-  1.343      18.074    0.728     4    True
-  1.510      14.292    0.711     5    True
-  1.648      11.909    0.697     6    True
-  1.952       7.979    0.666     7    True
-  2.257       5.308    0.636     8    True
-  2.343       4.715    0.627     8    True
-  2.562       3.425    0.605     8    True
-  2.867       2.083    0.574     8    True
-  3.172       1.15     0.543     8    True
-  3.185       1.115    0.542     8    True
-  3.476       0.494    0.512     8    True
-  3.781      -0.015    0.482     8    True
-  4.023      -0.381    0.457     8    True
-  4.086      -0.475    0.451     8    True
-  4.391      -0.920    0.420     8    True
-  4.696      -1.352    0.389     8    True
-  4.780      -1.469    0.381     8    True
-  5.000      -1.775    0.358     8    True
 -----  Aerodynamic Data  -------------------------------------------------------
 0.0                                      ShearExp:            Wind shear exponent (1/7 law = 0.143).
 -----  I/O Settings  -----------------------------------------------------------
+''                   OutFileRoot:               rootname of output file
 False                UnfPower:                  Write parametric power to an unformatted file?
 True                 TabDel:                    When generating formatted output (OutForm=True), make output tab-delimited (fixed-width otherwise).
 True                 OutNines:                  Output nines if the solution doesn't fully converge to the specified tolerences.

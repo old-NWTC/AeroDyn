@@ -61,7 +61,6 @@ program WT_Perf
    character(4096)                                :: errMsg               ! Error message if ErrStat /= ErrID_None
    real(ReKi)                                     :: dcm (3,3)            ! The resulting transformation matrix from X to x, (-).
    character(1024)                                :: drvrFilename         ! Filename and path for the driver input file.  This is passed in as a command line argument when running the Driver exe.
-   character(1024)                                :: outFileRoot
    integer(IntKi)                                 :: unOutFile
    character(1)                                   :: delim
    character(20)                                  :: outFmt, outFmtS
@@ -90,7 +89,6 @@ program WT_Perf
    errStat     = ErrID_None
    errMsg      = ''
    time        = 0.0 ! seconds
-   outFileRoot = "ccBlade_UAE"
    unOutFile   = -1
    delim       = ' '
    outFmt      = "ES15.4e2"
@@ -126,19 +124,13 @@ program WT_Perf
    
    if (command_argument_count() == 0 .OR. command_argument_count() > 2) then
       errStat = ErrID_Fatal
-      errMsg = 'WT_PERF usage:  WT_Perf.exe settingsfile rootname'
+      errMsg = 'WT_PERF usage:  WT_Perf.exe settingsfile'
       call WTP_DvrCleanup()
    end if
    
    call get_command_argument(1, inputFile)
    
-   if (command_argument_count() == 2) then
-      call get_command_argument(2, outFileRoot)
-   else
-      outFileRoot = 'WT_Perf'
-   end if
-   
-   
+
       ! Read the WT_Perf style input file
    call WTP_ReadInputFile(inputFile, WTP_FileData, errStat, errMsg )
       if (ErrStat >= AbortErrLev) call WTP_DvrCleanup
@@ -147,12 +139,15 @@ program WT_Perf
    !call Alloc_AD_u( u, numInp, errStat, errMsg)
    
       ! Set the Initialization input data for AeroDyn based on the WT_Perf input file data
-   call Set_AD_InitInp(WTP_FileData, AD_InitInData, outFileRoot, errStat, errMsg)
+   call Set_AD_InitInp(WTP_FileData, AD_InitInData, errStat, errMsg)
       if (ErrStat >= AbortErrLev) call WTP_DvrCleanup
    
       ! Initialize AeroDyn
    call AD_Init(AD_InitInData, u(1), p, x, xd, z, OtherState, y, dt, InitOutData, ErrStat, ErrMsg )
       if (ErrStat >= AbortErrLev) call WTP_DvrCleanup
+   call move_alloc( InitOutData%twist,  WTP_FileData%twist )
+   call move_alloc( InitOutData%rLocal, WTP_FileData%rLoc )
+   WTP_FileData%numSeg = size(WTP_FileData%rLoc,1)
    
    
    
@@ -183,15 +178,15 @@ program WT_Perf
         
       u(1)%Vinf   = velocityHub
       
-      do j=1,AD_InitInData%numBlades
+      do j=1,WTP_FileData%numBlade
          u(1)%psi(j)   = psiRotor + (j-1)*2.0*pi/(AD_InitInData%numBlades) ! find psi for each blade based on the rotor psi value
          u(1)%rTip(j)  = WTP_FileData%RotorRad ! set the tip radius to the initialization distance along the blade (straight blade assumption)
 
-         do i=1,AD_InitInData%numBladeNodes
-            u(1)%theta (i,j)  = WTP_FileData%BladeData(i)%Twist + (WTP_FileData%Cases(iCase)%Pitch)*D2R ! convert from deg to rad
+         do i=1,WTP_FileData%numSeg
+            u(1)%theta (i,j)  = WTP_FileData%Twist(i,j) + (WTP_FileData%Cases(iCase)%Pitch)*D2R ! convert from deg to rad
            ! u(1)%Vx    (i,j)  = velocityHub   ! for now just set the velocity perp to rotation plane = hub velocity of inflow wind
-             u(1)%rLocal(i,j)  = WTP_FileData%BladeData(i)%RLoc
-            !u(1)%Vy    (i,j)  = u(1)%omega*u(1)%rLocal(i,j) 
+             u(1)%rLocal(i,j)  = WTP_FileData%rLoc(i,j)
+            !u(1)%Vy    (i,j)  = u(1)%omega*u(1)%rLoc(i,j) 
            ! temp1             = velocityHub*((cos(u(1)%gamma)*sin(WTP_FileData%tilt)*sin(u(1)%psi(j)) - sin(u(1)%gamma)*cos(u(1)%psi(j)) )
            ! temp2             = u(1)%omega*u(1)%rLocal(i,j)*WTP_FileData%CosCone)
             if (p%BEMT%skewWakeMod < 2 ) then

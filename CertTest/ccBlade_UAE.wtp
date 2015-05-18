@@ -2,7 +2,7 @@
 WT_Perf BEMT input file.  UAE Phase 3 turbine (BEM).
 Compatible with WT_Perf v4.xx
 -----  Input Configuration  ----------------------------------------------------
-False                Echo:                      Echo input parameters to "<rootname>.ech"?
+true                Echo:                      Echo input parameters to "<rootname>.ech"?
 "ccBlade_UAE_AeroDyn.dat" AD_InputFile:              Name of the primary AeroDyn input file
 -----  Model Configuration  ----------------------------------------------------
 160                   NumSect:                   Number of circumferential sectors.
@@ -14,32 +14,10 @@ False                Echo:                      Echo input parameters to "<rootn
 0.0                  Tilt:                      Shaft tilt [deg].
 0.0                  Yaw:                       Yaw error [deg].
 12.192               HubHt:                     Hub height [length or div by radius].
-21                   NumSeg:                    Number of blade segments (entire rotor radius).
-   RElm      Twist      Chord  AFfile  PrntElem
-0.6060    0.000     0.219     1    true
-0.8801   -0.098     0.181     3    true
-1.2321   19.423     0.714     4    true
-1.5087   14.318     0.711     5    true
-1.7099   10.971     0.691     6    true
-1.9278    8.244     0.668     7    true
-2.1457    6.164     0.647     8    true
-2.3469    4.689     0.627     8    true
-2.5480    3.499     0.606     8    true
-2.7660    2.478     0.584     8    true
-2.9840    1.686     0.561     8    true
-3.1850    1.115     0.542     8    true
-3.3862    0.666     0.522     8    true
-3.6041    0.267     0.499     8    true
-3.8220   -0.079     0.478     8    true
-4.0232   -0.381     0.457     8    true
-4.2244   -0.679     0.437     8    true
-4.4004   -0.933     0.419     8    true
-4.5764   -1.184     0.401     8    true
-4.7776   -1.466     0.381     8    true
-4.9536   -1.711     0.363     8    true
 -----  Aerodynamic Data  -------------------------------------------------------
 0.0                                      ShearExp:            Wind shear exponent (1/7 law = 0.143).
 -----  I/O Settings  -----------------------------------------------------------
+''                   OutFileRoot:               rootname of output file
 False                UnfPower:                  Write parametric power to an unformatted file?
 True                 TabDel:                    When generating formatted output (OutForm=True), make output tab-delimited (fixed-width otherwise).
 True                 OutNines:                  Output nines if the solution doesn't fully converge to the specified tolerences.
