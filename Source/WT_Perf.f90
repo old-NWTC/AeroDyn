@@ -15,16 +15,16 @@
 
 program WT_Perf
 
+   use NWTC_Library
+
    use WTP_Types
    use WT_Perf_IO
-   use AirfoilInfo_Types
-   use AirfoilInfo
    use WTP_DvrSubs
-   use NWTC_Library
-   !use BEMT_Types
+
+   !use AirfoilInfo_Types
+   !use AirfoilInfo
    use AeroDyn
-   use NWTC_Library
-   use NWTC_FitPack
+   !use NWTC_FitPack
    
     
    implicit none   

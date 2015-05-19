@@ -3,7 +3,6 @@ module WTP_DvrSubs
    use NWTC_Library
    use WTP_Types
    use AeroDyn_Types
-   use NWTC_Library
    
     
    implicit none   

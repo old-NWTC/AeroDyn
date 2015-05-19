@@ -227,7 +227,10 @@ subroutine WTP_ReadInputFile(fileName, inputData, errStat, errMsg )
 
       ! Make sure hub is high enough so the blade doesn't hit the ground.  We wouldn't want to get it dirty.  :-)
 
-   if ( inputData%HubHt*inputData%CosCone*inputData%CosTilt .LT. 1.0 )  call Abort ( ' The hub is so low, the blade will hit the ground.' )
+   if ( inputData%HubHt*inputData%CosCone*inputData%CosTilt .LT. 1.0 )  then
+      call setErrStat( ErrID_Fatal, 'The hub is so low, the blade will hit the ground.', errStat, errMsg, RoutineName )
+   end if
+   
 
 
       ! Read the aerodynamic-data section.

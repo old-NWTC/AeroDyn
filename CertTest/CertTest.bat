@@ -1,5 +1,6 @@
 ECHO OFF
 
+:: SET PROG_EXE=..\bin\WT_Perf_gwin32.exe
 SET PROG_EXE=..\bin\WT_Perf.exe
 SET COMPARE=FC
 SET OLD_RESULTS=.\Results
