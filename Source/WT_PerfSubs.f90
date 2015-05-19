@@ -31,9 +31,7 @@ module WTP_DvrSubs
       AD_Data%InputFile      = WTP_Data%AD_InputFile
       AD_Data%NumBlades      = WTP_Data%numBlade
       AD_Data%RootName       = WTP_Data%outFileRoot
-      
-      AD_Data%MustUseBEMT    = .TRUE.  ! gdw model is not valid in WT_Perf
-                  
+                        
    
       allocate ( AD_Data%zTip(AD_Data%NumBlades), STAT = errStat2 )
       if ( errStat2 /= 0 ) then
