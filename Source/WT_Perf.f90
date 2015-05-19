@@ -58,7 +58,7 @@ program WT_Perf
    integer(IntKi)                                 :: n                    ! loop counter (for time step)
    integer(IntKi)                                 :: numSteps             ! number of time steps in the simulation
    integer(IntKi)                                 :: errStat              ! Status of error message
-   character(4096)                                :: errMsg               ! Error message if ErrStat /= ErrID_None
+   character(ErrMsgLen)                           :: errMsg               ! Error message if ErrStat /= ErrID_None
    real(ReKi)                                     :: dcm (3,3)            ! The resulting transformation matrix from X to x, (-).
    character(1024)                                :: drvrFilename         ! Filename and path for the driver input file.  This is passed in as a command line argument when running the Driver exe.
    integer(IntKi)                                 :: unOutFile

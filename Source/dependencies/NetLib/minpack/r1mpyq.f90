@@ -54,7 +54,7 @@ subroutine r1mpyq(m,n,a,lda,v,w)
 !     **********
       integer i,j,nmj,nm1
       real(ReKi) cos,one,sin,temp
-      data one /1.0e0/
+      data one /1.0_ReKi/
 !
 !     apply the first set of givens rotations to a.
 !

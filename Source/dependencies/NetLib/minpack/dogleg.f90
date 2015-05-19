@@ -52,9 +52,9 @@ subroutine dogleg(n,r,lr,diag,qtb,delta,x,wa1,wa2)
 !
 !     subprograms called
 !
-!       minpack-supplied ... spmpar,enorm
+!       minpack-supplied ... enorm
 !
-!       fortran-supplied ... abs,amax1,amin1,sqrt
+!       fortran-supplied ... abs,max,min,sqrt,epsilon
 !
 !     argonne national laboratory. minpack project. march 1980.
 !     burton s. garbow, kenneth e. hillstrom, jorge j. more
@@ -62,12 +62,12 @@ subroutine dogleg(n,r,lr,diag,qtb,delta,x,wa1,wa2)
 !     **********
       integer i,j,jj,jp1,k,l
       real(ReKi) alpha,bnorm,epsmch,gnorm,one,qnorm,sgnorm,sum,temp,zero
-      real(ReKi) spmpar,enorm
-      data one,zero /1.0e0,0.0e0/
+      real(ReKi) enorm
+      data one,zero /1.0_ReKi,0.0_ReKi/
 !
 !     epsmch is the machine precision.
 !
-      epsmch = spmpar(1)
+      epsmch = EPSILON(epsmch)  ! spmpar(1)
 !
 !     first, calculate the gauss-newton direction.
 !
@@ -88,7 +88,7 @@ subroutine dogleg(n,r,lr,diag,qtb,delta,x,wa1,wa2)
          if (temp .ne. zero) go to 40
          l = j
          do 30 i = 1, j
-            temp = amax1(temp,abs(r(l)))
+            temp = max(temp,abs(r(l)))
             l = l + n - i
    30       continue
          temp = epsmch*temp
@@ -165,7 +165,7 @@ subroutine dogleg(n,r,lr,diag,qtb,delta,x,wa1,wa2)
 !     form appropriate convex combination of the gauss-newton
 !     direction and the scaled gradient direction.
 !
-      temp = (one - alpha)*amin1(sgnorm,delta)
+      temp = (one - alpha)*min(sgnorm,delta)
       do 130 j = 1, n
          x(j) = temp*wa1(j) + alpha*x(j)
   130    continue

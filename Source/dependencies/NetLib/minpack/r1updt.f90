@@ -65,9 +65,9 @@ subroutine r1updt(m,n,s,ls,u,v,w,sing)
 !
 !     subprograms called
 !
-!       minpack-supplied ... spmpar
+!       minpack-supplied ... 
 !
-!       fortran-supplied ... abs,sqrt
+!       fortran-supplied ... abs,sqrt,huge
 !
 !     argonne national laboratory. minpack project. march 1980.
 !     burton s. garbow, kenneth e. hillstrom, jorge j. more,
@@ -77,11 +77,11 @@ subroutine r1updt(m,n,s,ls,u,v,w,sing)
       integer i,j,jj,l,nmj,nm1
       real(ReKi) cos,cotan,giant,one,p5,p25,sin,tan,tau,temp,zero
       real(ReKi) spmpar
-      data one,p5,p25,zero /1.0e0,5.0e-1,2.5e-1,0.0e0/
+      data one,p5,p25,zero /1.0_ReKi,5.0e-1,2.5e-1,0.0_ReKi/
 !
 !     giant is the largest magnitude.
 !
-      giant = spmpar(3)
+      giant = HUGE(giant) !spmpar(3)
 !
 !     initialize the diagonal element pointer.
 !

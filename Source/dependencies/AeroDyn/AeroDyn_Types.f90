@@ -41,7 +41,6 @@ IMPLICIT NONE
     CHARACTER(1024)  :: InputFile      ! Name of the input file [-]
     INTEGER(IntKi)  :: NumBlades      ! Number of blades on the turbine [-]
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
-    LOGICAL  :: MustUseBEMT      ! whether or not the BEMT model is required (i.e., WT_Perf) [(flag)]
     REAL(DbKi)  :: DT      ! time step [s]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zHub      ! Distance to hub for each blade [m]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zTip      ! Distance to blade tip, measured along the blade [m]
@@ -198,7 +197,6 @@ CONTAINS
     DstInitInputData%InputFile = SrcInitInputData%InputFile
     DstInitInputData%NumBlades = SrcInitInputData%NumBlades
     DstInitInputData%RootName = SrcInitInputData%RootName
-    DstInitInputData%MustUseBEMT = SrcInitInputData%MustUseBEMT
     DstInitInputData%DT = SrcInitInputData%DT
 IF (ALLOCATED(SrcInitInputData%zHub)) THEN
   i1_l = LBOUND(SrcInitInputData%zHub,1)
@@ -281,7 +279,6 @@ ENDIF
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%InputFile)  ! InputFile
       Int_BufSz  = Int_BufSz  + 1  ! NumBlades
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%RootName)  ! RootName
-      Int_BufSz  = Int_BufSz  + 1  ! MustUseBEMT
       Db_BufSz   = Db_BufSz   + 1  ! DT
   Int_BufSz   = Int_BufSz   + 1     ! zHub allocated yes/no
   IF ( ALLOCATED(InData%zHub) ) THEN
@@ -330,8 +327,6 @@ ENDIF
           IntKiBuf(Int_Xferred) = ICHAR(InData%RootName(I:I), IntKi)
           Int_Xferred = Int_Xferred   + 1
         END DO ! I
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%MustUseBEMT , IntKiBuf(1), 1)
-      Int_Xferred   = Int_Xferred   + 1
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%DT
       Db_Xferred   = Db_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%zHub) ) THEN
@@ -406,8 +401,6 @@ ENDIF
         OutData%RootName(I:I) = CHAR(IntKiBuf(Int_Xferred))
         Int_Xferred = Int_Xferred   + 1
       END DO ! I
-      OutData%MustUseBEMT = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
-      Int_Xferred   = Int_Xferred + 1
       OutData%DT = DbKiBuf( Db_Xferred ) 
       Db_Xferred   = Db_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! zHub not allocated

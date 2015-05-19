@@ -157,10 +157,10 @@
 !
 !       user-supplied ...... fcn
 !
-!       minpack-supplied ... dogleg,spmpar,enorm,fdjac1,
+!       minpack-supplied ... dogleg,enorm,fdjac1,
 !                            qform,qrfac,r1mpyq,r1updt
 !
-!       fortran-supplied ... abs,amax1,amin1,min0,mod
+!       fortran-supplied ... abs,max,min,min,mod,epsilon
 !
 !     argonne national laboratory. minpack project. march 1980.
 !     burton s. garbow, kenneth e. hillstrom, jorge j. more
@@ -170,12 +170,12 @@
       integer iwa(1)
       logical jeval,sing
       real(ReKi) actred,delta,epsmch,fnorm,fnorm1,one,pnorm,prered,p1,p5, p001,p0001,ratio,sum,temp,xnorm,zero
-      real(ReKi) spmpar,enorm
-      data one,p1,p5,p001,p0001,zero  /1.0e0,1.0e-1,5.0e-1,1.0e-3,1.0e-4,0.0e0/
+      real(ReKi) enorm
+      data one,p1,p5,p001,p0001,zero  /1.0_ReKi,1.0e-1,5.0e-1,1.0e-3,1.0e-4,0.0_ReKi/
 !
 !     epsmch is the machine precision.
 !
-      epsmch = spmpar(1)
+      epsmch = EPSILON(epsmch)  ! spmpar(1)
 !
       info = 0
       iflag = 0
@@ -205,7 +205,7 @@
 !     determine the number of calls to fcn needed to compute
 !     the jacobian matrix.
 !
-      msum = min0(ml+mu+1,n)
+      msum = min(ml+mu+1,n)
 !
 !     initialize iteration counter and monitors.
 !
@@ -295,7 +295,7 @@
 !
          if (mode .eq. 2) go to 170
          do 160 j = 1, n
-            diag(j) = amax1(diag(j),wa2(j))
+            diag(j) = max(diag(j),wa2(j))
   160       continue
   170    continue
 !
@@ -330,7 +330,7 @@
 !
 !           on the first iteration, adjust the initial step bound.
 !
-            if (iter .eq. 1) delta = amin1(delta,pnorm)
+            if (iter .eq. 1) delta = min(delta,pnorm)
 !
 !           evaluate the function at x + p and calculate its norm.
 !
@@ -377,7 +377,7 @@
   230       continue
                ncfail = 0
                ncsuc = ncsuc + 1
-               if (ratio .ge. p5 .or. ncsuc .gt. 1) delta = amax1(delta,pnorm/p5)
+               if (ratio .ge. p5 .or. ncsuc .gt. 1) delta = max(delta,pnorm/p5)
                if (abs(ratio-one) .le. p1) delta = pnorm/p5
   240       continue
 !
@@ -412,7 +412,7 @@
 !           tests for termination and stringent tolerances.
 !
             if (nfev .ge. maxfev) info = 2
-            if (p1*amax1(p1*delta,pnorm) .le. epsmch*xnorm) info = 3
+            if (p1*max(p1*delta,pnorm) .le. epsmch*xnorm) info = 3
             if (nslow2 .eq. 5) info = 4
             if (nslow1 .eq. 10) info = 5
             if (info .ne. 0) go to 300

@@ -31,7 +31,7 @@ module fminfcn
       type(UA_DiscreteStateType)  :: xd_UA          ! Discrete states at Time
       type(UA_OtherStateType)     :: OtherState_UA  ! Other/optimization states
       integer(IntKi)    :: errStat       ! Error status of the operation
-      character(4096)   :: errMsg        ! Error message if ErrStat /= ErrID_None
+      character(ErrMsgLen)   :: errMsg        ! Error message if ErrStat /= ErrID_None
    end type fmin_fcnArgs
    
    public :: fmin_fcn
@@ -46,8 +46,8 @@ real(ReKi) function fmin_fcn(x, fcnArgs)
    real(ReKi),           intent(in   )   :: x
    type(fmin_fcnArgs),  intent(inout)    :: fcnArgs
    
-   integer(IntKi)      :: errStat       ! Error status of the operation
-   character(4096)     :: errMsg        ! Error message if ErrStat /= ErrID_None
+   integer(IntKi)       :: errStat       ! Error status of the operation
+   character(ErrMsgLen) :: errMsg        ! Error message if ErrStat /= ErrID_None
    !iflag = 0
    
    ! Call the UncoupledErrFn subroutine to compute the residual

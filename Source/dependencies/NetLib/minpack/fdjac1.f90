@@ -87,9 +87,7 @@ subroutine fdjac1( n, x,fvec,fjac,ldfjac,iflag,ml,mu,epsfcn, wa1,wa2, fcnArgs)
 !
 !     subprograms called
 !
-!       minpack-supplied ... spmpar
-!
-!       fortran-supplied ... abs,amax1,sqrt
+!       fortran-supplied ... abs,max,sqrt,epsilon
 !
 !     argonne national laboratory. minpack project. march 1980.
 !     burton s. garbow, kenneth e. hillstrom, jorge j. more
@@ -97,14 +95,13 @@ subroutine fdjac1( n, x,fvec,fjac,ldfjac,iflag,ml,mu,epsfcn, wa1,wa2, fcnArgs)
 !     **********
       integer i,j,k,msum
       real(ReKi) eps,epsmch,h,temp,zero
-      real(ReKi) spmpar
-      data zero /0.0e0/
+      data zero /0.0_ReKi/
 !
 !     epsmch is the machine precision.
 !
-      epsmch = spmpar(1)
+      epsmch = EPSILON(epsmch)  ! spmpar(1)
 !
-      eps = sqrt(amax1(epsfcn,epsmch))
+      eps = sqrt(max(epsfcn,epsmch))
       msum = ml + mu + 1
       if (msum .lt. n) go to 40
 !

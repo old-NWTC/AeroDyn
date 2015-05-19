@@ -42,11 +42,11 @@ subroutine qform(m,n,q,ldq,wa)
 !     **********
       integer i,j,jm1,k,l,minmn,np1
       real(ReKi) one,sum,temp,zero
-      data one,zero /1.0e0,0.0e0/
+      data one,zero /1.0_ReKi,0.0_ReKi/
 !
 !     zero out upper triangle of q in the first min(m,n) columns.
 !
-      minmn = min0(m,n)
+      minmn = min(m,n)
       if (minmn .lt. 2) go to 30
       do 20 j = 2, minmn
          jm1 = j - 1

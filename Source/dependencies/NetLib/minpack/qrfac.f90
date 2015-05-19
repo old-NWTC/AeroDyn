@@ -72,9 +72,9 @@ subroutine qrfac(m,n,a,lda,pivot,ipvt,lipvt,rdiag,acnorm,wa)
 !
 !     subprograms called
 !
-!       minpack-supplied ... spmpar,enorm
+!       minpack-supplied ... enorm
 !
-!       fortran-supplied ... amax1,sqrt,min0
+!       fortran-supplied ... max,sqrt,min,epsilon
 !
 !     argonne national laboratory. minpack project. march 1980.
 !     burton s. garbow, kenneth e. hillstrom, jorge j. more
@@ -82,12 +82,12 @@ subroutine qrfac(m,n,a,lda,pivot,ipvt,lipvt,rdiag,acnorm,wa)
 !     **********
       integer i,j,jp1,k,kmax,minmn
       real(ReKi) ajnorm,epsmch,one,p05,sum,temp,zero
-      real(ReKi) spmpar,enorm
-      data one,p05,zero /1.0e0,5.0e-2,0.0e0/
+      real(ReKi) enorm
+      data one,p05,zero /1.0_ReKi,5.0e-2,0.0_ReKi/
 !
 !     epsmch is the machine precision.
 !
-      epsmch = spmpar(1)
+      epsmch = EPSILON(epsmch)  ! spmpar(1)
 !
 !     compute the initial column norms and initialize several arrays.
 !
@@ -100,7 +100,7 @@ subroutine qrfac(m,n,a,lda,pivot,ipvt,lipvt,rdiag,acnorm,wa)
 !
 !     reduce a to r with householder transformations.
 !
-      minmn = min0(m,n)
+      minmn = min(m,n)
       do 110 j = 1, minmn
          if (.not.pivot) go to 40
 !
@@ -150,7 +150,7 @@ subroutine qrfac(m,n,a,lda,pivot,ipvt,lipvt,rdiag,acnorm,wa)
    70          continue
             if (.not.pivot .or. rdiag(k) .eq. zero) go to 80
             temp = a(j,k)/rdiag(k)
-            rdiag(k) = rdiag(k)*sqrt(amax1(zero,one-temp**2))
+            rdiag(k) = rdiag(k)*sqrt(max(zero,one-temp**2))
             if (p05*(rdiag(k)/wa(k))**2 .gt. epsmch) go to 80
             rdiag(k) = enorm(m-j,a(jp1,k))
             wa(k) = rdiag(k)

@@ -29,12 +29,12 @@ module hybrd_fcn
       logical           :: useHubLoss
       logical           :: useTipLoss 
       integer(IntKi)    :: SkewWakeMod
-      logical                      :: UA_Flag
-      type(UA_ParameterType)       :: p_UA           ! Parameters
-      type(UA_DiscreteStateType)   :: xd_UA          ! Discrete states at Time
-      type(UA_OtherStateType)      :: OtherState_UA  ! Other/optimization states
-      integer(IntKi)       :: errStat       ! Error status of the operation
-      character(4096)      :: errMsg        ! Error message if ErrStat /= ErrID_None
+      logical                    :: UA_Flag
+      type(UA_ParameterType)     :: p_UA           ! Parameters
+      type(UA_DiscreteStateType) :: xd_UA          ! Discrete states at Time
+      type(UA_OtherStateType)    :: OtherState_UA  ! Other/optimization states
+      integer(IntKi)             :: errStat        ! Error status of the operation
+      character(ErrMsgLen)       :: errMsg         ! Error message if ErrStat /= ErrID_None
    end type hybrd_fcnArgs
    
    public :: fcn
@@ -49,8 +49,8 @@ subroutine fcn(n, x, fvec, iflag, fcnArgs)
    type(hybrd_fcnArgs),  intent(inout)   :: fcnArgs
    
    
-   integer(IntKi)      :: errStat       ! Error status of the operation
-   character(4096)     :: errMsg        ! Error message if ErrStat /= ErrID_None
+   integer(IntKi)       :: errStat       ! Error status of the operation
+   character(ErrMsgLen) :: errMsg        ! Error message if ErrStat /= ErrID_None
    iflag = 0
    
    ! Call the BEMTC_ElementalErrFn subroutine to compute the residual

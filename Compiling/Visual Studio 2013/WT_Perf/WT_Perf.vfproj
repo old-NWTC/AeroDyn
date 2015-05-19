@@ -58,6 +58,7 @@
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\BEMTCoupled.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\BEMTUncoupled.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\Brent.f90"/>
+		<File RelativePath="..\..\..\Source\dependencies\BEMT\fmin_fcn.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\mod_root1dim.f90"/></Filter>
 		<Filter Name="NWTC_Library">
 		<Filter Name="NetLib">
@@ -68,20 +69,8 @@
 			<FileConfiguration Name="Release|Win32">
 				<Tool Name="VFFortranCompilerTool" StandardWarnings="standardWarningsNone"/></FileConfiguration></File>
 		<File RelativePath="..\..\..\Source\dependencies\NetLib\NWTC_FitPack.f90"/></Filter>
-		<Filter Name="go">
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\go\fmin_fcn.f90"/></Filter>
 		<Filter Name="MinPack">
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\dogleg.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\enorm.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\fdjac1.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\hybrd.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\hybrd1.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\BEMT\hybrd_fcn.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\qform.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\qrfac.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\r1mpyq.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\r1updt.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\spmpar.f"/></Filter>
+		<File RelativePath="..\..\..\Source\dependencies\NetLib\minpack\nwtc_bemt_minpack.f90"/></Filter>
 		<File RelativePath="..\..\..\Source\dependencies\NetLib\NWTC_LAPACK.f90"/></Filter>
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\ModMesh.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\ModMesh_Mapping.f90"/>

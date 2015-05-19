@@ -42,7 +42,7 @@ real(ReKi) function enorm(n,x)
 !     **********
       integer i
       real(ReKi) agiant,floatn,one,rdwarf,rgiant,s1,s2,s3,xabs,x1max,x3max, zero
-      data one,zero,rdwarf,rgiant /1.0e0,0.0e0,3.834e-20,1.304e19/
+      data one,zero,rdwarf,rgiant /1.0_ReKi,0.0_ReKi,3.834e-20,1.304e19/  !bjj: those "e" values should be "d" values for ReKi=8
       s1 = zero
       s2 = zero
       s3 = zero
