@@ -176,16 +176,16 @@ default: $(INTER_DIR) $(ALL_OBJS) $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT)
 	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
 
    # Making _Types.f90 files from .txt registry files.
-$(AFI_DIR)/AirfoilInfo_Types.f90: AirfoilInfo_Registry.txt
+$(AFI_DIR)/AirfoilInfo_Types.f90: $(AFI_DIR)/AirfoilInfo_Registry.txt
 	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -O $(AFI_DIR) -noextrap
 
-$(UA_DIR)/UnsteadyAero_Types.f90: UnsteadyAero_Registry.txt
+$(UA_DIR)/UnsteadyAero_Types.f90: $(UA_DIR)/UnsteadyAero_Registry.txt
 	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AFI_DIR) -O $(UA_DIR)
 
-$(BEMT_DIR)/BEMT_Types.f90: BEMT_Registry.txt
+$(BEMT_DIR)/BEMT_Types.f90: $(BEMT_DIR)/BEMT_Registry.txt
 	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AFI_DIR) -I $(UA_DIR) -O $(BEMT_DIR)
 
-$(AD_DIR)/AeroDyn_Types.f90: AeroDyn_Registry.txt
+$(AD_DIR)/AeroDyn_Types.f90: $(AD_DIR)/AeroDyn_Registry.txt
 	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AFI_DIR) -I $(UA_DIR) -I $(BEMT_DIR) -O $(AD_DIR)
 
 
@@ -207,15 +207,15 @@ NWTC_Library$(OBJ_EXT):             ModMesh$(OBJ_EXT)  ModMesh_Mapping$(OBJ_EXT)
 NWTC_FitPack$(OBJ_EXT):             NWTC_Library$(OBJ_EXT) dierckx_fitpack$(OBJ_EXT)
 
 
-AirfoilInfo_Types$(OBJ_EXT):        NWTC_Library$(OBJ_EXT)
+AirfoilInfo_Types$(OBJ_EXT):        NWTC_Library$(OBJ_EXT) $(AFI_DIR)/AirfoilInfo_Types.f90
 AirfoilInfo$(OBJ_EXT):              AirfoilInfo_Types$(OBJ_EXT)  NWTC_FitPack$(OBJ_EXT)
 
 
-UnsteadyAero_Types$(OBJ_EXT):       NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)
+UnsteadyAero_Types$(OBJ_EXT):       NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  $(UA_DIR)/UnsteadyAero_Types.f90
 UnsteadyAero$(OBJ_EXT):             AirfoilInfo$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
 
 
-BEMT_Types$(OBJ_EXT):               NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
+BEMT_Types$(OBJ_EXT):               NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  $(BEMT_DIR)/BEMT_Types.f90
 BEMTCoupled$(OBJ_EXT):              NWTC_Library$(OBJ_EXT)  BladeElement$(OBJ_EXT)
 nwtc_bemt_minpack$(OBJ_EXT):        NWTC_Library$(OBJ_EXT)  BEMTCoupled$(OBJ_EXT)    AirFoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
 BEMTUncoupled$(OBJ_EXT):            NWTC_Library$(OBJ_EXT)  BladeElement$(OBJ_EXT)
@@ -227,7 +227,7 @@ BEMT$(OBJ_EXT):                     NWTC_Library$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)
 
 #bjj: why isn't BladeElement.f90 part of BEMT?
 BladeElement$(OBJ_EXT):             NWTC_Library$(OBJ_EXT)  UnsteadyAero$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)
-AeroDyn_Types$(OBJ_EXT):            NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
+AeroDyn_Types$(OBJ_EXT):            NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  $(AD_DIR)/AeroDyn_Types.f90
 AeroDyn$(OBJ_EXT):                  NWTC_Library$(OBJ_EXT)  AeroDyn_Types$(OBJ_EXT)  AirfoilInfo$(OBJ_EXT)  BEMT$(OBJ_EXT)
 
 

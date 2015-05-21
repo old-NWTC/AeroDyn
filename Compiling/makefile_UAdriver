@@ -115,7 +115,8 @@ AFI_SOURCES =              \
 UA_SOURCES =                \
 	UnsteadyAero_Types.f90   \
 	UnsteadyAero.f90         \
-	UnsteadyAeroTest.f90
+	UA_Dvr_Subs.f90          \
+	UnsteadyAero_Driver.f90
 
 
 
@@ -184,8 +185,8 @@ AirfoilInfo$(OBJ_EXT):              AirfoilInfo_Types$(OBJ_EXT)  NWTC_FitPack$(O
 
 UnsteadyAero_Types$(OBJ_EXT):       NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)
 UnsteadyAero$(OBJ_EXT):             AirfoilInfo$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
-UnsteadyAeroTest$(OBJ_EXT):         UnsteadyAero$(OBJ_EXT)
-
+UA_Dvr_Subs$(OBJ_EXT):              UnsteadyAero$(OBJ_EXT)
+UnsteadyAero_Driver$(OBJ_EXT):      UA_Dvr_Subs$(OBJ_EXT)
 
    # Make sure the destination directory for the intermediate files exist.
 
@@ -202,6 +203,9 @@ $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT): $(ALL_OBJS) | $(INTER_DIR)
 
    # Cleanup afterwards.
 clean:
+	$(DEL_CMD) $(INTER_DIR)$(PATH_SEP)*.mod $(INTER_DIR)$(PATH_SEP)*$(OBJ_EXT)
+
+superclean:
 	$(DEL_CMD) $(INTER_DIR)$(PATH_SEP)*.mod $(INTER_DIR)$(PATH_SEP)*$(OBJ_EXT)
 	$(DEL_CMD) "$(DEST_DIR)$(PATH_SEP)$(OUTPUT_NAME)$(EXE_EXT)"
 	$(DEL_CMD) "$(AFI_DIR)$(PATH_SEP)AirfoilInfo_Types.f90"
