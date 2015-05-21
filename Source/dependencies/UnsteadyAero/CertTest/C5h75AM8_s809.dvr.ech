@@ -1,0 +1,26 @@
+UnsteadyAero Driver file for Unit C5h75AM8_s809.                                                                                                                                                        
+Compatible with UnsteadyAero v2.00.00a-gjh                                                                                                                                                              
+            T  Echo           - Echo the input file data
+---------------------- ENVIRONMENTAL CONDITIONS -------------------------------                                                                                                                         
+   3.4029E+02  SpdSound       - SpdSound
+---------------------- UNSTEADYAERO -------------------------------------------                                                                                                                         
+               OutRootName    - UnsteadyAero output root filename
+  "./Results/C5h75AM8_s809_a"
+   2.6548E+01  InflowVel      - Inflow velocity
+   7.5000E-01  Re             - Reynolds number in millions
+            3  UAMod          - Unsteady Aero Model Switch
+            T  Flookup        - Lookup used to determine f'
+------------------- AIRFOIL PROPERTIES ----------------------------------------                                                                                                                         
+               AirFoil1       - Filename for the airfoil table and properties
+  "OSU075_FAST.txt"
+   4.5700E-01  Chord          - Chord length
+------------------- SIMULATION CONTROL ----------------------------------------                                                                                                                         
+            1  SimMod         - Simulation model
+   3.0000E+00  NCycles        - Number of cycles for angle-of-attack inputs
+          720  StepsPerCycle  - Number of timesteps per cycle
+   1.8000E+00  Frequency      - Frequency of angle-of-attack inputs
+   0.0000E+00  Amplitude      - Amplitude for angle-of-attack inputs
+   8.1000E+00  Mean           - Mean for angle-of-attack inputs
+            0  Phase          - Initial phase for angle-of-attack inputs
+               InputsFile     - Filename for Time series data in an ASCII input file
+  "C5h75AM8_s809.txt"
