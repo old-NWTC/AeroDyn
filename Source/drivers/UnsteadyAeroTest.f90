@@ -49,9 +49,9 @@ use AirfoilInfo
    end do
    
       ! Set this to 1 to use the UA coefs
-   AFI_InitInputs%UA_Model    = 1
+   !AFI_InitInputs%UA_Model    = 1
       ! This is the number of columns of coefs in the AOA table: Cl, Cd, Cm, for example, but doesn't include Alpha
-   AFI_InitInputs%NumCoefs    = 3
+   !AFI_InitInputs%NumCoefs    = 3
       !
    AFI_InitInputs%InCol_Alfa  = 1
    AFI_InitInputs%InCol_Cl    = 2
