@@ -1,9 +1,10 @@
 ------- AERODYN v15.00.* BLADE DEFINITION INPUT FILE -------------------------------------
 Description line for this file -- file corresponds to inputs in Test01_UAE_AeroDyn.dat
 ======  Blade Properties =================================================================
-   21               NumBlNds           - Number of blade nodes used in the analysis (-)
+   23               NumBlNds           - Number of blade nodes used in the analysis (-)
   BlSpn     BlCrvAC    BlSwpAC    BlCrvAng    BlTwist    BlChord    BlAFID
   (m)       (m)        (m)        (deg)       (deg)      (m)        (-)
+ 0.0        0.0        0.0        0.0         0.000      0.219       1
  0.1360     0.0        0.0        0.0         0.000      0.219       1
  0.4481     0.0        0.0        0.0        -0.098      0.181       1
  0.8001     0.0        0.0        0.0        19.423      0.714       3
@@ -25,7 +26,7 @@ Description line for this file -- file corresponds to inputs in Test01_UAE_AeroD
  4.1444     0.0        0.0        0.0        -1.184      0.401      10
  4.3456     0.0        0.0        0.0        -1.466      0.381      10
  4.5216     0.0        0.0        0.0        -1.711      0.363      10
-
+ 4.5970     0.0        0.0        0.0        -1.711      0.363      10
 
 
 

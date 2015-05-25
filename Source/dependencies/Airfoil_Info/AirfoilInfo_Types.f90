@@ -1,4 +1,4 @@
-!STARTOFREGISTRYGENERATEDFILE '..\..\..\Source\dependencies\Airfoil_Info/AirfoilInfo_Types.f90'
+!STARTOFREGISTRYGENERATEDFILE '../Source/dependencies/Airfoil_Info/AirfoilInfo_Types.f90'
 !
 ! WARNING This file is generated automatically by the FAST registry
 ! Do not edit.  Your changes to this file will be lost.

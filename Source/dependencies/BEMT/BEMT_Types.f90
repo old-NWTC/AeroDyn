@@ -1,9 +1,9 @@
-!STARTOFREGISTRYGENERATEDFILE '..\..\..\Source\dependencies\BEMT/BEMT_Types.f90'
+!STARTOFREGISTRYGENERATEDFILE 'BEMT_Types.f90'
 !
 ! WARNING This file is generated automatically by the FAST registry
 ! Do not edit.  Your changes to this file will be lost.
 !
-! FAST Registry (v2.08.00, 8-May-2015)
+! FAST Registry (v2.08.01, 21-May-2015)
 !*********************************************************************************************************************************
 ! BEMT_Types
 !.................................................................................................................................
@@ -56,7 +56,10 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zHub      ! Distance to hub for each blade [m]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: zLocal      ! Distance to blade node, measured along the blade [m]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zTip      ! Distance to blade tip, measured along the blade [m]
+    INTEGER(IntKi)  :: UAMod      ! Model for the dynamic stall equations [1 = Leishman/Beddoes, 2 = Gonzalez, 3 = Minnema] [-]
     LOGICAL  :: UA_Flag      ! logical flag indicating whether to use UnsteadyAero [-]
+    LOGICAL  :: Flookup      ! Use table lookup for f' and f''  [-]
+    REAL(ReKi)  :: a_s      ! speed of sound [m/s]
   END TYPE BEMT_InitInputType
 ! =======================
 ! =========  BEMT_InitOutputType  =======
@@ -240,7 +243,10 @@ IF (ALLOCATED(SrcInitInputData%zTip)) THEN
   END IF
     DstInitInputData%zTip = SrcInitInputData%zTip
 ENDIF
+    DstInitInputData%UAMod = SrcInitInputData%UAMod
     DstInitInputData%UA_Flag = SrcInitInputData%UA_Flag
+    DstInitInputData%Flookup = SrcInitInputData%Flookup
+    DstInitInputData%a_s = SrcInitInputData%a_s
  END SUBROUTINE BEMT_CopyInitInput
 
  SUBROUTINE BEMT_DestroyInitInput( InitInputData, ErrStat, ErrMsg )
@@ -343,7 +349,10 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*1  ! zTip upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%zTip)  ! zTip
   END IF
+      Int_BufSz  = Int_BufSz  + 1  ! UAMod
       Int_BufSz  = Int_BufSz  + 1  ! UA_Flag
+      Int_BufSz  = Int_BufSz  + 1  ! Flookup
+      Re_BufSz   = Re_BufSz   + 1  ! a_s
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -473,8 +482,14 @@ ENDIF
       IF (SIZE(InData%zTip)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%zTip))-1 ) = PACK(InData%zTip,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%zTip)
   END IF
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%UAMod
+      Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%UA_Flag , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%Flookup , IntKiBuf(1), 1)
+      Int_Xferred   = Int_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%a_s
+      Re_Xferred   = Re_Xferred   + 1
  END SUBROUTINE BEMT_PackInitInput
 
  SUBROUTINE BEMT_UnPackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -663,8 +678,14 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(OutData%zTip)
     DEALLOCATE(mask1)
   END IF
+      OutData%UAMod = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
       OutData%UA_Flag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
+      OutData%Flookup = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
+      Int_Xferred   = Int_Xferred + 1
+      OutData%a_s = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
  END SUBROUTINE BEMT_UnPackInitInput
 
  SUBROUTINE BEMT_CopyInitOutput( SrcInitOutputData, DstInitOutputData, CtrlCode, ErrStat, ErrMsg )

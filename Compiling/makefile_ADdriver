@@ -1,0 +1,261 @@
+#================================================================================#
+# This makefile created by B. Jonkman on 7-May-2015,                             #
+# adapted from InflowWind v3.0 (A. Platt).                                       #
+# (c) 2015 National Renewable Energy Laboratory                                  #
+#                                                                                #
+#                                                                                #
+#================================================================================#
+
+   # 32-bit or 64-bit?
+BITS = 32
+#BITS = 64
+
+#OS=lin
+
+
+   # Name of compiler to use and flags to use.
+FC      = gfortran
+
+FFLAGS  = -O2 -m$(BITS) -fbacktrace -ffree-line-length-none -x f95-cpp-input -C
+LDFLAGS = -O2 -m$(BITS) -fbacktrace -g -fno-inline
+# some useful gfortran options:
+#  -DFPE_TRAP_ENABLED
+#  -Wl,--large-address-aware   # not necessary when $(BITS) is 64 (64-bit target)
+#  -Wl,--stack=999999999       # not necessary when $(BITS) is 64
+#  -Wconversion-extra -Wconversion
+#  -fdefault-real-8 -fcheck=bounds,do,mem,pointer -std=f2003 -O0 -v -Wall
+# http://gcc.gnu.org/onlinedocs/gfortran/Option-Index.html#Option-Index
+#
+# makefile:
+# --warn-undefined-variables
+
+
+
+   # Location of source files for AeroDyn/WTP, NWTC Library, and the FAST Registry.
+   # You will probably need to change these for your system.
+
+
+ifeq ($(OS),Windows_NT)
+   RegistryProgram   = C:/Users/bjonkman/Documents/DATA/DesignCodes/simulators/FAST/SVNdirectory/branches/BJonkman/bin/Registry_win32.exe
+   LDFLAGS          := $(LDFLAGS) -llapack -lblas -LC:/LAPACK/win32
+
+else
+
+      RegistryProgram   = /Users/aplatt/software-development/windsvn/FAST/branches/FAST_Registry/registry.exe
+			# Mac flag requirement
+	# Mac needs some additional flags prepended for linking to get lapack working, hence the funny notation here.
+		LDFLAGS := -framework Accelerate $(LDFLAGS)
+
+endif
+
+
+NETLIB_DIR  := ../Source/dependencies/NetLib \
+               ../Source/dependencies/NetLib/minpack
+NWTC_Lib_DIR = ../Source/dependencies/NWTC_Library
+AFI_DIR      = ../Source/dependencies/Airfoil_Info
+UA_DIR       = ../Source/dependencies/UnsteadyAero
+BEMT_DIR     = ../Source/dependencies/BEMT
+AD_DIR       = ../Source/dependencies/AeroDyn
+Driver_DIR   = ../Source
+
+DEST_DIR     = ../bin
+OUTPUT_NAME  = AeroDyn_Driver
+
+
+
+   #==========================================================#
+   # You should not need to change anything beyond this point #
+   #==========================================================#
+
+   # System-specific settings.
+
+ifeq ($(OS),Windows_NT)
+      # Windows
+   DEL_CMD   = del
+   EXE_EXT   = _gwin$(BITS).exe
+   INTER_DIR = Obj_win$(BITS)
+   MD_CMD    = @mkdir
+   CP_CMD    = copy
+   OBJ_EXT   = .obj
+   PATH_SEP  = \\
+   SYS_FILE  = SysGnuWin
+else
+      # Linux or Mac
+   DEL_CMD   = rm -f
+   EXE_EXT   = _glin$(BITS)
+   INTER_DIR = Obj_lin$(BITS)
+   MD_CMD    = @mkdir -p
+   CP_CMD    = cp
+   OBJ_EXT   = .o
+   PATH_SEP  = /
+   SYS_FILE  = SysGnuLinux
+endif
+
+
+   # Source files (by module)
+
+LIB_SOURCES =              \
+	SingPrec.f90            \
+	NWTC_Base.f90           \
+	$(SYS_FILE).f90         \
+	NWTC_Library_Types.f90  \
+	NWTC_IO.f90             \
+	NWTC_Num.f90            \
+	ModMesh_Types.f90       \
+	ModMesh.f90             \
+	ModMesh_Mapping.f90     \
+	NWTC_Library.f90
+
+NETLIB_SOURCES  =          \
+	NWTC_LAPACK.f90         \
+	NWTC_FitPack.f90        \
+	dierckx_fitpack.f
+
+AFI_SOURCES =              \
+	AirfoilInfo_Types.f90   \
+	AirfoilInfo.f90
+
+UA_SOURCES =               \
+	UnsteadyAero_Types.f90  \
+	UnsteadyAero.f90
+
+BEMT_SOURCES =             \
+	BEMT_Types.f90          \
+	BEMTCoupled.f90         \
+	BEMTUncoupled.f90       \
+	Brent.f90               \
+	fmin_fcn.f90            \
+	mod_root1dim.f90        \
+	nwtc_bemt_minpack.f90   \
+	BEMT.f90
+
+AD_SOURCES =               \
+	AeroDyn_Types.f90       \
+	BladeElement.f90        \
+	AeroDyn.f90
+
+DRIVER_SOURCES =           \
+	AD_Driver_Types.f90     \
+	AD_Driver_Subs.f90      \
+	AD_Driver.f90
+
+
+vpath %.f90 $(NWTC_Lib_DIR) $(NETLIB_DIR) $(AFI_DIR) $(UA_DIR) $(BEMT_DIR) $(AD_DIR) $(Driver_DIR)
+vpath %.f   $(NETLIB_DIR)
+vpath %.mod $(INTER_DIR)
+vpath %$(OBJ_EXT) $(INTER_DIR)
+vpath %.txt $(AFI_DIR) $(UA_DIR) $(BEMT_DIR) $(AD_DIR)
+
+
+
+	# complete object list
+ALL_SOURCES = $(LIB_SOURCES) $(NETLIB_SOURCES) $(AFI_SOURCES) $(UA_SOURCES) $(BEMT_SOURCES) $(AD_SOURCES) $(DRIVER_SOURCES)
+ALL_OBJS    = $(ALL_SOURCES:.f90=$(OBJ_EXT))
+ALL_OBJS   := $(ALL_OBJS:.F90=$(OBJ_EXT))
+ALL_OBJS   := $(ALL_OBJS:.f=$(OBJ_EXT))
+
+
+   # Rule to do everything.
+
+all:     default
+# use this for "all" for debugging: print variables:
+#all:     ; $(info $$NWTC_Lib_DIR is [${NWTC_Lib_DIR}]) echo debugging
+
+default: $(INTER_DIR) $(ALL_OBJS) $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT)
+
+
+   ### general rules for making the files ###
+
+   # Making .o or .obj files from .f90 files
+%$(OBJ_EXT): %.f90
+	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
+
+   # Making .o or .obj files from .f files
+%$(OBJ_EXT): %.f
+	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
+
+   # Making _Types.f90 files from .txt registry files.
+$(AFI_DIR)/AirfoilInfo_Types.f90: $(AFI_DIR)/AirfoilInfo_Registry.txt
+	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -O $(AFI_DIR) -noextrap
+
+$(UA_DIR)/UnsteadyAero_Types.f90: $(UA_DIR)/UnsteadyAero_Registry.txt
+	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AFI_DIR) -O $(UA_DIR)
+
+$(BEMT_DIR)/BEMT_Types.f90: $(BEMT_DIR)/BEMT_Registry.txt
+	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AFI_DIR) -I $(UA_DIR) -O $(BEMT_DIR)
+
+$(AD_DIR)/AeroDyn_Types.f90: $(AD_DIR)/AeroDyn_Registry.txt
+	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AFI_DIR) -I $(UA_DIR) -I $(BEMT_DIR) -O $(AD_DIR)
+
+$(Driver_DIR)/AeroDyn_Driver_Types.f90: $(Driver_DIR)/AeroDyn_Driver_Registry.txt
+	$(RegistryProgram) $< -I $(NWTC_Lib_DIR) -I $(AD_DIR) -I $(AFI_DIR) -I $(UA_DIR) -I $(BEMT_DIR) -O $(Driver_DIR) -noextrap
+
+
+   #  Dependency rules.
+#NWTC Library dependency rules:
+NWTC_Base$(OBJ_EXT):                SingPrec$(OBJ_EXT)
+$(SYS_FILE)$(OBJ_EXT):              NWTC_Base$(OBJ_EXT) SingPrec$(OBJ_EXT)
+NWTC_Library_Types$(OBJ_EXT):       $(SYS_FILE)$(OBJ_EXT) NWTC_Base$(OBJ_EXT)
+NWTC_IO$(OBJ_EXT):                  NWTC_Library_Types$(OBJ_EXT) $(SYS_FILE)$(OBJ_EXT)
+NWTC_Num$(OBJ_EXT):                 NWTC_IO$(OBJ_EXT)
+ModMesh_Types$(OBJ_EXT):            NWTC_Num$(OBJ_EXT)
+ModMesh$(OBJ_EXT):                  ModMesh_Types$(OBJ_EXT) NWTC_Num$(OBJ_EXT) ModMesh_Types$(OBJ_EXT)
+ModMesh_Mapping$(OBJ_EXT):          ModMesh$(OBJ_EXT)  NWTC_LAPACK$(OBJ_EXT)
+NWTC_LAPACK$(OBJ_EXT):              NWTC_Base$(OBJ_EXT)
+NWTC_Library$(OBJ_EXT):             ModMesh$(OBJ_EXT)  ModMesh_Mapping$(OBJ_EXT) NWTC_Num$(OBJ_EXT) NWTC_IO$(OBJ_EXT) NWTC_LAPACK$(OBJ_EXT)
+
+
+NWTC_FitPack$(OBJ_EXT):             NWTC_Library$(OBJ_EXT) dierckx_fitpack$(OBJ_EXT)
+
+
+AirfoilInfo_Types$(OBJ_EXT):        NWTC_Library$(OBJ_EXT) $(AFI_DIR)/AirfoilInfo_Types.f90
+AirfoilInfo$(OBJ_EXT):              AirfoilInfo_Types$(OBJ_EXT)  NWTC_FitPack$(OBJ_EXT)
+
+
+UnsteadyAero_Types$(OBJ_EXT):       NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  $(UA_DIR)/UnsteadyAero_Types.f90
+UnsteadyAero$(OBJ_EXT):             AirfoilInfo$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
+
+
+BEMT_Types$(OBJ_EXT):               NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  $(BEMT_DIR)/BEMT_Types.f90
+BEMTCoupled$(OBJ_EXT):              NWTC_Library$(OBJ_EXT)  BladeElement$(OBJ_EXT)
+nwtc_bemt_minpack$(OBJ_EXT):        NWTC_Library$(OBJ_EXT)  BEMTCoupled$(OBJ_EXT)    AirFoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
+BEMTUncoupled$(OBJ_EXT):            NWTC_Library$(OBJ_EXT)  BladeElement$(OBJ_EXT)
+Brent$(OBJ_EXT):                    NWTC_Library$(OBJ_EXT)  BEMTUncoupled$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)
+fmin_fcn$(OBJ_EXT):                 NWTC_Library$(OBJ_EXT)  BEMTUnCoupled$(OBJ_EXT)  AirFoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
+mod_root1dim$(OBJ_EXT):             NWTC_Library$(OBJ_EXT)  fmin_fcn$(OBJ_EXT)
+BEMT$(OBJ_EXT):                     NWTC_Library$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)  BEMTUncoupled$(OBJ_EXT)  BEMTCoupled$(OBJ_EXT)  \
+                                                            Brent$(OBJ_EXT)  UnsteadyAero$(OBJ_EXT)  BladeElement$(OBJ_EXT)
+
+#bjj: why isn't BladeElement.f90 part of BEMT?
+BladeElement$(OBJ_EXT):             NWTC_Library$(OBJ_EXT)  UnsteadyAero$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)
+AeroDyn_Types$(OBJ_EXT):            NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  $(AD_DIR)/AeroDyn_Types.f90
+AeroDyn$(OBJ_EXT):                  NWTC_Library$(OBJ_EXT)  AeroDyn_Types$(OBJ_EXT)  AirfoilInfo$(OBJ_EXT)  BEMT$(OBJ_EXT)
+
+
+AeroDyn_Driver_Types$(OBJ_EXT):     NWTC_Library$(OBJ_EXT)  $(Driver_DIR)/AeroDyn_Driver_Types.f90
+AeroDyn_Driver_Subs$(OBJ_EXT):      NWTC_Library$(OBJ_EXT)  AeroDyn_Driver_Types$(OBJ_EXT)  AeroDyn_Types$(OBJ_EXT) AeroDyn$(OBJ_EXT)
+AeroDyn_Driver$(OBJ_EXT):           AeroDyn_Driver_Subs$(OBJ_EXT)
+
+
+   # Make sure the destination directory for the intermediate files exist.
+
+$(INTER_DIR):
+	$(MD_CMD) $(INTER_DIR)
+
+
+   # For linking driver code.
+
+$(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT): $(ALL_OBJS) | $(INTER_DIR)
+	$(FC) $(LDFLAGS) -I $(INTER_DIR) -o $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT) \
+	$(foreach src, $(ALL_OBJS), $(addprefix $(INTER_DIR)/,$(src)))
+
+
+   # Cleanup afterwards.
+clean:
+	$(DEL_CMD) $(INTER_DIR)$(PATH_SEP)*.mod $(INTER_DIR)$(PATH_SEP)*$(OBJ_EXT)
+	$(DEL_CMD) "$(DEST_DIR)$(PATH_SEP)$(OUTPUT_NAME)$(EXE_EXT)"
+	$(DEL_CMD) "$(AFI_DIR)$(PATH_SEP)AirfoilInfo_Types.f90"
+	$(DEL_CMD) "$(UA_DIR)$(PATH_SEP)UnsteadyAero_Types.f90"
+	$(DEL_CMD) "$(BEMT_DIR)$(PATH_SEP)BEMT_Types.f90"
+	$(DEL_CMD) "$(AD_DIR)$(PATH_SEP)AeroDyn_Types.f90"
+	$(DEL_CMD) *_Types.f90

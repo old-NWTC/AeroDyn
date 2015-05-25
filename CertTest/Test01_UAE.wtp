@@ -1,44 +1,19 @@
------  WT_Perf v4.xx Input File  -----------------------------------------------
-WT_Perf BEMT input file.  UAE Phase 3 turbine (BEM).
-Compatible with WT_Perf v4.xx
+-----  AeroDyn Driver v1.00.x Input File  -----------------------------------------------
+BEMT input file.  UAE Phase 3 turbine (BEM).
 -----  Input Configuration  ----------------------------------------------------
 False                Echo:                      Echo input parameters to "<rootname>.ech"?
 "Test01_UAE_AeroDyn.dat"  AD_InputFile:              Name of the primary AeroDyn input file
------  Model Configuration  ----------------------------------------------------
-21                   NumSect:                   Number of circumferential sectors.
 -----  Turbine Data  -----------------------------------------------------------
 2                    NumBlade:                  Number of blades.
-5.029                RotorRad:                  Rotor radius [length].
 0.432                HubRad:                    Hub radius [length or div by radius].
-0.0                  PreCone:                   Precone angle, positive downwind [deg].
-0.0                  Tilt:                      Shaft tilt [deg].
-0.0                  Yaw:                       Yaw error [deg].
 12.192               HubHt:                     Hub height [length or div by radius].
------  Aerodynamic Data  -------------------------------------------------------
-0.0                                      ShearExp:            Wind shear exponent (1/7 law = 0.143).
 -----  I/O Settings  -----------------------------------------------------------
 "Test01"             OutFileRoot                Root name for any output files
-False                UnfPower:                  Write parametric power to an unformatted file?
 True                 TabDel:                    When generating formatted output (OutForm=True), make output tab-delimited (fixed-width otherwise).
-True                 OutNines:                  Output nines if the solution doesn't fully converge to the specified tolerances.
 True                 Beep:                      Beep on exit.
-False                KFact:                     Output dimensional parameters in K (e.g., kN instead of N)
-True                 WriteBED:                  Write out blade element data to "<rootname>.bed"?
 False                InputTSR:                  Input speeds as TSRs?
-True                 OutMaxCp:                  Output conditions for the maximum Cp?
 -----  Combined-Case Analysis  -------------------------------------------------
-1                    NumCases:                  Number of cases to run.  Enter zero for parametric analysis.
-WS or TSR   RotSpd   Pitch       Yaw      Tilt    Precone      (mps, rpm, deg, deg, deg, deg) Remove following block of lines if NumCases is zero.
-5            71.9     3.0        0.0       0.0     0.0
------  Parametric Analysis (Ignored if NumCases > 0)  --------------------------
-3                    ParRow:                    Row parameter    (1-rpm, 2-pitch, 3-tsr/speed).
-2                    ParCol:                    Column parameter (1-rpm, 2-pitch, 3-tsr/speed).
-1                    ParTab:                    Table parameter  (1-rpm, 2-pitch, 3-tsr/speed).
-True                 OutPwr:                    Request output of rotor power for formatted output?
-True                 OutCp:                     Request output of Cp for formatted output?
-True                 OutTrq:                    Request output of shaft torque for formatted output?
-True                 OutFlp:                    Request output of flap bending moment for formatted output?
-True                 OutThr:                    Request output of rotor thrust for formatted output?
-3, 4, 1              PitSt, PitEnd, PitDel:     First, last, delta blade pitch (deg).
-72, 73, 1            OmgSt, OmgEnd, OmgDel:     First, last, delta rotor speed (rpm).
-15, 75, 1            SpdSt, SpdEnd, SpdDel:     First, last, delta speeds.
+1                    NumCases:                  Number of cases to run.
+WS or TSR   ShearExp   RotSpd   Pitch     Yaw      Tilt    Precone   initial_Azimuth_Angle   dT       Tmax
+(m/s or -)    (-)       (rpm)   (deg)    (deg)     (deg)    (deg)      (deg)                (s)       (s)
+5             0.0       71.9     3.0      0.0       0.0     0.0        0.0                  0.0397    0.8345
