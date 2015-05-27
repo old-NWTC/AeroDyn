@@ -1,9 +1,9 @@
-!STARTOFREGISTRYGENERATEDFILE 'UnsteadyAero_Types.f90'
+!STARTOFREGISTRYGENERATEDFILE './UnsteadyAero_Types.f90'
 !
 ! WARNING This file is generated automatically by the FAST registry
 ! Do not edit.  Your changes to this file will be lost.
 !
-! FAST Registry (v2.08.01, 21-May-2015)
+! FAST Registry (v2.08.00, 8-May-2015)
 !*********************************************************************************************************************************
 ! UnsteadyAero_Types
 !.................................................................................................................................
@@ -79,9 +79,12 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Dp_minus1      ! deficiency function used in the development of Cm_q_circ, previous time step [rad/s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn_pot_minus1      ! deficiency function used in the development of Cn_prime [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: fprimeprime_minus1      ! lagged version of fprime, accounting for unsteady boundary layer response, previous time step [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: fprimeprime_c_minus1      ! lagged version of fprime, accounting for unsteady boundary layer response, previous time step [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Df_minus1      ! deficiency function used in the development of fprime, previous time step [rad/s]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Df_c_minus1      ! deficiency function used in the development of fprime, previous time step [rad/s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Dalphaf_minus1      ! deficiency function used in the development of fprime, previous time step [rad/s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: fprime_minus1      ! separation point distance from leading edge, expressed in cord fraction, previous time step [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: fprime_c_minus1      ! separation point distance from leading edge, expressed in cord fraction, previous time step [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: tau_V      ! time variable, tracking the travel of the LE vortex over the airfoil suction surface [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cn_v_minus1      ! normal force coefficient due to the presence of LE vortex, previous time step [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: C_V_minus1      ! contribution to the normal force coefficient due to accumulated vorticity in the LE vortex, previous time step [-]
@@ -1130,6 +1133,20 @@ IF (ALLOCATED(SrcDiscStateData%fprimeprime_minus1)) THEN
   END IF
     DstDiscStateData%fprimeprime_minus1 = SrcDiscStateData%fprimeprime_minus1
 ENDIF
+IF (ALLOCATED(SrcDiscStateData%fprimeprime_c_minus1)) THEN
+  i1_l = LBOUND(SrcDiscStateData%fprimeprime_c_minus1,1)
+  i1_u = UBOUND(SrcDiscStateData%fprimeprime_c_minus1,1)
+  i2_l = LBOUND(SrcDiscStateData%fprimeprime_c_minus1,2)
+  i2_u = UBOUND(SrcDiscStateData%fprimeprime_c_minus1,2)
+  IF (.NOT. ALLOCATED(DstDiscStateData%fprimeprime_c_minus1)) THEN 
+    ALLOCATE(DstDiscStateData%fprimeprime_c_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%fprimeprime_c_minus1.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstDiscStateData%fprimeprime_c_minus1 = SrcDiscStateData%fprimeprime_c_minus1
+ENDIF
 IF (ALLOCATED(SrcDiscStateData%Df_minus1)) THEN
   i1_l = LBOUND(SrcDiscStateData%Df_minus1,1)
   i1_u = UBOUND(SrcDiscStateData%Df_minus1,1)
@@ -1143,6 +1160,20 @@ IF (ALLOCATED(SrcDiscStateData%Df_minus1)) THEN
     END IF
   END IF
     DstDiscStateData%Df_minus1 = SrcDiscStateData%Df_minus1
+ENDIF
+IF (ALLOCATED(SrcDiscStateData%Df_c_minus1)) THEN
+  i1_l = LBOUND(SrcDiscStateData%Df_c_minus1,1)
+  i1_u = UBOUND(SrcDiscStateData%Df_c_minus1,1)
+  i2_l = LBOUND(SrcDiscStateData%Df_c_minus1,2)
+  i2_u = UBOUND(SrcDiscStateData%Df_c_minus1,2)
+  IF (.NOT. ALLOCATED(DstDiscStateData%Df_c_minus1)) THEN 
+    ALLOCATE(DstDiscStateData%Df_c_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%Df_c_minus1.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstDiscStateData%Df_c_minus1 = SrcDiscStateData%Df_c_minus1
 ENDIF
 IF (ALLOCATED(SrcDiscStateData%Dalphaf_minus1)) THEN
   i1_l = LBOUND(SrcDiscStateData%Dalphaf_minus1,1)
@@ -1171,6 +1202,20 @@ IF (ALLOCATED(SrcDiscStateData%fprime_minus1)) THEN
     END IF
   END IF
     DstDiscStateData%fprime_minus1 = SrcDiscStateData%fprime_minus1
+ENDIF
+IF (ALLOCATED(SrcDiscStateData%fprime_c_minus1)) THEN
+  i1_l = LBOUND(SrcDiscStateData%fprime_c_minus1,1)
+  i1_u = UBOUND(SrcDiscStateData%fprime_c_minus1,1)
+  i2_l = LBOUND(SrcDiscStateData%fprime_c_minus1,2)
+  i2_u = UBOUND(SrcDiscStateData%fprime_c_minus1,2)
+  IF (.NOT. ALLOCATED(DstDiscStateData%fprime_c_minus1)) THEN 
+    ALLOCATE(DstDiscStateData%fprime_c_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDiscStateData%fprime_c_minus1.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstDiscStateData%fprime_c_minus1 = SrcDiscStateData%fprime_c_minus1
 ENDIF
 IF (ALLOCATED(SrcDiscStateData%tau_V)) THEN
   i1_l = LBOUND(SrcDiscStateData%tau_V,1)
@@ -1284,14 +1329,23 @@ ENDIF
 IF (ALLOCATED(DiscStateData%fprimeprime_minus1)) THEN
   DEALLOCATE(DiscStateData%fprimeprime_minus1)
 ENDIF
+IF (ALLOCATED(DiscStateData%fprimeprime_c_minus1)) THEN
+  DEALLOCATE(DiscStateData%fprimeprime_c_minus1)
+ENDIF
 IF (ALLOCATED(DiscStateData%Df_minus1)) THEN
   DEALLOCATE(DiscStateData%Df_minus1)
+ENDIF
+IF (ALLOCATED(DiscStateData%Df_c_minus1)) THEN
+  DEALLOCATE(DiscStateData%Df_c_minus1)
 ENDIF
 IF (ALLOCATED(DiscStateData%Dalphaf_minus1)) THEN
   DEALLOCATE(DiscStateData%Dalphaf_minus1)
 ENDIF
 IF (ALLOCATED(DiscStateData%fprime_minus1)) THEN
   DEALLOCATE(DiscStateData%fprime_minus1)
+ENDIF
+IF (ALLOCATED(DiscStateData%fprime_c_minus1)) THEN
+  DEALLOCATE(DiscStateData%fprime_c_minus1)
 ENDIF
 IF (ALLOCATED(DiscStateData%tau_V)) THEN
   DEALLOCATE(DiscStateData%tau_V)
@@ -1417,10 +1471,20 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! fprimeprime_minus1 upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%fprimeprime_minus1)  ! fprimeprime_minus1
   END IF
+  Int_BufSz   = Int_BufSz   + 1     ! fprimeprime_c_minus1 allocated yes/no
+  IF ( ALLOCATED(InData%fprimeprime_c_minus1) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! fprimeprime_c_minus1 upper/lower bounds for each dimension
+      Re_BufSz   = Re_BufSz   + SIZE(InData%fprimeprime_c_minus1)  ! fprimeprime_c_minus1
+  END IF
   Int_BufSz   = Int_BufSz   + 1     ! Df_minus1 allocated yes/no
   IF ( ALLOCATED(InData%Df_minus1) ) THEN
     Int_BufSz   = Int_BufSz   + 2*2  ! Df_minus1 upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%Df_minus1)  ! Df_minus1
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! Df_c_minus1 allocated yes/no
+  IF ( ALLOCATED(InData%Df_c_minus1) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! Df_c_minus1 upper/lower bounds for each dimension
+      Re_BufSz   = Re_BufSz   + SIZE(InData%Df_c_minus1)  ! Df_c_minus1
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! Dalphaf_minus1 allocated yes/no
   IF ( ALLOCATED(InData%Dalphaf_minus1) ) THEN
@@ -1431,6 +1495,11 @@ ENDIF
   IF ( ALLOCATED(InData%fprime_minus1) ) THEN
     Int_BufSz   = Int_BufSz   + 2*2  ! fprime_minus1 upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%fprime_minus1)  ! fprime_minus1
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! fprime_c_minus1 allocated yes/no
+  IF ( ALLOCATED(InData%fprime_c_minus1) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! fprime_c_minus1 upper/lower bounds for each dimension
+      Re_BufSz   = Re_BufSz   + SIZE(InData%fprime_c_minus1)  ! fprime_c_minus1
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! tau_V allocated yes/no
   IF ( ALLOCATED(InData%tau_V) ) THEN
@@ -1719,6 +1788,22 @@ ENDIF
       IF (SIZE(InData%fprimeprime_minus1)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%fprimeprime_minus1))-1 ) = PACK(InData%fprimeprime_minus1,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%fprimeprime_minus1)
   END IF
+  IF ( .NOT. ALLOCATED(InData%fprimeprime_c_minus1) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%fprimeprime_c_minus1,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%fprimeprime_c_minus1,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%fprimeprime_c_minus1,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%fprimeprime_c_minus1,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%fprimeprime_c_minus1)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%fprimeprime_c_minus1))-1 ) = PACK(InData%fprimeprime_c_minus1,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%fprimeprime_c_minus1)
+  END IF
   IF ( .NOT. ALLOCATED(InData%Df_minus1) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -1734,6 +1819,22 @@ ENDIF
 
       IF (SIZE(InData%Df_minus1)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Df_minus1))-1 ) = PACK(InData%Df_minus1,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%Df_minus1)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%Df_c_minus1) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Df_c_minus1,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Df_c_minus1,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Df_c_minus1,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Df_c_minus1,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%Df_c_minus1)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Df_c_minus1))-1 ) = PACK(InData%Df_c_minus1,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%Df_c_minus1)
   END IF
   IF ( .NOT. ALLOCATED(InData%Dalphaf_minus1) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -1766,6 +1867,22 @@ ENDIF
 
       IF (SIZE(InData%fprime_minus1)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%fprime_minus1))-1 ) = PACK(InData%fprime_minus1,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%fprime_minus1)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%fprime_c_minus1) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%fprime_c_minus1,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%fprime_c_minus1,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%fprime_c_minus1,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%fprime_c_minus1,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%fprime_c_minus1)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%fprime_c_minus1))-1 ) = PACK(InData%fprime_c_minus1,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%fprime_c_minus1)
   END IF
   IF ( .NOT. ALLOCATED(InData%tau_V) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -2257,6 +2374,32 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(OutData%fprimeprime_minus1)
     DEALLOCATE(mask2)
   END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! fprimeprime_c_minus1 not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%fprimeprime_c_minus1)) DEALLOCATE(OutData%fprimeprime_c_minus1)
+    ALLOCATE(OutData%fprimeprime_c_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%fprimeprime_c_minus1.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%fprimeprime_c_minus1)>0) OutData%fprimeprime_c_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%fprimeprime_c_minus1))-1 ), mask2, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%fprimeprime_c_minus1)
+    DEALLOCATE(mask2)
+  END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Df_minus1 not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
@@ -2281,6 +2424,32 @@ ENDIF
     mask2 = .TRUE. 
       IF (SIZE(OutData%Df_minus1)>0) OutData%Df_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Df_minus1))-1 ), mask2, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%Df_minus1)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Df_c_minus1 not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%Df_c_minus1)) DEALLOCATE(OutData%Df_c_minus1)
+    ALLOCATE(OutData%Df_c_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%Df_c_minus1.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%Df_c_minus1)>0) OutData%Df_c_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Df_c_minus1))-1 ), mask2, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%Df_c_minus1)
     DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Dalphaf_minus1 not allocated
@@ -2333,6 +2502,32 @@ ENDIF
     mask2 = .TRUE. 
       IF (SIZE(OutData%fprime_minus1)>0) OutData%fprime_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%fprime_minus1))-1 ), mask2, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%fprime_minus1)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! fprime_c_minus1 not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%fprime_c_minus1)) DEALLOCATE(OutData%fprime_c_minus1)
+    ALLOCATE(OutData%fprime_c_minus1(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%fprime_c_minus1.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%fprime_c_minus1)>0) OutData%fprime_c_minus1 = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%fprime_c_minus1))-1 ), mask2, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%fprime_c_minus1)
     DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! tau_V not allocated
