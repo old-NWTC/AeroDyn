@@ -6,9 +6,9 @@ Compatible with UnsteadyAero v2.00.00a-gjh
 ---------------------- UNSTEADYAERO -------------------------------------------                                                                                                                         
                OutRootName    - UnsteadyAero output root filename
   "./Results/C5h75AM8_s809_a"
-   2.6548E+01  InflowVel      - Inflow velocity
+   2.4628E+01  InflowVel      - Inflow velocity
    7.5000E-01  Re             - Reynolds number in millions
-            3  UAMod          - Unsteady Aero Model Switch
+            1  UAMod          - Unsteady Aero Model Switch
             T  Flookup        - Lookup used to determine f'
 ------------------- AIRFOIL PROPERTIES ----------------------------------------                                                                                                                         
                AirFoil1       - Filename for the airfoil table and properties
