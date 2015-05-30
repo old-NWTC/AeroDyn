@@ -41,7 +41,7 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: numBlades      ! Number of blades [-]
     REAL(ReKi)  :: airDens      ! Air density [kg/m^3]
     REAL(ReKi)  :: kinVisc      ! Kinematic air viscosity [m^2/s]
-    INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
+    INTEGER(IntKi)  :: skewWakeMod      ! Type of skewed-wake correction model [switch] {1=uncoupled, 2=Pitt/Peters, 3=coupled} [-]
     REAL(ReKi)  :: aTol      ! Tolerance for the induction solution [-]
     LOGICAL  :: useTipLoss      ! Use the Prandtl tip-loss model?  [flag] [-]
     LOGICAL  :: useHubLoss      ! Use the Prandtl hub-loss model?  [flag] [-]
@@ -98,7 +98,7 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: numBlades      ! Number of blades [-]
     REAL(ReKi)  :: airDens      ! Air density [kg/m^3]
     REAL(ReKi)  :: kinVisc      ! Kinematic air viscosity [m^2/s]
-    INTEGER(IntKi)  :: skewWakeMod      ! Skewed-wake correction model [switch] {0: no correction, 1: Pitt and Peters, 2: Teknikgruppen AB, 3: Coupled model} [-]
+    INTEGER(IntKi)  :: skewWakeMod      ! Type of skewed-wake correction model [switch] {1=uncoupled, 2=Pitt/Peters, 3=coupled} [-]
     REAL(ReKi)  :: aTol      ! Tolerance for the induction solution [-]
     LOGICAL  :: useTipLoss      ! Use the Prandtl tip-loss model?  [flag] [-]
     LOGICAL  :: useHubLoss      ! Use the Prandtl hub-loss model?  [flag] [-]
@@ -119,7 +119,7 @@ IMPLICIT NONE
 ! =======================
 ! =========  BEMT_InputType  =======
   TYPE, PUBLIC :: BEMT_InputType
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: theta      ! Twist angle (includes all sources of twist)  [Array of size (numBlades, NumBlNds)] [rad]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: theta      ! Twist angle (includes all sources of twist)  [Array of size (NumBlNds,numBlades)] [rad]
     REAL(ReKi)  :: chi0      ! Angle between the vector normal to the rotor plane and the wind vector (e.g., the yaw angle in the case of no tilt) [rad]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: psi      ! Azimuth angle [rad]
     REAL(ReKi)  :: omega      ! Angular velocity of rotor [rad/s]
@@ -139,8 +139,9 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: tanInduction      ! Distributed inertial loads [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Re      ! Distributed inertial loads [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: AOA      ! Distributed inertial loads [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cx      ! Distributed inertial loads [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cy      ! Distributed inertial loads [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cx      ! normal force coefficient (normal to the plane, not chord) of the jth node in the kth blade [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cy      ! tangential force coefficient (tangential to the plane, not chord) of the jth node in the kth blade [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cm      ! pitching moment coefficient of the jth node in the kth blade [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cl      ! Distributed inertial loads [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cd      ! Distributed inertial loads [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chi      ! Distributed inertial loads [-]
@@ -3131,6 +3132,20 @@ IF (ALLOCATED(SrcOutputData%Cy)) THEN
   END IF
     DstOutputData%Cy = SrcOutputData%Cy
 ENDIF
+IF (ALLOCATED(SrcOutputData%Cm)) THEN
+  i1_l = LBOUND(SrcOutputData%Cm,1)
+  i1_u = UBOUND(SrcOutputData%Cm,1)
+  i2_l = LBOUND(SrcOutputData%Cm,2)
+  i2_u = UBOUND(SrcOutputData%Cm,2)
+  IF (.NOT. ALLOCATED(DstOutputData%Cm)) THEN 
+    ALLOCATE(DstOutputData%Cm(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOutputData%Cm.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstOutputData%Cm = SrcOutputData%Cm
+ENDIF
 IF (ALLOCATED(SrcOutputData%Cl)) THEN
   i1_l = LBOUND(SrcOutputData%Cl,1)
   i1_u = UBOUND(SrcOutputData%Cl,1)
@@ -3207,6 +3222,9 @@ IF (ALLOCATED(OutputData%Cx)) THEN
 ENDIF
 IF (ALLOCATED(OutputData%Cy)) THEN
   DEALLOCATE(OutputData%Cy)
+ENDIF
+IF (ALLOCATED(OutputData%Cm)) THEN
+  DEALLOCATE(OutputData%Cm)
 ENDIF
 IF (ALLOCATED(OutputData%Cl)) THEN
   DEALLOCATE(OutputData%Cl)
@@ -3293,6 +3311,11 @@ ENDIF
   IF ( ALLOCATED(InData%Cy) ) THEN
     Int_BufSz   = Int_BufSz   + 2*2  ! Cy upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%Cy)  ! Cy
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! Cm allocated yes/no
+  IF ( ALLOCATED(InData%Cm) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! Cm upper/lower bounds for each dimension
+      Re_BufSz   = Re_BufSz   + SIZE(InData%Cm)  ! Cm
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! Cl allocated yes/no
   IF ( ALLOCATED(InData%Cl) ) THEN
@@ -3463,6 +3486,22 @@ ENDIF
 
       IF (SIZE(InData%Cy)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Cy))-1 ) = PACK(InData%Cy,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%Cy)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%Cm) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Cm,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Cm,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Cm,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Cm,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%Cm)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Cm))-1 ) = PACK(InData%Cm,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%Cm)
   END IF
   IF ( .NOT. ALLOCATED(InData%Cl) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -3754,6 +3793,32 @@ ENDIF
     mask2 = .TRUE. 
       IF (SIZE(OutData%Cy)>0) OutData%Cy = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Cy))-1 ), mask2, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%Cy)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Cm not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%Cm)) DEALLOCATE(OutData%Cm)
+    ALLOCATE(OutData%Cm(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%Cm.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%Cm)>0) OutData%Cm = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Cm))-1 ), mask2, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%Cm)
     DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Cl not allocated
@@ -4282,6 +4347,14 @@ IF (ALLOCATED(y_out%Cy) .AND. ALLOCATED(y1%Cy)) THEN
   DEALLOCATE(b2)
   DEALLOCATE(c2)
 END IF ! check if allocated
+IF (ALLOCATED(y_out%Cm) .AND. ALLOCATED(y1%Cm)) THEN
+  ALLOCATE(b2(SIZE(y_out%Cm,1),SIZE(y_out%Cm,2) ))
+  ALLOCATE(c2(SIZE(y_out%Cm,1),SIZE(y_out%Cm,2) ))
+  b2 = -(y1%Cm - y2%Cm)/t(2)
+  y_out%Cm = y1%Cm + b2 * t_out
+  DEALLOCATE(b2)
+  DEALLOCATE(c2)
+END IF ! check if allocated
 IF (ALLOCATED(y_out%Cl) .AND. ALLOCATED(y1%Cl)) THEN
   ALLOCATE(b2(SIZE(y_out%Cl,1),SIZE(y_out%Cl,2) ))
   ALLOCATE(c2(SIZE(y_out%Cl,1),SIZE(y_out%Cl,2) ))
@@ -4431,6 +4504,15 @@ IF (ALLOCATED(y_out%Cy) .AND. ALLOCATED(y1%Cy)) THEN
   b2 = (t(3)**2*(y1%Cy - y2%Cy) + t(2)**2*(-y1%Cy + y3%Cy))/(t(2)*t(3)*(t(2) - t(3)))
   c2 = ( (t(2)-t(3))*y1%Cy + t(3)*y2%Cy - t(2)*y3%Cy ) / (t(2)*t(3)*(t(2) - t(3)))
   y_out%Cy = y1%Cy + b2 * t_out + c2 * t_out**2
+  DEALLOCATE(b2)
+  DEALLOCATE(c2)
+END IF ! check if allocated
+IF (ALLOCATED(y_out%Cm) .AND. ALLOCATED(y1%Cm)) THEN
+  ALLOCATE(b2(SIZE(y_out%Cm,1),SIZE(y_out%Cm,2) ))
+  ALLOCATE(c2(SIZE(y_out%Cm,1),SIZE(y_out%Cm,2) ))
+  b2 = (t(3)**2*(y1%Cm - y2%Cm) + t(2)**2*(-y1%Cm + y3%Cm))/(t(2)*t(3)*(t(2) - t(3)))
+  c2 = ( (t(2)-t(3))*y1%Cm + t(3)*y2%Cm - t(2)*y3%Cm ) / (t(2)*t(3)*(t(2) - t(3)))
+  y_out%Cm = y1%Cm + b2 * t_out + c2 * t_out**2
   DEALLOCATE(b2)
   DEALLOCATE(c2)
 END IF ! check if allocated

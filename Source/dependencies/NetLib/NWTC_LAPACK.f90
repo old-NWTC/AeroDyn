@@ -1,26 +1,28 @@
 !**********************************************************************************************************************************
-! Copyright (C) 2013-2014  National Renewable Energy Laboratory
+! Copyright (C) 2013-2015  National Renewable Energy Laboratory
 !
 ! This code provides a wrapper for the LAPACK routines currently used at the NWTC (mainly codes in the FAST framework).
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2013-09-21 22:37:32 -0600 (Sat, 21 Sep 2013) $
-! (File) Revision #: $Rev: 175 $
-! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/NWTC_Library.f90 $
+! File last committed: $Date: 2015-05-07 13:27:33 -0600 (Thu, 07 May 2015) $
+! (File) Revision #: $Rev: 301 $
+! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/branches/NetLib/NWTC_source/NWTC_LAPACK.f90 $
 !**********************************************************************************************************************************
 MODULE NWTC_LAPACK
 
    USE NWTC_Base        ! we only need the precision and error level constants
+   
+   
 !   USE, INTRINSIC               :: ISO_C_Binding, only: C_FLOAT, C_DOUBLE          ! this is included in NWTC_Library
 
       ! Notes:
 
          ! Your project must include the following files:
          ! From the NWTC Subroutine Library:
-         !     {Doub | Sing}Prec.f90 [from NWTC Library]
+         !     SingPrec.f90          [from NWTC Library]
          !     Sys*.f90              [from NWTC Library]
          !     NWTC_Base.f90         [from NWTC Library]
-         ! lapack library (preferable a binary, but available in source form from http://www.netlib.org/, too)
+         ! lapack library (preferably a binary, but available in source form from http://www.netlib.org/, too)
          ! This wrapper file:
          !     NWTC_LAPACK.f90
 
@@ -32,6 +34,9 @@ MODULE NWTC_LAPACK
    !      we need to check this somehow to make sure the right routines are called.
    ! (or define a directive that uses
 
+   ! http://www.netlib.org/lapack/explore-html/ 
+   
+   
    IMPLICIT  NONE
 
    INTERFACE LAPACK_gbsv ! Computes the solution to system of linear equations A * X = B for GB matrices
@@ -39,6 +44,12 @@ MODULE NWTC_LAPACK
       MODULE PROCEDURE LAPACK_sgbsv
    END INTERFACE
 
+   INTERFACE LAPACK_gemm   ! Computes scalar1*op( A )*op( B ) + scalar2*C where op(x) = x or op(x) = x**T for matrices A, B, and C
+      MODULE PROCEDURE LAPACK_dgemm
+      MODULE PROCEDURE LAPACK_sgemm
+   END INTERFACE
+   
+   
    INTERFACE LAPACK_gesv ! Computes the solution to system of linear equations A * X = B for GE matrices
       MODULE PROCEDURE LAPACK_dgesv
       MODULE PROCEDURE LAPACK_sgesv
@@ -71,7 +82,12 @@ MODULE NWTC_LAPACK
       MODULE PROCEDURE LAPACK_sposv
    END INTERFACE
 
+   INTERFACE LAPACK_pptrf ! Compute the Cholesky factorization of a real symmetric positive definite matrix A stored in packed format.
+      MODULE PROCEDURE LAPACK_dpptrf
+      MODULE PROCEDURE LAPACK_spptrf
+   END INTERFACE
 
+      
 CONTAINS
 
 !=======================================================================
@@ -181,6 +197,162 @@ CONTAINS
    RETURN
    END SUBROUTINE LAPACK_SGBSV
 !=======================================================================
+   SUBROUTINE LAPACK_DGEMM( TRANSA, TRANSB, ALPHA, A, B, BETA, C, ErrStat, ErrMsg )
+   ! computes C = alpha*op( A )*op( B ) + beta*C where op(x) = x or op(x) = x**T for matrices A, B, and C
+
+         ! passed parameters
+
+      CHARACTER(1),    intent(in   ) :: TRANSA            ! On entry, TRANSA specifies the form of op( A ) to be used in the matrix multiplication as follows:
+                                                          !     TRANSA = 'N' or 'n', op( A ) = A.
+                                                          !     TRANSA = 'T' or 't', op( A ) = A**T.
+      CHARACTER(1),    intent(in   ) :: TRANSB            ! On entry, TRANSB specifies the form of op( A ) to be used in the matrix multiplication as follows:
+                                                          !     TRANSB = 'N' or 'n', op( B ) = B.
+                                                          !     TRANSB = 'T' or 't', op( B ) = B**T.
+
+      REAL(R8Ki)      ,intent(in   ) :: ALPHA             ! On entry, ALPHA specifies the scalar alpha.
+      REAL(R8Ki)      ,intent(in   ) :: BETA              ! On entry, BETA specifies the scalar beta. When BETA is supplied as zero then C need not be set on input.
+      REAL(R8Ki)      ,intent(in   ) :: A( :, : )         ! Matrix A
+      REAL(R8Ki)      ,intent(in   ) :: B( :, : )         ! Matrix B
+      REAL(R8Ki)      ,intent(inout) :: C( :, : )         ! Matrix C: Before entry, C must contain the matrix C, except when beta is zero, in which case C need not
+                                                          ! case C need not be set on entry. On exit, the array C is overwritten by the m by n matrix ( alpha*op( A )*op( B ) + beta*C ).
+
+      INTEGER(IntKi),  intent(  out) :: ErrStat           ! Error level
+      CHARACTER(*),    intent(  out) :: ErrMsg            ! Message describing error
+                                                          
+         ! local variables                                                                   
+                                                                                                                                                                                                                  
+      INTEGER                        :: M                 ! M specifies the number of rows of the matrix op(A)
+      INTEGER                        :: K                 ! K specifies the number of columns of the matrix op(A)
+      INTEGER                        :: N                 ! N specifies the number of columns of the matrix op(B)
+      INTEGER                        :: KB                ! KB specifies the number of rows of the matrix op(B)
+                
+      INTEGER                        :: LDA               ! LDA specifies the first dimension of A as declared in the calling (sub) program. When TRANSA = 'N' or 'n' then
+                                                          ! LDA must be at least max( 1, m ), otherwise LDA must be at least max( 1, k ).
+
+      INTEGER                        :: LDB               ! LDB specifies the first dimension of B as declared in the calling (sub) program. When TRANSB = 'N' or 'n' then
+                                                          ! LDB must be at least max( 1, k ), otherwise LDB must be at least max( 1, n ).
+                                                  
+      CHARACTER(*), PARAMETER        :: RoutineName = 'LAPACK_DGEMM'
+                                                                                                                                                                              
+      LDA = SIZE(A,1)
+      LDB = SIZE(B,1)
+      
+      IF (INDEX('Nn',TransA) > 0) THEN
+         M = SIZE(A,1)
+         K = SIZE(A,2)
+      ELSE
+         M = SIZE(A,2)
+         K = SIZE(A,1)
+      END IF
+
+      IF (INDEX('Nn',TransB) > 0) THEN
+         N = SIZE(B,2)
+         Kb = SIZE(B,1)
+      ELSE
+         N = SIZE(B,1)
+         Kb = SIZE(B,2)
+      END IF
+
+      ErrStat = ErrID_None
+      ErrMsg  = ""
+
+      
+      IF ( K /= Kb ) THEN
+         ErrStat = ErrID_Fatal
+         ErrMsg = Routinename//":Size of Matrix A is incompatible with size of Matrix B."
+         RETURN
+      END IF
+      
+      IF ( M /= SIZE(C,1) .OR. N /= SIZE(C,2) ) THEN
+         ErrStat = ErrID_Fatal
+         ErrMsg = Routinename//":Size of Matrix C is incompatible with Matrix A and Matrix B."
+         RETURN
+      END IF
+      
+      CALL dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, M)
+
+
+   RETURN
+   END SUBROUTINE LAPACK_DGEMM
+!=======================================================================
+   SUBROUTINE LAPACK_SGEMM( TRANSA, TRANSB, ALPHA, A, B, BETA, C, ErrStat, ErrMsg )
+   ! computes C = alpha*op( A )*op( B ) + beta*C where op(x) = x or op(x) = x**T for matrices A, B, and C
+
+         ! passed parameters
+
+      CHARACTER(1),    intent(in   ) :: TRANSA            ! On entry, TRANSA specifies the form of op( A ) to be used in the matrix multiplication as follows:
+                                                          !     TRANSA = 'N' or 'n', op( A ) = A.
+                                                          !     TRANSA = 'T' or 't', op( A ) = A**T.
+      CHARACTER(1),    intent(in   ) :: TRANSB            ! On entry, TRANSB specifies the form of op( A ) to be used in the matrix multiplication as follows:
+                                                          !     TRANSB = 'N' or 'n', op( B ) = B.
+                                                          !     TRANSB = 'T' or 't', op( B ) = B**T.
+
+      REAL(SiKi)      ,intent(in   ) :: ALPHA             ! On entry, ALPHA specifies the scalar alpha.
+      REAL(SiKi)      ,intent(in   ) :: BETA              ! On entry, BETA specifies the scalar beta. When BETA is supplied as zero then C need not be set on input.
+      REAL(SiKi)      ,intent(in   ) :: A( :, : )         ! Matrix A
+      REAL(SiKi)      ,intent(in   ) :: B( :, : )         ! Matrix B
+      REAL(SiKi)      ,intent(inout) :: C( :, : )         ! Matrix C: Before entry, C must contain the matrix C, except when beta is zero, in which case C need not
+                                                          ! be set on entry. On exit, the array C is overwritten by the m by n matrix ( alpha*op( A )*op( B ) + beta*C ).
+
+      INTEGER(IntKi),  intent(  out) :: ErrStat           ! Error level
+      CHARACTER(*),    intent(  out) :: ErrMsg            ! Message describing error
+                                                          
+         ! local variables                                                                   
+                                                                                                                                                                                                                  
+      INTEGER                        :: M                 ! M specifies the number of rows of the matrix op(A)
+      INTEGER                        :: K                 ! K specifies the number of columns of the matrix op(A)
+      INTEGER                        :: N                 ! N specifies the number of columns of the matrix op(B)
+      INTEGER                        :: KB                ! KB specifies the number of rows of the matrix op(B)
+                
+      INTEGER                        :: LDA               ! LDA specifies the first dimension of A as declared in the calling (sub) program. When TRANSA = 'N' or 'n' then
+                                                          ! LDA must be at least max( 1, m ), otherwise LDA must be at least max( 1, k ).
+
+      INTEGER                        :: LDB               ! LDB specifies the first dimension of B as declared in the calling (sub) program. When TRANSB = 'N' or 'n' then
+                                                          ! LDB must be at least max( 1, k ), otherwise LDB must be at least max( 1, n ).
+                                                  
+      CHARACTER(*), PARAMETER        :: RoutineName = 'LAPACK_SGEMM'
+                                                                                                                                                                              
+      LDA = SIZE(A,1)
+      LDB = SIZE(B,1)
+      
+      IF (INDEX('Nn',TransA) > 0) THEN
+         M = SIZE(A,1)
+         K = SIZE(A,2)
+      ELSE
+         M = SIZE(A,2)
+         K = SIZE(A,1)
+      END IF
+
+      IF (INDEX('Nn',TransB) > 0) THEN
+         N = SIZE(B,2)
+         Kb = SIZE(B,1)
+      ELSE
+         N = SIZE(B,1)
+         Kb = SIZE(B,2)
+      END IF
+
+      ErrStat = ErrID_None
+      ErrMsg  = ""
+
+      
+      IF ( K /= Kb ) THEN
+         ErrStat = ErrID_Fatal
+         ErrMsg = Routinename//":Size of Matrix A is incompatible with size of Matrix B."
+         RETURN
+      END IF
+      
+      IF ( M /= SIZE(C,1) .OR. N /= SIZE(C,2) ) THEN
+         ErrStat = ErrID_Fatal
+         ErrMsg = Routinename//":Size of Matrix C is incompatible with Matrix A and Matrix B."
+         RETURN
+      END IF
+      
+      CALL sgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, M)
+
+
+   RETURN
+   END SUBROUTINE LAPACK_SGEMM   
+   !=======================================================================
    SUBROUTINE LAPACK_DGESV ( N, A, IPIV, B, ErrStat, ErrMsg )
 
 
@@ -393,11 +565,11 @@ CONTAINS
 
       IF (INFO /= 0) THEN
          ErrStat = ErrID_FATAL
-         WRITE( ErrMsg, * ) INFO
+         WRITE( ErrMsg, * ) -INFO
          IF (INFO < 0) THEN
             ErrMsg  = "LAPACK_DGETRS: illegal value in argument "//TRIM(ErrMsg)//"."
          ELSE
-            ErrMsg = 'LAPACK_DGETRS: unknown error '//TRIM(ErrMsg)//'.'
+            ErrMsg = 'LAPACK_DGETRS: unknown error -'//TRIM(ErrMsg)//'.'
          END IF
       END IF
 
@@ -441,11 +613,11 @@ CONTAINS
 
       IF (INFO /= 0) THEN
          ErrStat = ErrID_FATAL
-         WRITE( ErrMsg, * ) INFO
+         WRITE( ErrMsg, * ) -INFO
          IF (INFO < 0) THEN
             ErrMsg  = "LAPACK_DGETRS1: illegal value in argument "//TRIM(ErrMsg)//"."
          ELSE
-            ErrMsg = 'LAPACK_DGETRS1: unknown error '//TRIM(ErrMsg)//'.'
+            ErrMsg = 'LAPACK_DGETRS1: unknown error -'//TRIM(ErrMsg)//'.'
          END IF
       END IF
 
@@ -497,11 +669,11 @@ CONTAINS
 
       IF (INFO /= 0) THEN
          ErrStat = ErrID_FATAL
-         WRITE( ErrMsg, * ) INFO
+         WRITE( ErrMsg, * ) -INFO
          IF (INFO < 0) THEN
             ErrMsg  = "LAPACK_SGETRS: illegal value in argument "//TRIM(ErrMsg)//"."
          ELSE
-            ErrMsg = 'LAPACK_SGETRS: unknown error '//TRIM(ErrMsg)//'.'
+            ErrMsg = 'LAPACK_SGETRS: unknown error -'//TRIM(ErrMsg)//'.'
          END IF
       END IF
 
@@ -541,6 +713,7 @@ CONTAINS
       ErrStat = ErrID_None
       ErrMsg  = ""
 
+      
       !IF (ReKi == C_FLOAT) THEN
          CALL SGETRS( TRANS, N, NRHS, A, LDA, IPIV, B, LDB, INFO )
       !ELSEIF (ReKi == C_DOUBLE) THEN
@@ -553,11 +726,11 @@ CONTAINS
 
       IF (INFO /= 0) THEN
          ErrStat = ErrID_FATAL
-         WRITE( ErrMsg, * ) INFO
+         WRITE( ErrMsg, * ) -INFO
          IF (INFO < 0) THEN
             ErrMsg  = "LAPACK_SGETRS1: illegal value in argument "//TRIM(ErrMsg)//"."
          ELSE
-            ErrMsg = 'LAPACK_SGETRS1: unknown error '//TRIM(ErrMsg)//'.'
+            ErrMsg = 'LAPACK_SGETRS1: unknown error -'//TRIM(ErrMsg)//'.'
          END IF
       END IF
 
@@ -958,4 +1131,126 @@ CONTAINS
    RETURN
    END SUBROUTINE LAPACK_SPOSV
 !=======================================================================
+   SUBROUTINE LAPACK_DPPTRF (UPLO, N, AP, ErrStat, ErrMsg)
+
+   ! DPPTRF computes the Cholesky factorization of a real symmetric
+   ! positive definite matrix A stored in packed format.
+   !
+   ! The factorization has the form
+   !      A = U**T * U,  if UPLO = 'U', or
+   !      A = L  * L**T,  if UPLO = 'L',
+   ! where U is an upper triangular matrix and L is lower triangular.
+   
+
+      ! passed parameters
+
+      INTEGER,         intent(in   ) :: N                 ! The order of the matrix A.  N >= 0.
+
+      !     .. Array Arguments ..
+      REAL(R8Ki)      ,intent(inout) :: AP( : )           ! AP is REAL array, dimension (N*(N+1)/2)
+                                                          ! On entry, the upper or lower triangle of the symmetric matrix A, packed columnwise in a linear array.  The j-th column of A
+                                                          ! is stored in the array AP as follows:
+                                                          !    if UPLO = 'U', AP(i + (j-1)*j/2) = A(i,j) for 1<=i<=j;
+                                                          !    if UPLO = 'L', AP(i + (j-1)*(2n-j)/2) = A(i,j) for j<=i<=n.
+                                                          ! See below for further details.
+                                                          ! On exit, if INFO = 0, the triangular factor U or L from the Cholesky factorization A = U**T*U or A = L*L**T, in the same storage format as A.
+
+                                                          ! Further details:      
+                                                          !   The packed storage scheme is illustrated by the following example
+                                                          !   when N = 4, UPLO = 'U':
+                                                          ! 
+                                                          !   Two-dimensional storage of the symmetric matrix A:
+                                                          ! 
+                                                          !      a11 a12 a13 a14
+                                                          !          a22 a23 a24
+                                                          !              a33 a34     (aij = aji)
+                                                          !                  a44
+                                                          ! 
+                                                          !   Packed storage of the upper triangle of A:
+                                                          ! 
+                                                          !   AP = [ a11, a12, a22, a13, a23, a33, a14, a24, a34, a44 ]
+                                                                                                                    
+                                                          
+      INTEGER(IntKi),  intent(  out) :: ErrStat           ! Error level
+      CHARACTER(*),    intent(  out) :: ErrMsg            ! Message describing error
+      CHARACTER(1),    intent(in   ) :: UPLO              ! 'U':  Upper triangle of A is stored; 'L':  Lower triangle of A is stored.
+      
+      
+
+         ! local variables
+      INTEGER                        :: INFO              ! = 0:  successful exit; < 0:  if INFO = -i, the i-th argument had an illegal value; 
+                                                          ! > 0:  if INFO = i, the leading minor of order i is not positive definite, and the factorization could not be completed.
+
+                                                          
+      ErrStat = ErrID_None
+      ErrMsg  = ""
+
+      CALL DPPTRF (UPLO, N, AP, INFO)
+
+      IF (INFO /= 0) THEN
+         ErrStat = ErrID_FATAL
+         WRITE( ErrMsg, * ) INFO
+         IF (INFO < 0) THEN
+            ErrMsg  = "LAPACK_DPPTRF: illegal value in argument "//TRIM(ErrMsg)//"."
+         ELSE
+            ErrMsg = 'LAPACK_DPPTRF: Leading minor order '//TRIM(ErrMsg)//' of A is not positive definite, so Cholesky factorization could not be completed.'
+         END IF
+      END IF
+
+
+   RETURN
+   END SUBROUTINE LAPACK_DPPTRF   
+!=======================================================================
+   SUBROUTINE LAPACK_SPPTRF (UPLO, N, AP, ErrStat, ErrMsg)
+
+   ! SPPTRF computes the Cholesky factorization of a real symmetric
+   ! positive definite matrix A stored in packed format.
+   !
+   ! The factorization has the form
+   !      A = U**T * U,  if UPLO = 'U', or
+   !      A = L  * L**T,  if UPLO = 'L',
+   ! where U is an upper triangular matrix and L is lower triangular.
+   
+
+      ! passed parameters
+
+      INTEGER,         intent(in   ) :: N                 ! The order of the matrix A.  N >= 0.
+
+      !     .. Array Arguments ..
+      REAL(SiKi)      ,intent(inout) :: AP( : )           ! AP is REAL array, dimension (N*(N+1)/2)
+                                                          ! On entry, the upper or lower triangle of the symmetric matrix A, packed columnwise in a linear array.  The j-th column of A
+                                                          ! is stored in the array AP as follows:
+                                                          !    if UPLO = 'U', AP(i + (j-1)*j/2) = A(i,j) for 1<=i<=j;
+                                                          !    if UPLO = 'L', AP(i + (j-1)*(2n-j)/2) = A(i,j) for j<=i<=n.
+                                                          ! See LAPACK_DPPTRF for further details.
+                                                          ! On exit, if INFO = 0, the triangular factor U or L from the Cholesky factorization A = U**T*U or A = L*L**T, in the same storage format as A.
+
+      INTEGER(IntKi),  intent(  out) :: ErrStat           ! Error level
+      CHARACTER(*),    intent(  out) :: ErrMsg            ! Message describing error
+      CHARACTER(1),    intent(in   ) :: UPLO              ! 'U':  Upper triangle of A is stored; 'L':  Lower triangle of A is stored.
+
+         ! local variables
+      INTEGER                        :: INFO              ! = 0:  successful exit; < 0:  if INFO = -i, the i-th argument had an illegal value; 
+                                                          ! > 0:  if INFO = i, the leading minor of order i is not positive definite, and the factorization could not be completed
+
+
+      ErrStat = ErrID_None
+      ErrMsg  = ""
+
+      CALL SPPTRF (UPLO, N, AP, INFO)
+
+      IF (INFO /= 0) THEN
+         ErrStat = ErrID_FATAL
+         WRITE( ErrMsg, * ) INFO
+         IF (INFO < 0) THEN
+            ErrMsg  = "LAPACK_SPPTRF: illegal value in argument "//TRIM(ErrMsg)//"."
+         ELSE
+            ErrMsg = 'LAPACK_SPPTRF: Leading minor order '//TRIM(ErrMsg)//' of A is not positive definite, so Cholesky factorization could not be completed.'
+         END IF
+      END IF
+
+
+   RETURN
+   END SUBROUTINE LAPACK_SPPTRF   
+   !=======================================================================
 END MODULE NWTC_LAPACK

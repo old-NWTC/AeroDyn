@@ -46,8 +46,6 @@ IMPLICIT NONE
     REAL(ReKi)  :: RotSpeed      ! Rotor Speed [rad/s]
     REAL(ReKi)  :: Pitch      ! Pitch angle [rad]
     REAL(ReKi)  :: Yaw      ! Yaw angle [rad]
-    REAL(ReKi)  :: Tilt      ! Tilt angle [rad]
-    REAL(ReKi)  :: Precone      ! Precone angle (all blades) [rad]
     REAL(ReKi)  :: AzAng0      ! Initial azimuth angle [rad]
     REAL(DbKi)  :: dT      ! time increment [s]
     REAL(DbKi)  :: Tmax      ! length of this simulation [s]
@@ -61,8 +59,8 @@ IMPLICIT NONE
     character(20)  :: outFmt      ! Format specifier [-]
     character(1024)  :: Root      ! Output file rootname [-]
     character(1024)  :: runTitle      ! Description string from input file [-]
-    character(1024) , DIMENSION(:), ALLOCATABLE  :: WriteOutputHdr      ! Channel headers [-]
-    character(1024) , DIMENSION(:), ALLOCATABLE  :: WriteOutputUnt      ! Channel units [-]
+    character(ChanLen) , DIMENSION(:), ALLOCATABLE  :: WriteOutputHdr      ! Channel headers [-]
+    character(ChanLen) , DIMENSION(:), ALLOCATABLE  :: WriteOutputUnt      ! Channel units [-]
   END TYPE Dvr_OutputFile
 ! =======================
 ! =========  AeroDyn_Data  =======
@@ -80,16 +78,17 @@ IMPLICIT NONE
 ! =========  Dvr_SimData  =======
   TYPE, PUBLIC :: Dvr_SimData
     character(1024)  :: AD_InputFile      ! Name of AeroDyn input file [-]
-    INTEGER(IntKi)  :: numBlade      ! number of blades on turbine [-]
+    INTEGER(IntKi)  :: numBlades      ! number of blades on turbine [-]
     REAL(ReKi)  :: hubRad      ! Hub radius [m]
     REAL(ReKi)  :: hubHt      ! Hub height [m]
+    REAL(ReKi)  :: overhang      ! overhang [m]
+    REAL(ReKi)  :: ShftTilt      ! Shaft tilt angle [rad]
+    REAL(ReKi)  :: Precone      ! Precone angle (all blades) [rad]
     INTEGER(IntKi)  :: NumCases      ! number of time-marching cases to run [-]
     LOGICAL  :: InputTSR      ! whether TSR (true) or WndSpeed (false) was entered in table; other will be calculated [-]
     TYPE(Dvr_Case) , DIMENSION(:), ALLOCATABLE  :: Cases      ! table of cases to run [-]
     TYPE(Dvr_OutputFile)  :: OutFileData      ! data for driver output file [-]
     REAL(ReKi)  :: rotorRad      ! unconed Rotor radius [m]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Twist      ! Twist [rad]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: rLoc      ! local r [m]
   END TYPE Dvr_SimData
 ! =======================
 CONTAINS
@@ -102,7 +101,6 @@ CONTAINS
 ! Local 
    INTEGER(IntKi)                 :: i,j,k
    INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
-   INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
    INTEGER(IntKi)                 :: ErrStat2
    CHARACTER(ErrMsgLen)           :: ErrMsg2
    CHARACTER(*), PARAMETER        :: RoutineName = 'AD_Dvr_CopyDvr_Case'
@@ -115,8 +113,6 @@ CONTAINS
     DstDvr_CaseData%RotSpeed = SrcDvr_CaseData%RotSpeed
     DstDvr_CaseData%Pitch = SrcDvr_CaseData%Pitch
     DstDvr_CaseData%Yaw = SrcDvr_CaseData%Yaw
-    DstDvr_CaseData%Tilt = SrcDvr_CaseData%Tilt
-    DstDvr_CaseData%Precone = SrcDvr_CaseData%Precone
     DstDvr_CaseData%AzAng0 = SrcDvr_CaseData%AzAng0
     DstDvr_CaseData%dT = SrcDvr_CaseData%dT
     DstDvr_CaseData%Tmax = SrcDvr_CaseData%Tmax
@@ -174,8 +170,6 @@ CONTAINS
       Re_BufSz   = Re_BufSz   + 1  ! RotSpeed
       Re_BufSz   = Re_BufSz   + 1  ! Pitch
       Re_BufSz   = Re_BufSz   + 1  ! Yaw
-      Re_BufSz   = Re_BufSz   + 1  ! Tilt
-      Re_BufSz   = Re_BufSz   + 1  ! Precone
       Re_BufSz   = Re_BufSz   + 1  ! AzAng0
       Db_BufSz   = Db_BufSz   + 1  ! dT
       Db_BufSz   = Db_BufSz   + 1  ! Tmax
@@ -218,10 +212,6 @@ CONTAINS
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%Yaw
       Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%Tilt
-      Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%Precone
-      Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%AzAng0
       Re_Xferred   = Re_Xferred   + 1
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%dT
@@ -250,7 +240,6 @@ CONTAINS
   LOGICAL, ALLOCATABLE           :: mask4(:,:,:,:)
   LOGICAL, ALLOCATABLE           :: mask5(:,:,:,:,:)
   INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
-  INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
   INTEGER(IntKi)                 :: ErrStat2
   CHARACTER(ErrMsgLen)           :: ErrMsg2
   CHARACTER(*), PARAMETER        :: RoutineName = 'AD_Dvr_UnPackDvr_Case'
@@ -275,10 +264,6 @@ CONTAINS
       OutData%Pitch = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%Yaw = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
-      OutData%Tilt = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
-      OutData%Precone = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%AzAng0 = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
@@ -1466,7 +1451,6 @@ ENDDO
 ! Local 
    INTEGER(IntKi)                 :: i,j,k
    INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
-   INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
    INTEGER(IntKi)                 :: ErrStat2
    CHARACTER(ErrMsgLen)           :: ErrMsg2
    CHARACTER(*), PARAMETER        :: RoutineName = 'AD_Dvr_CopyDvr_SimData'
@@ -1474,9 +1458,12 @@ ENDDO
    ErrStat = ErrID_None
    ErrMsg  = ""
     DstDvr_SimDataData%AD_InputFile = SrcDvr_SimDataData%AD_InputFile
-    DstDvr_SimDataData%numBlade = SrcDvr_SimDataData%numBlade
+    DstDvr_SimDataData%numBlades = SrcDvr_SimDataData%numBlades
     DstDvr_SimDataData%hubRad = SrcDvr_SimDataData%hubRad
     DstDvr_SimDataData%hubHt = SrcDvr_SimDataData%hubHt
+    DstDvr_SimDataData%overhang = SrcDvr_SimDataData%overhang
+    DstDvr_SimDataData%ShftTilt = SrcDvr_SimDataData%ShftTilt
+    DstDvr_SimDataData%Precone = SrcDvr_SimDataData%Precone
     DstDvr_SimDataData%NumCases = SrcDvr_SimDataData%NumCases
     DstDvr_SimDataData%InputTSR = SrcDvr_SimDataData%InputTSR
 IF (ALLOCATED(SrcDvr_SimDataData%Cases)) THEN
@@ -1499,34 +1486,6 @@ ENDIF
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
     DstDvr_SimDataData%rotorRad = SrcDvr_SimDataData%rotorRad
-IF (ALLOCATED(SrcDvr_SimDataData%Twist)) THEN
-  i1_l = LBOUND(SrcDvr_SimDataData%Twist,1)
-  i1_u = UBOUND(SrcDvr_SimDataData%Twist,1)
-  i2_l = LBOUND(SrcDvr_SimDataData%Twist,2)
-  i2_u = UBOUND(SrcDvr_SimDataData%Twist,2)
-  IF (.NOT. ALLOCATED(DstDvr_SimDataData%Twist)) THEN 
-    ALLOCATE(DstDvr_SimDataData%Twist(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDvr_SimDataData%Twist.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DstDvr_SimDataData%Twist = SrcDvr_SimDataData%Twist
-ENDIF
-IF (ALLOCATED(SrcDvr_SimDataData%rLoc)) THEN
-  i1_l = LBOUND(SrcDvr_SimDataData%rLoc,1)
-  i1_u = UBOUND(SrcDvr_SimDataData%rLoc,1)
-  i2_l = LBOUND(SrcDvr_SimDataData%rLoc,2)
-  i2_u = UBOUND(SrcDvr_SimDataData%rLoc,2)
-  IF (.NOT. ALLOCATED(DstDvr_SimDataData%rLoc)) THEN 
-    ALLOCATE(DstDvr_SimDataData%rLoc(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstDvr_SimDataData%rLoc.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DstDvr_SimDataData%rLoc = SrcDvr_SimDataData%rLoc
-ENDIF
  END SUBROUTINE AD_Dvr_CopyDvr_SimData
 
  SUBROUTINE AD_Dvr_DestroyDvr_SimData( Dvr_SimDataData, ErrStat, ErrMsg )
@@ -1545,12 +1504,6 @@ ENDDO
   DEALLOCATE(Dvr_SimDataData%Cases)
 ENDIF
   CALL AD_Dvr_Destroydvr_outputfile( Dvr_SimDataData%OutFileData, ErrStat, ErrMsg )
-IF (ALLOCATED(Dvr_SimDataData%Twist)) THEN
-  DEALLOCATE(Dvr_SimDataData%Twist)
-ENDIF
-IF (ALLOCATED(Dvr_SimDataData%rLoc)) THEN
-  DEALLOCATE(Dvr_SimDataData%rLoc)
-ENDIF
  END SUBROUTINE AD_Dvr_DestroyDvr_SimData
 
  SUBROUTINE AD_Dvr_PackDvr_SimData( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
@@ -1589,9 +1542,12 @@ ENDIF
   Db_BufSz  = 0
   Int_BufSz  = 0
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%AD_InputFile)  ! AD_InputFile
-      Int_BufSz  = Int_BufSz  + 1  ! numBlade
+      Int_BufSz  = Int_BufSz  + 1  ! numBlades
       Re_BufSz   = Re_BufSz   + 1  ! hubRad
       Re_BufSz   = Re_BufSz   + 1  ! hubHt
+      Re_BufSz   = Re_BufSz   + 1  ! overhang
+      Re_BufSz   = Re_BufSz   + 1  ! ShftTilt
+      Re_BufSz   = Re_BufSz   + 1  ! Precone
       Int_BufSz  = Int_BufSz  + 1  ! NumCases
       Int_BufSz  = Int_BufSz  + 1  ! InputTSR
   Int_BufSz   = Int_BufSz   + 1     ! Cases allocated yes/no
@@ -1636,16 +1592,6 @@ ENDIF
          DEALLOCATE(Int_Buf)
       END IF
       Re_BufSz   = Re_BufSz   + 1  ! rotorRad
-  Int_BufSz   = Int_BufSz   + 1     ! Twist allocated yes/no
-  IF ( ALLOCATED(InData%Twist) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! Twist upper/lower bounds for each dimension
-      Re_BufSz   = Re_BufSz   + SIZE(InData%Twist)  ! Twist
-  END IF
-  Int_BufSz   = Int_BufSz   + 1     ! rLoc allocated yes/no
-  IF ( ALLOCATED(InData%rLoc) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! rLoc upper/lower bounds for each dimension
-      Re_BufSz   = Re_BufSz   + SIZE(InData%rLoc)  ! rLoc
-  END IF
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -1677,11 +1623,17 @@ ENDIF
           IntKiBuf(Int_Xferred) = ICHAR(InData%AD_InputFile(I:I), IntKi)
           Int_Xferred = Int_Xferred   + 1
         END DO ! I
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%numBlade
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%numBlades
       Int_Xferred   = Int_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%hubRad
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%hubHt
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%overhang
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%ShftTilt
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%Precone
       Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumCases
       Int_Xferred   = Int_Xferred   + 1
@@ -1758,38 +1710,6 @@ ENDIF
       ENDIF
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%rotorRad
       Re_Xferred   = Re_Xferred   + 1
-  IF ( .NOT. ALLOCATED(InData%Twist) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Twist,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Twist,1)
-    Int_Xferred = Int_Xferred + 2
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Twist,2)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Twist,2)
-    Int_Xferred = Int_Xferred + 2
-
-      IF (SIZE(InData%Twist)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Twist))-1 ) = PACK(InData%Twist,.TRUE.)
-      Re_Xferred   = Re_Xferred   + SIZE(InData%Twist)
-  END IF
-  IF ( .NOT. ALLOCATED(InData%rLoc) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%rLoc,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%rLoc,1)
-    Int_Xferred = Int_Xferred + 2
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%rLoc,2)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%rLoc,2)
-    Int_Xferred = Int_Xferred + 2
-
-      IF (SIZE(InData%rLoc)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%rLoc))-1 ) = PACK(InData%rLoc,.TRUE.)
-      Re_Xferred   = Re_Xferred   + SIZE(InData%rLoc)
-  END IF
  END SUBROUTINE AD_Dvr_PackDvr_SimData
 
  SUBROUTINE AD_Dvr_UnPackDvr_SimData( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -1812,7 +1732,6 @@ ENDIF
   LOGICAL, ALLOCATABLE           :: mask4(:,:,:,:)
   LOGICAL, ALLOCATABLE           :: mask5(:,:,:,:,:)
   INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
-  INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
   INTEGER(IntKi)                 :: ErrStat2
   CHARACTER(ErrMsgLen)           :: ErrMsg2
   CHARACTER(*), PARAMETER        :: RoutineName = 'AD_Dvr_UnPackDvr_SimData'
@@ -1830,11 +1749,17 @@ ENDIF
         OutData%AD_InputFile(I:I) = CHAR(IntKiBuf(Int_Xferred))
         Int_Xferred = Int_Xferred   + 1
       END DO ! I
-      OutData%numBlade = IntKiBuf( Int_Xferred ) 
+      OutData%numBlades = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%hubRad = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%hubHt = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%overhang = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%ShftTilt = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%Precone = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%NumCases = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
@@ -1938,58 +1863,6 @@ ENDIF
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
       OutData%rotorRad = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Twist not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    i2_l = IntKiBuf( Int_Xferred    )
-    i2_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%Twist)) DEALLOCATE(OutData%Twist)
-    ALLOCATE(OutData%Twist(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%Twist.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%Twist)>0) OutData%Twist = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Twist))-1 ), mask2, 0.0_ReKi )
-      Re_Xferred   = Re_Xferred   + SIZE(OutData%Twist)
-    DEALLOCATE(mask2)
-  END IF
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! rLoc not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    i2_l = IntKiBuf( Int_Xferred    )
-    i2_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%rLoc)) DEALLOCATE(OutData%rLoc)
-    ALLOCATE(OutData%rLoc(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%rLoc.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%rLoc)>0) OutData%rLoc = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%rLoc))-1 ), mask2, 0.0_ReKi )
-      Re_Xferred   = Re_Xferred   + SIZE(OutData%rLoc)
-    DEALLOCATE(mask2)
-  END IF
  END SUBROUTINE AD_Dvr_UnPackDvr_SimData
 
 END MODULE AeroDyn_Driver_Types

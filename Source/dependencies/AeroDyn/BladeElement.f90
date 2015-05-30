@@ -6,6 +6,11 @@ module BladeElement
    
    implicit none
    
+    integer(IntKi), public, parameter  :: SkewMod_Uncoupled  = 1      ! Uncoupled (no correction) [-]
+    integer(IntKi), public, parameter  :: SkewMod_PittPeters = 2      ! Pitt/Peters [-]
+    integer(IntKi), public, parameter  :: SkewMod_Coupled    = 3      ! Coupled [-]
+   
+   
    public :: BE_CalcCxCyCoefs
    public :: BE_CalcOutputs
    
