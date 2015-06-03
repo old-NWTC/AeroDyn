@@ -59,7 +59,7 @@ function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu,
    ! Local variables
    
    
-   real(ReKi)                            :: fzero, phi, AOA, Re, Cl, Cd, Cx, Cy,  chi
+   real(ReKi)                            :: fzero, phi, AOA, Re, Cl, Cd, Cx, Cy, Cm, chi
    integer                               :: I
    
    ErrStat = ErrID_None
@@ -70,7 +70,7 @@ function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu,
    BEMTC_ElementalErrFn = BEMTC_Elemental(axInduction, tanInduction, psi, chi0,  airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
                               Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
-                              phi, AOA, Re, Cl, Cd, Cx, Cy, chi, ErrStat, ErrMsg)
+                              phi, AOA, Re, Cl, Cd, Cx, Cy, Cm, chi, ErrStat, ErrMsg)
       
    
    
@@ -80,7 +80,7 @@ end function BEMTC_ElementalErrFn
 function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
                               Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
-                              phi, AOA, Re, Cl, Cd, Cx, Cy,  chi, ErrStat, ErrMsg)
+                              phi, AOA, Re, Cl, Cd, Cx, Cy, Cm, chi, ErrStat, ErrMsg)
       
    !real(ReKi),             intent(in   ) :: phi
    real(ReKi),             intent(in   ) :: axInduction
@@ -110,7 +110,7 @@ function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, num
    type(UA_ParameterType),       intent(in   ) :: p_UA           ! Parameters
    type(UA_DiscreteStateType),   intent(in   ) :: xd_UA          ! Discrete states at Time
    type(UA_OtherStateType),      intent(in   ) :: OtherState_UA  ! Other/optimization states
-   real(ReKi),             intent(  out) :: phi, AOA, Re, Cl, Cd, Cx, Cy,  chi
+   real(ReKi),             intent(  out) :: phi, AOA, Re, Cl, Cd, Cx, Cy, Cm, chi
    integer(IntKi),         intent(  out) :: ErrStat       ! Error status of the operation
    character(*),           intent(  out) :: ErrMsg        ! Error message if ErrStat /= ErrID_None
   
@@ -131,15 +131,15 @@ function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, num
       W = BEMTC_Wind(axInduction, tanInduction, Vx, Vy, chord, theta, airDens, mu, chi0, psi, phi, AOA, Re, chi)
       
          ! Look up Cl and Cd based on AOA and Re and Airfoil information  
-      call  BE_CalcOutputs( AFInfo, UA_Flag, AOA*R2D, W, log(Re), p_UA, xd_UA, OtherState_UA, Cl, Cd,  errStat, errMsg)  
+      call  BE_CalcOutputs( AFInfo, UA_Flag, AOA*R2D, W, log(Re), p_UA, xd_UA, OtherState_UA, Cl, Cd, Cm,  errStat, errMsg)  
       !call  BE_CalcOutputs( AFInfo, AOA*R2D, log(Re), Cl, Cd, errStat, errMsg) ! AOA is in degrees in this look up table and Re is in log(Re)
       if (errStat >= AbortErrLev) then
          call SetErrStat( errStat, errMsg, errStat, errMsg, 'BEMTC_Elemental' ) 
          return
       end if   
       
-         ! Determine Cx, Cy from Cl, Cd and phi
-      call BE_CalcCxCyCoefs(phi, useAIDrag, useTIDrag, Cl, Cd, Cx, Cy)
+         ! Determine Cx, Cy from Cl, Cd and phi  
+      call BE_CalcCxCyCoefs(phi, useAIDrag, useTIDrag, Cl, Cd, Cx, Cy) ! Note: Cn is not the same as Cx for cases where theta is non-zero. 
           
          ! The coupled method requires the local total wind normalized with the total local freestream velocity
       Wnorm = W / Vinf
