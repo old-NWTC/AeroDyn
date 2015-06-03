@@ -1,7 +1,6 @@
 AeroDyn\AeroDyn.f90
 AeroDyn\AeroDyn_Types.f90
 AeroDyn\AeroDyn_Registry.txt
-AeroDyn\BladeElement.f90
 
 AirfoilInfo\AirfoilInfo.f90
 AirfoilInfo\AirfoilInfo_Registry.txt
@@ -12,6 +11,7 @@ BEMT\BEMT_Registry.txt
 BEMT\BEMT_Types.f90
 BEMT\BEMTCoupled.f90
 BEMT\BEMTUncoupled.f90
+BEMT\BladeElement.f90
 BEMT\Brent.f90
 BEMT\fmin_fcn.f90
 BEMT\mod_root1dim.f90

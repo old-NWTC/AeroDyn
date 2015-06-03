@@ -35,8 +35,17 @@
 			<FileConfiguration Name="Release|Win32">
 				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat AeroDyn" Description="Running Registry for AeroDyn" Outputs="..\..\..\Source\dependencies\AeroDyn\AeroDyn_Types.f90"/></FileConfiguration></File>
 		<File RelativePath="..\..\..\Source\dependencies\AeroDyn\AeroDyn_Types.f90"/></Filter>
-		<File RelativePath="..\..\..\Source\dependencies\AeroDyn\AeroDyn.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\AeroDyn\BladeElement.f90"/></Filter>
+		<File RelativePath="..\..\..\Source\dependencies\AeroDyn\AeroDyn.f90"/></Filter>
+		<Filter Name="AeroDyn_Driver">
+		<Filter Name="RegistryFiles">
+		<File RelativePath="..\..\..\Source\AeroDyn_Driver_Registry.txt">
+			<FileConfiguration Name="Debug|Win32">
+				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat AeroDyn_Driver" Description="Running Registry for AeroDyn Driver" Outputs="..\..\..\Source\AeroDyn_Driver_Types.f90"/></FileConfiguration>
+			<FileConfiguration Name="Release|Win32">
+				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat AeroDyn_Driver" Description="Running Registry for AeroDyn Driver" Outputs="..\..\..\Source\AeroDyn_Driver_Types.f90"/></FileConfiguration></File>
+		<File RelativePath="..\..\..\Source\AeroDyn_Driver_Types.f90"/></Filter>
+		<File RelativePath="..\..\..\Source\AeroDyn_Driver.f90"/>
+		<File RelativePath="..\..\..\Source\AeroDyn_Driver_Subs.f90"/></Filter>
 		<Filter Name="AirFoil_Info">
 		<Filter Name="RegistryFiles">
 		<File RelativePath="..\..\..\Source\dependencies\Airfoil_Info\AirfoilInfo_Registry.txt">
@@ -57,6 +66,7 @@
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\BEMT.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\BEMTCoupled.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\BEMTUncoupled.f90"/>
+		<File RelativePath="..\..\..\Source\dependencies\BEMT\BladeElement.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\Brent.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\fmin_fcn.f90"/>
 		<File RelativePath="..\..\..\Source\dependencies\BEMT\mod_root1dim.f90"/></Filter>
@@ -90,15 +100,5 @@
 			<FileConfiguration Name="Release|Win32">
 				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat UnsteadyAero" Description="Running Registry for UnsteadyAero" Outputs="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></FileConfiguration></File>
 		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Types.f90"/></Filter>
-		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero.f90"/></Filter>
-		<Filter Name="AeroDyn_Driver">
-		<Filter Name="RegistryFiles">
-		<File RelativePath="..\..\..\Source\AeroDyn_Driver_Registry.txt">
-			<FileConfiguration Name="Debug|Win32">
-				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat AeroDyn_Driver" Description="Running Registry for AeroDyn Driver" Outputs="..\..\..\Source\AeroDyn_Driver_Types.f90"/></FileConfiguration>
-			<FileConfiguration Name="Release|Win32">
-				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat AeroDyn_Driver" Description="Running Registry for AeroDyn Driver" Outputs="..\..\..\Source\AeroDyn_Driver_Types.f90"/></FileConfiguration></File>
-		<File RelativePath="..\..\..\Source\AeroDyn_Driver_Types.f90"/></Filter>
-		<File RelativePath="..\..\..\Source\AeroDyn_Driver.f90"/>
-		<File RelativePath="..\..\..\Source\AeroDyn_Driver_Subs.f90"/></Filter></Filter></Files>
+		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero.f90"/></Filter></Filter></Files>
 	<Globals/></VisualStudioProject>
