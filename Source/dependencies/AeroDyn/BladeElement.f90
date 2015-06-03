@@ -45,7 +45,7 @@ module BladeElement
        end if
    end subroutine BE_CalcCxCyCoefs
    
-   subroutine BE_CalcOutputs(AFInfo, UA_Flag, AOA, W, Re, p_UA, xd_UA, OtherState_UA, Cl, Cd,  ErrStat, ErrMsg)     
+   subroutine BE_CalcOutputs(AFInfo, UA_Flag, AOA, W, Re, p_UA, xd_UA, OtherState_UA, Cl, Cd, Cm, ErrStat, ErrMsg)     
 
       type(AFInfoType),             intent(in   ) :: AFInfo
       logical   ,                   intent(in   ) :: UA_Flag
@@ -57,6 +57,7 @@ module BladeElement
       type(UA_OtherStateType),      intent(in   ) :: OtherState_UA  ! Other/optimization states
       real(ReKi),                   intent(  out) :: Cl
       real(ReKi),                   intent(  out) :: Cd
+      real(ReKi),                   intent(  out) :: Cm
       integer(IntKi),               intent(  out) :: ErrStat     ! Error status of the operation
       character(*),                 intent(  out) :: ErrMsg      ! Error message if ErrStat /= ErrID_None
    
@@ -78,6 +79,7 @@ module BladeElement
          call UA_CalcOutput(u_UA, p_UA, xd_UA, OtherState_UA, AFInfo, y_UA, errStat, errMsg )
          Cl         = y_UA%Cl
          Cd         = y_UA%Cd
+         Cm         = y_UA%Cm
       else
             ! NOTE: we use Table(1) because the right now we can only interpolate with AOA and not Re or other variables.  If we had multiple tables stored
             ! for changes in other variables (Re, Mach #, etc) then then we would need to interpolate across tables.
@@ -92,6 +94,7 @@ module BladeElement
    
          Cl = IntAFCoefs(1)
          Cd = IntAFCoefs(2)
+         Cm = IntAFCoefs(3)
       end if
       
    end subroutine BE_CalcOutputs
