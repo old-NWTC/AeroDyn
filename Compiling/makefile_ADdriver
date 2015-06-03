@@ -135,9 +135,9 @@ AD_SOURCES =               \
 	AeroDyn.f90
 
 DRIVER_SOURCES =           \
-	AD_Driver_Types.f90     \
-	AD_Driver_Subs.f90      \
-	AD_Driver.f90
+	AeroDyn_Driver_Types.f90     \
+	AeroDyn_Driver_Subs.f90      \
+	AeroDyn_Driver.f90
 
 
 vpath %.f90 $(NWTC_Lib_DIR) $(NETLIB_DIR) $(AFI_DIR) $(UA_DIR) $(BEMT_DIR) $(AD_DIR) $(Driver_DIR)

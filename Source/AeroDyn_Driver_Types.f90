@@ -42,11 +42,9 @@ IMPLICIT NONE
   TYPE, PUBLIC :: Dvr_Case
     REAL(ReKi)  :: WndSpeed      ! Wind Speed [m/s]
     REAL(ReKi)  :: ShearExp      ! Power Law Wind-Shear Exponent [-]
-    REAL(ReKi)  :: TSR      ! Tip-Speed Ratio [-]
     REAL(ReKi)  :: RotSpeed      ! Rotor Speed [rad/s]
     REAL(ReKi)  :: Pitch      ! Pitch angle [rad]
     REAL(ReKi)  :: Yaw      ! Yaw angle [rad]
-    REAL(ReKi)  :: AzAng0      ! Initial azimuth angle [rad]
     REAL(DbKi)  :: dT      ! time increment [s]
     REAL(DbKi)  :: Tmax      ! length of this simulation [s]
   END TYPE Dvr_Case
@@ -85,10 +83,8 @@ IMPLICIT NONE
     REAL(ReKi)  :: ShftTilt      ! Shaft tilt angle [rad]
     REAL(ReKi)  :: Precone      ! Precone angle (all blades) [rad]
     INTEGER(IntKi)  :: NumCases      ! number of time-marching cases to run [-]
-    LOGICAL  :: InputTSR      ! whether TSR (true) or WndSpeed (false) was entered in table; other will be calculated [-]
     TYPE(Dvr_Case) , DIMENSION(:), ALLOCATABLE  :: Cases      ! table of cases to run [-]
     TYPE(Dvr_OutputFile)  :: OutFileData      ! data for driver output file [-]
-    REAL(ReKi)  :: rotorRad      ! unconed Rotor radius [m]
   END TYPE Dvr_SimData
 ! =======================
 CONTAINS
@@ -109,11 +105,9 @@ CONTAINS
    ErrMsg  = ""
     DstDvr_CaseData%WndSpeed = SrcDvr_CaseData%WndSpeed
     DstDvr_CaseData%ShearExp = SrcDvr_CaseData%ShearExp
-    DstDvr_CaseData%TSR = SrcDvr_CaseData%TSR
     DstDvr_CaseData%RotSpeed = SrcDvr_CaseData%RotSpeed
     DstDvr_CaseData%Pitch = SrcDvr_CaseData%Pitch
     DstDvr_CaseData%Yaw = SrcDvr_CaseData%Yaw
-    DstDvr_CaseData%AzAng0 = SrcDvr_CaseData%AzAng0
     DstDvr_CaseData%dT = SrcDvr_CaseData%dT
     DstDvr_CaseData%Tmax = SrcDvr_CaseData%Tmax
  END SUBROUTINE AD_Dvr_CopyDvr_Case
@@ -166,11 +160,9 @@ CONTAINS
   Int_BufSz  = 0
       Re_BufSz   = Re_BufSz   + 1  ! WndSpeed
       Re_BufSz   = Re_BufSz   + 1  ! ShearExp
-      Re_BufSz   = Re_BufSz   + 1  ! TSR
       Re_BufSz   = Re_BufSz   + 1  ! RotSpeed
       Re_BufSz   = Re_BufSz   + 1  ! Pitch
       Re_BufSz   = Re_BufSz   + 1  ! Yaw
-      Re_BufSz   = Re_BufSz   + 1  ! AzAng0
       Db_BufSz   = Db_BufSz   + 1  ! dT
       Db_BufSz   = Db_BufSz   + 1  ! Tmax
   IF ( Re_BufSz  .GT. 0 ) THEN 
@@ -204,15 +196,11 @@ CONTAINS
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%ShearExp
       Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%TSR
-      Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%RotSpeed
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%Pitch
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%Yaw
-      Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%AzAng0
       Re_Xferred   = Re_Xferred   + 1
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%dT
       Db_Xferred   = Db_Xferred   + 1
@@ -257,15 +245,11 @@ CONTAINS
       Re_Xferred   = Re_Xferred + 1
       OutData%ShearExp = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
-      OutData%TSR = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
       OutData%RotSpeed = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%Pitch = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%Yaw = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
-      OutData%AzAng0 = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%dT = DbKiBuf( Db_Xferred ) 
       Db_Xferred   = Db_Xferred + 1
@@ -1465,7 +1449,6 @@ ENDDO
     DstDvr_SimDataData%ShftTilt = SrcDvr_SimDataData%ShftTilt
     DstDvr_SimDataData%Precone = SrcDvr_SimDataData%Precone
     DstDvr_SimDataData%NumCases = SrcDvr_SimDataData%NumCases
-    DstDvr_SimDataData%InputTSR = SrcDvr_SimDataData%InputTSR
 IF (ALLOCATED(SrcDvr_SimDataData%Cases)) THEN
   i1_l = LBOUND(SrcDvr_SimDataData%Cases,1)
   i1_u = UBOUND(SrcDvr_SimDataData%Cases,1)
@@ -1485,7 +1468,6 @@ ENDIF
       CALL AD_Dvr_Copydvr_outputfile( SrcDvr_SimDataData%OutFileData, DstDvr_SimDataData%OutFileData, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
-    DstDvr_SimDataData%rotorRad = SrcDvr_SimDataData%rotorRad
  END SUBROUTINE AD_Dvr_CopyDvr_SimData
 
  SUBROUTINE AD_Dvr_DestroyDvr_SimData( Dvr_SimDataData, ErrStat, ErrMsg )
@@ -1549,7 +1531,6 @@ ENDIF
       Re_BufSz   = Re_BufSz   + 1  ! ShftTilt
       Re_BufSz   = Re_BufSz   + 1  ! Precone
       Int_BufSz  = Int_BufSz  + 1  ! NumCases
-      Int_BufSz  = Int_BufSz  + 1  ! InputTSR
   Int_BufSz   = Int_BufSz   + 1     ! Cases allocated yes/no
   IF ( ALLOCATED(InData%Cases) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! Cases upper/lower bounds for each dimension
@@ -1591,7 +1572,6 @@ ENDIF
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
-      Re_BufSz   = Re_BufSz   + 1  ! rotorRad
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -1636,8 +1616,6 @@ ENDIF
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%Precone
       Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NumCases
-      Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%InputTSR , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%Cases) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -1708,8 +1686,6 @@ ENDIF
       ELSE
         IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
       ENDIF
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%rotorRad
-      Re_Xferred   = Re_Xferred   + 1
  END SUBROUTINE AD_Dvr_PackDvr_SimData
 
  SUBROUTINE AD_Dvr_UnPackDvr_SimData( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -1762,8 +1738,6 @@ ENDIF
       OutData%Precone = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%NumCases = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-      OutData%InputTSR = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Cases not allocated
     Int_Xferred = Int_Xferred + 1
@@ -1861,8 +1835,6 @@ ENDIF
       IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
       IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
-      OutData%rotorRad = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
  END SUBROUTINE AD_Dvr_UnPackDvr_SimData
 
 END MODULE AeroDyn_Driver_Types
