@@ -17,8 +17,8 @@ TRUE             Flookup             – Flag to indicate whether a lookup for f
 3                NCycles             - Number of angle-of-attack oscillations (cosine function) over the length of the simulation (-)
 720              StepsPerCycle       - Number of timesteps per cycle (-)
 1.8              Frequency           - Frequency for the airfoil oscillations (Hz)
-0 10.0              Amplitude           - Amplitude of the oscillations (deg)
-8.1 14.0              Mean                - Cycle mean (deg)
+ 10.0              Amplitude           - Amplitude of the oscillations (deg)
+ 14.0              Mean                - Cycle mean (deg)
 0                Phase               - Initial phase (num steps)
 "C5h75AM8_s809.txt"    InputsFile          - Time series data in an ASCII input file (whitespace-separated data).  First row specifies number of time values in file (rows). First column is time (sec), second column is angle-of-attack (deg)
 END of driver input file

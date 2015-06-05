@@ -49,7 +49,7 @@ module BladeElement
 
       type(AFInfoType),             intent(in   ) :: AFInfo
       logical   ,                   intent(in   ) :: UA_Flag
-      real(ReKi),                   intent(in   ) :: AOA
+      real(ReKi),                   intent(in   ) :: AOA            ! Angle of attack in radians
       real(ReKi),                   intent(in   ) :: W
       real(ReKi),                   intent(in   ) :: Re
       type(UA_ParameterType),       intent(in   ) :: p_UA           ! Parameters
@@ -72,7 +72,7 @@ module BladeElement
       ! TODO: Extend this to use the UnsteadyAero module to determine the Cl, Cd, Cm info, as needed.  We may need to be tracking whether this call is
       ! part of an UpdateStates action or a CalcOutput action, because the calculation chain differs for the two.
       if (UA_Flag) then
-         u_UA%alpha = AOA
+         u_UA%alpha = AOA   
          u_UA%Re    = Re
          u_UA%U     = W
          !bjj: this gets called element-by-element (not all at once). Are OtherState%iBladeNode and OtherState%iBlade set properly?

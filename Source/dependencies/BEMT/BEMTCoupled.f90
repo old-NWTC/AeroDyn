@@ -19,8 +19,8 @@ module BEMTCoupled
    
 ! This is the residual calculation for the coupled BEM solve
 
-function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
-                              Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu, numBlades, rlocal, rtip, chord, theta,  AFInfo, &
+                              Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, hubLossConst, tipLossConst, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
       
@@ -36,8 +36,6 @@ function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu,
    real(ReKi),             intent(in   ) :: rtip   
    real(ReKi),             intent(in   ) :: chord 
    real(ReKi),             intent(in   ) :: theta         
-   real(ReKi),             intent(in   ) :: rHub
-   real(ReKi),             intent(in   ) :: lambda
    type(AFInfoType),       intent(in   ) :: AFInfo
    real(ReKi),             intent(in   ) :: Vx
    real(ReKi),             intent(in   ) :: Vy
@@ -47,6 +45,8 @@ function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu,
    logical,                intent(in   ) :: useTIDrag
    logical,                intent(in   ) :: useHubLoss
    logical,                intent(in   ) :: useTipLoss
+   real(ReKi),             intent(in   ) :: hubLossConst
+   real(ReKi),             intent(in   ) :: tipLossConst
    integer,                intent(in   ) :: SkewWakeMod   ! Skewed wake model
    logical,                intent(in   ) :: UA_Flag
    type(UA_ParameterType),       intent(in   ) :: p_UA           ! Parameters
@@ -67,8 +67,8 @@ function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu,
     
    
       
-   BEMTC_ElementalErrFn = BEMTC_Elemental(axInduction, tanInduction, psi, chi0,  airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
-                              Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+   BEMTC_ElementalErrFn = BEMTC_Elemental(axInduction, tanInduction, psi, chi0,  airDens, mu, numBlades, rlocal, rtip, chord, theta,  AFInfo, &
+                              Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, hubLossConst, tipLossConst, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               phi, AOA, Re, Cl, Cd, Cx, Cy, Cm, chi, ErrStat, ErrMsg)
       
@@ -77,8 +77,8 @@ function BEMTC_ElementalErrFn(axInduction, tanInduction, psi, chi0, airDens, mu,
 end function BEMTC_ElementalErrFn
    
 ! This is the coupled calculation for the  BEMT solve
-function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
-                              Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, numBlades, rlocal, rtip, chord, theta,  AFInfo, &
+                              Vx, Vy, Vinf, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, hubLossConst, tipLossConst, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               phi, AOA, Re, Cl, Cd, Cx, Cy, Cm, chi, ErrStat, ErrMsg)
       
@@ -94,8 +94,6 @@ function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, num
    real(ReKi),             intent(in   ) :: rtip   
    real(ReKi),             intent(in   ) :: chord 
    real(ReKi),             intent(in   ) :: theta         
-   real(ReKi),             intent(in   ) :: rHub
-   real(ReKi),             intent(in   ) :: lambda
    type(AFInfoType),       intent(in   ) :: AFInfo
    real(ReKi),             intent(in   ) :: Vx
    real(ReKi),             intent(in   ) :: Vy
@@ -105,6 +103,8 @@ function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, num
    logical,                intent(in   ) :: useTIDrag
    logical,                intent(in   ) :: useHubLoss
    logical,                intent(in   ) :: useTipLoss
+   real(ReKi),             intent(in   ) :: hubLossConst
+   real(ReKi),             intent(in   ) :: tipLossConst
    integer,                intent(in   ) :: SkewWakeMod   ! Skewed wake model
    logical,                intent(in   ) :: UA_Flag
    type(UA_ParameterType),       intent(in   ) :: p_UA           ! Parameters
@@ -144,8 +144,8 @@ function BEMTC_Elemental( axInduction, tanInduction, psi, chi0, airDens, mu, num
          ! The coupled method requires the local total wind normalized with the total local freestream velocity
       Wnorm = W / Vinf
       
-      call BEMTC_ElementalInduction( axInduction, tanInduction, rlocal, chord, rHub, rtip, Wnorm, phi, Cx, Cy, numBlades, &
-                              Vx, Vy, chi0, psi,  useHubLoss, useTipLoss, &
+      call BEMTC_ElementalInduction( axInduction, tanInduction, rlocal, chord, rtip, Wnorm, phi, Cx, Cy, numBlades, &
+                              Vx, Vy, chi0, psi,  useHubLoss, useTipLoss, hubLossConst, tipLossConst, &
                               R1, R2)
       
       if (errStat >= AbortErrLev) then
@@ -195,8 +195,8 @@ real(ReKi) function BEMTC_Wind(a, ap, Vx, Vy, chord, theta, airDens, mu, chi0, p
 end function BEMTC_Wind                           
                            
                            
-subroutine BEMTC_ElementalInduction(a, ap, r, chord, Rhub, Rtip, Wnorm, phi, cn, ct, B, &
-                              Vx, Vy, chi0, azimuth, hubLoss, tipLoss, R1, R2)
+subroutine BEMTC_ElementalInduction(a, ap, r, chord, Rtip, Wnorm, phi, cn, ct, B, &
+                              Vx, Vy, chi0, azimuth, hubLoss, tipLoss, hubLossConst, tipLossConst, R1, R2)
 
     implicit none
 
@@ -204,11 +204,14 @@ subroutine BEMTC_ElementalInduction(a, ap, r, chord, Rhub, Rtip, Wnorm, phi, cn,
 
     ! in
     real(ReKi), intent(in   ) :: a, ap
-    real(ReKi), intent(in   ) :: r, chord, Rhub, Rtip, Wnorm, phi, cn, ct
+    real(ReKi), intent(in   ) :: r, chord, Rtip, Wnorm, phi, cn, ct
     integer   , intent(in   ) :: B
     real(ReKi), intent(in   ) :: Vx, Vy
     real(ReKi), intent(in   ) :: chi0, azimuth
     logical   , intent(in   ) :: hubLoss, tipLoss
+    real(ReKi), intent(in   ) :: hubLossConst
+    real(ReKi), intent(in   ) :: tipLossConst
+
     
     ! out
     real(ReKi), intent(  out) :: R1, R2
@@ -259,20 +262,22 @@ subroutine BEMTC_ElementalInduction(a, ap, r, chord, Rhub, Rtip, Wnorm, phi, cn,
     
 
     ! Prandtl's tip and hub loss factor
-    Ftip = 1.0_ReKi
-    if ( tipLoss ) then
-        factortip = B/2.0_ReKi*(Rtip - r)/(r*abs(sphi))
-        Ftip = 2.0_ReKi/pi*acos(exp(-factortip))
-    end if
+    
+    Ftip = 1.0
+   if ( tipLoss ) then
+      factortip = tipLossConst/abs(sphi)
+      Ftip = (2.0/pi)*acos(exp(-factortip))
+   end if
 
-    Fhub = 1.0_ReKi
-    if ( hubLoss ) then
-        factorhub = B/2.0_ReKi*(r - Rhub)/(Rhub*abs(sphi))
-        Fhub = 2.0_ReKi/pi*acos(exp(-factorhub))
-    end if
+   Fhub = 1.0
+   if ( hubLoss ) then
+      factorhub = hubLossConst/abs(sphi)
+      Fhub = (2.0/pi)*acos(exp(-factorhub))
+   end if
 
     F = Ftip * Fhub
 
+    
     ! residuals
     chi  = (0.6*a + 1)*chi0
     

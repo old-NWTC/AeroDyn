@@ -529,6 +529,10 @@ CONTAINS
 
    DO I=1,NumPts-1
       DelX (I  ) =   XAry(I+1  ) - XAry(I  )
+      IF ( EqualRealNos(DelX(I), 0.0_ReKi) ) THEN
+         CALL ExitThisRoutine ( ErrID_Fatal, RoutineName//':Cannot have a DelX value equal to zero.' )
+         RETURN
+      END IF
       Slope(I,:) = ( YAry(I+1,:) - YAry(I,:) )/DelX(I)
    END DO ! I
 

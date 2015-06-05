@@ -57,8 +57,8 @@ end Function Minimum
 !*                   : =1, no root found in interval *
 !*                   : =2, no more iterations !      *
 !*****************************************************
-real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot, niter, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta,  rHub, lambda, AFInfo, &
-                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot, niter, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta,  AFInfo, &
+                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, hubLossConst, tipLossConst, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)  
 
@@ -69,7 +69,7 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
    REAL(ReKi),             INTENT(IN   ) :: x1,x2,Tolerance
    INTEGER,                INTENT(IN   ) :: maxIndIterations
    REAL(ReKi),             INTENT(  OUT) :: valueAtRoot                 ! the actual residual at resultant
-   integer,                INTENT(  OUT) :: niter                       ! number of iterations performed
+   INTEGER,                INTENT(  OUT) :: niter                       ! number of iterations performed
    REAL(ReKi),             INTENT(IN   ) :: psi
    REAL(ReKi),             INTENT(IN   ) :: chi0
    INTEGER,                INTENT(IN   ) :: numReIterations
@@ -80,8 +80,6 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
    REAL(ReKi),             INTENT(IN   ) :: rtip
    REAL(ReKi),             INTENT(IN   ) :: chord 
    REAL(ReKi),             INTENT(IN   ) :: theta         
-   REAL(ReKi),             INTENT(IN   ) :: rHub
-   REAL(ReKi),             INTENT(IN   ) :: lambda
    TYPE(AFInfoType),       INTENT(IN   ) :: AFInfo
    REAL(ReKi),             INTENT(IN   ) :: Vx
    REAL(ReKi),             INTENT(IN   ) :: Vy
@@ -90,17 +88,19 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
    LOGICAL,                INTENT(IN   ) :: useTIDrag
    LOGICAL,                INTENT(IN   ) :: useHubLoss
    LOGICAL,                INTENT(IN   ) :: useTipLoss
+   REAL(ReKi),             INTENT(IN   ) :: hubLossConst
+   REAL(ReKi),             INTENT(IN   ) :: tipLossConst 
    INTEGER,                INTENT(IN   ) :: SkewWakeMod   ! Skewed wake model
-   logical,                intent(in   ) :: UA_Flag
-   type(UA_ParameterType),       intent(in   ) :: p_UA           ! Parameters
-   type(UA_DiscreteStateType),   intent(in   ) :: xd_UA          ! Discrete states at Time
-   type(UA_OtherStateType),      intent(in   ) :: OtherState_UA  ! Other/optimization states 
+   LOGICAL,                intent(in   ) :: UA_Flag
+   TYPE(UA_ParameterType),       INTENT(IN   ) :: p_UA           ! Parameters
+   TYPE(UA_DiscreteStateType),   INTENT(IN   ) :: xd_UA          ! Discrete states at Time
+   TYPE(UA_OtherStateType),      INTENT(IN   ) :: OtherState_UA  ! Other/optimization states 
    INTEGER(IntKi),         INTENT(  OUT) :: ErrStat       ! Error status of the operation
    CHARACTER(*),           INTENT(  OUT) :: ErrMsg        ! Error message if ErrStat /= ErrID_None
   
    
    REAL(ReKi) resultant, AA, BB, CC, DD, EE, FA, FB, FC, Tol1, PP, QQ, RR, SS, xm
-   integer i, done
+   INTEGER i, done
 
   ErrStat = ErrID_None
   ErrMsg  = ""
@@ -109,12 +109,12 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
   i = 0; done = 0;
   AA = x1
   BB = x2
-  FA = UncoupledErrFn(AA, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
-                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+  FA = UncoupledErrFn(AA, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta,  AFInfo, &
+                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, hubLossConst, tipLossConst, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
-  FB = UncoupledErrFn(BB, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
-                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+  FB = UncoupledErrFn(BB, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, AFInfo, &
+                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, hubLossConst, tipLossConst, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
   
@@ -140,8 +140,8 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
         ! A root has been found
         resultant = BB;
         done = 1
-        valueAtRoot = UncoupledErrFn(BB, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
-                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+        valueAtRoot = UncoupledErrFn(BB, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta,  AFInfo, &
+                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, hubLossConst, tipLossConst, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
       else 
@@ -187,8 +187,8 @@ real(ReKi) function BrentRoots( x1, x2, Tolerance, maxIndIterations, valueAtRoot
       !end if
       !----------------------------------------------------------
       
-        FB = UncoupledErrFn(BB, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, rHub, lambda, AFInfo, &
-                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, SkewWakeMod, &
+        FB = UncoupledErrFn(BB, psi, chi0, numReIterations, airDens, mu, numBlades, rlocal, rtip, chord, theta, AFInfo, &
+                              Vx, Vy, useTanInd, useAIDrag, useTIDrag, useHubLoss, useTipLoss, hubLossConst, tipLossConst, SkewWakeMod, &
                               UA_Flag, p_UA, xd_UA, OtherState_UA, &
                               ErrStat, ErrMsg)
         i=i+1

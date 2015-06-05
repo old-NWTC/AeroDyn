@@ -126,8 +126,6 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Vx      ! Local axial velocity at node [m/s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Vy      ! Local tangential velocity at node [m/s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Vinf      ! Local upstream velocity at node [m/s]
-    REAL(ReKi)  :: lambda      ! Average tip speed ratio for rotor disk [-]
-    REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: rTip      ! Radial distance from center-of-rotation to blade tip [m]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: rLocal      ! Radial distance from center-of-rotation to node [m]
   END TYPE BEMT_InputType
 ! =======================
@@ -2511,19 +2509,6 @@ IF (ALLOCATED(SrcInputData%Vinf)) THEN
   END IF
     DstInputData%Vinf = SrcInputData%Vinf
 ENDIF
-    DstInputData%lambda = SrcInputData%lambda
-IF (ALLOCATED(SrcInputData%rTip)) THEN
-  i1_l = LBOUND(SrcInputData%rTip,1)
-  i1_u = UBOUND(SrcInputData%rTip,1)
-  IF (.NOT. ALLOCATED(DstInputData%rTip)) THEN 
-    ALLOCATE(DstInputData%rTip(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstInputData%rTip.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DstInputData%rTip = SrcInputData%rTip
-ENDIF
 IF (ALLOCATED(SrcInputData%rLocal)) THEN
   i1_l = LBOUND(SrcInputData%rLocal,1)
   i1_u = UBOUND(SrcInputData%rLocal,1)
@@ -2563,9 +2548,6 @@ IF (ALLOCATED(InputData%Vy)) THEN
 ENDIF
 IF (ALLOCATED(InputData%Vinf)) THEN
   DEALLOCATE(InputData%Vinf)
-ENDIF
-IF (ALLOCATED(InputData%rTip)) THEN
-  DEALLOCATE(InputData%rTip)
 ENDIF
 IF (ALLOCATED(InputData%rLocal)) THEN
   DEALLOCATE(InputData%rLocal)
@@ -2633,12 +2615,6 @@ ENDIF
   IF ( ALLOCATED(InData%Vinf) ) THEN
     Int_BufSz   = Int_BufSz   + 2*2  ! Vinf upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%Vinf)  ! Vinf
-  END IF
-      Re_BufSz   = Re_BufSz   + 1  ! lambda
-  Int_BufSz   = Int_BufSz   + 1     ! rTip allocated yes/no
-  IF ( ALLOCATED(InData%rTip) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! rTip upper/lower bounds for each dimension
-      Re_BufSz   = Re_BufSz   + SIZE(InData%rTip)  ! rTip
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! rLocal allocated yes/no
   IF ( ALLOCATED(InData%rLocal) ) THEN
@@ -2752,21 +2728,6 @@ ENDIF
 
       IF (SIZE(InData%Vinf)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Vinf))-1 ) = PACK(InData%Vinf,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%Vinf)
-  END IF
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%lambda
-      Re_Xferred   = Re_Xferred   + 1
-  IF ( .NOT. ALLOCATED(InData%rTip) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%rTip,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%rTip,1)
-    Int_Xferred = Int_Xferred + 2
-
-      IF (SIZE(InData%rTip)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%rTip))-1 ) = PACK(InData%rTip,.TRUE.)
-      Re_Xferred   = Re_Xferred   + SIZE(InData%rTip)
   END IF
   IF ( .NOT. ALLOCATED(InData%rLocal) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -2950,31 +2911,6 @@ ENDIF
       IF (SIZE(OutData%Vinf)>0) OutData%Vinf = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Vinf))-1 ), mask2, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%Vinf)
     DEALLOCATE(mask2)
-  END IF
-      OutData%lambda = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! rTip not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%rTip)) DEALLOCATE(OutData%rTip)
-    ALLOCATE(OutData%rTip(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%rTip.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%rTip)>0) OutData%rTip = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%rTip))-1 ), mask1, 0.0_ReKi )
-      Re_Xferred   = Re_Xferred   + SIZE(OutData%rTip)
-    DEALLOCATE(mask1)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! rLocal not allocated
     Int_Xferred = Int_Xferred + 1
@@ -4040,16 +3976,6 @@ IF (ALLOCATED(u_out%Vinf) .AND. ALLOCATED(u1%Vinf)) THEN
   DEALLOCATE(b2)
   DEALLOCATE(c2)
 END IF ! check if allocated
-  b0 = -(u1%lambda - u2%lambda)/t(2)
-  u_out%lambda = u1%lambda + b0 * t_out
-IF (ALLOCATED(u_out%rTip) .AND. ALLOCATED(u1%rTip)) THEN
-  ALLOCATE(b1(SIZE(u_out%rTip,1)))
-  ALLOCATE(c1(SIZE(u_out%rTip,1)))
-  b1 = -(u1%rTip - u2%rTip)/t(2)
-  u_out%rTip = u1%rTip + b1 * t_out
-  DEALLOCATE(b1)
-  DEALLOCATE(c1)
-END IF ! check if allocated
 IF (ALLOCATED(u_out%rLocal) .AND. ALLOCATED(u1%rLocal)) THEN
   ALLOCATE(b2(SIZE(u_out%rLocal,1),SIZE(u_out%rLocal,2) ))
   ALLOCATE(c2(SIZE(u_out%rLocal,1),SIZE(u_out%rLocal,2) ))
@@ -4164,18 +4090,6 @@ IF (ALLOCATED(u_out%Vinf) .AND. ALLOCATED(u1%Vinf)) THEN
   u_out%Vinf = u1%Vinf + b2 * t_out + c2 * t_out**2
   DEALLOCATE(b2)
   DEALLOCATE(c2)
-END IF ! check if allocated
-  b0 = (t(3)**2*(u1%lambda - u2%lambda) + t(2)**2*(-u1%lambda + u3%lambda))/(t(2)*t(3)*(t(2) - t(3)))
-  c0 = ( (t(2)-t(3))*u1%lambda + t(3)*u2%lambda - t(2)*u3%lambda ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%lambda = u1%lambda + b0 * t_out + c0 * t_out**2
-IF (ALLOCATED(u_out%rTip) .AND. ALLOCATED(u1%rTip)) THEN
-  ALLOCATE(b1(SIZE(u_out%rTip,1)))
-  ALLOCATE(c1(SIZE(u_out%rTip,1)))
-  b1 = (t(3)**2*(u1%rTip - u2%rTip) + t(2)**2*(-u1%rTip + u3%rTip))/(t(2)*t(3)*(t(2) - t(3)))
-  c1 = ( (t(2)-t(3))*u1%rTip + t(3)*u2%rTip - t(2)*u3%rTip ) / (t(2)*t(3)*(t(2) - t(3)))
-  u_out%rTip = u1%rTip + b1 * t_out + c1 * t_out**2
-  DEALLOCATE(b1)
-  DEALLOCATE(c1)
 END IF ! check if allocated
 IF (ALLOCATED(u_out%rLocal) .AND. ALLOCATED(u1%rLocal)) THEN
   ALLOCATE(b2(SIZE(u_out%rLocal,1),SIZE(u_out%rLocal,2) ))

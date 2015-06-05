@@ -20,8 +20,6 @@ module nwtc_bemt_minpack
       real(ReKi)                 :: rtip   
       real(ReKi)                 :: chord 
       real(ReKi)                 :: theta         
-      real(ReKi)                 :: rHub
-      real(ReKi)                 :: lambda
       integer                    :: AFindx
       type(AFInfoType)           :: AFInfo
       real(ReKi)                 :: Vx
@@ -31,7 +29,9 @@ module nwtc_bemt_minpack
       logical                    :: useAIDrag
       logical                    :: useTIDrag
       logical                    :: useHubLoss
-      logical                    :: useTipLoss 
+      logical                    :: useTipLoss
+      real(ReKi)                 :: hubLossConst
+      real(ReKi)                 :: tipLossConst
       integer(IntKi)             :: SkewWakeMod
       logical                    :: UA_Flag
       type(UA_ParameterType)     :: p_UA           ! Parameters
@@ -60,8 +60,8 @@ subroutine fcn(n, x, fvec, iflag, fcnArgs)
    iflag = 0
    
    ! Call the BEMTC_ElementalErrFn subroutine to compute the residual
-   fvec = BEMTC_ElementalErrFn( x(1), x(2), fcnArgs%psi, fcnArgs%chi0, fcnArgs%airDens, fcnArgs%mu, fcnArgs%numBlades, fcnArgs%rlocal, fcnArgs%rtip, fcnArgs%chord, fcnArgs%theta, fcnArgs%rHub, fcnArgs%lambda, fcnArgs%AFInfo, &
-                              fcnArgs%Vx, fcnArgs%Vy, fcnArgs%Vinf, fcnArgs%useTanInd, fcnArgs%useAIDrag, fcnArgs%useTIDrag, fcnArgs%useHubLoss, fcnArgs%useTipLoss,  fcnArgs%SkewWakeMod, &
+   fvec = BEMTC_ElementalErrFn( x(1), x(2), fcnArgs%psi, fcnArgs%chi0, fcnArgs%airDens, fcnArgs%mu, fcnArgs%numBlades, fcnArgs%rlocal, fcnArgs%rtip, fcnArgs%chord, fcnArgs%theta,  fcnArgs%AFInfo, &
+                              fcnArgs%Vx, fcnArgs%Vy, fcnArgs%Vinf, fcnArgs%useTanInd, fcnArgs%useAIDrag, fcnArgs%useTIDrag, fcnArgs%useHubLoss, fcnArgs%useTipLoss,  fcnArgs%hubLossConst, fcnArgs%tipLossConst, fcnArgs%SkewWakeMod, &
                               fcnArgs%UA_Flag, fcnArgs%p_UA, fcnArgs%xd_UA, fcnArgs%OtherState_UA, &
                               errStat, errMsg)
    
