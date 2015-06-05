@@ -1,0 +1,27 @@
+\nomenclatureentry{$a$@[{$a$}]\begingroup axial induction factor [state]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$a^\prime$@[{$a^\prime$}]\begingroup tangential induction factor [state]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\phi$@[{$\phi$}]\begingroup local inflow angle [state, output]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$W$@[{$W$}]\begingroup inflow velocity [output]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$V$@[{$V$}]\begingroup velocity\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\alpha$@[{$\alpha$}]\begingroup angle of attack\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\theta$@[{$\theta$}]\begingroup twist angle (geometric + structural) [input]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\theta_p$@[{$\theta_p$}]\begingroup pitch angle [input]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$c$@[{$c$}]\begingroup chord [parameter]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\rho$@[{$\rho$}]\begingroup fluid density [parameter]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\mu$@[{$\mu$}]\begingroup dynamic viscosity [parameter]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$c_l$@[{$c_l$}]\begingroup lift coefficient \nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$c_d$@[{$c_d$}]\begingroup drag coefficient\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\sigma^\prime$@[{$\sigma^\prime$}]\begingroup local solidity ($B c /(2\pi r)$) [parameter]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$F$@[{$F$}]\begingroup hub/tip correction factor\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$B$@[{$B$}]\begingroup number of blades [parameter]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$r$@[{$r$}]\begingroup local radial position [input]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$R$@[{$R$}]\begingroup rotor tip radius [input]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$R_{hub}$@[{$R_{hub}$}]\begingroup rotor hub radius [parameter]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\gamma$@[{$\gamma$}]\begingroup yaw angle [input]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\psi$@[{$\psi$}]\begingroup azimuth angle [input]\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\chi$@[{$\chi$}]\begingroup wake skew angle\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\Phi$@[{$\Phi$}]\begingroup precone angle \nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\Theta$@[{$\Theta$}]\begingroup tilt angle\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$C_T$@[{$C_T$}]\begingroup local thrust coefficient\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$C_Q$@[{$C_Q$}]\begingroup local torque coefficient\nomeqref {0}|nompageref}{1}
+\nomenclatureentry{$\lambda_r$@[{$\lambda_r$}]\begingroup local tip-speed ratio\nomeqref {0}|nompageref}{1}
