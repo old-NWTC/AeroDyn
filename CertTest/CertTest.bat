@@ -1,7 +1,7 @@
 ECHO OFF
 
-SET PROG_EXE=..\bin\AeroDyn_Driver_gwin32.exe
-:: SET PROG_EXE=..\bin\AeroDyn_Driver.exe
+:: SET PROG_EXE=..\bin\AeroDyn_Driver_gwin32.exe
+SET PROG_EXE=..\bin\AeroDyn_Driver.exe
 SET COMPARE=FC
 SET OLD_RESULTS=.\Results
 @SET  POUNDS=#############################################################################################
