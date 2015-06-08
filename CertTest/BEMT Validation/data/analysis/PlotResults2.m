@@ -1,6 +1,8 @@
 function PlotResults2(plotMask, azimuth)
 
-
+AD_v15dir    = '..\AD_v15';
+ADv15_skew_root = 'skewWakeCorr';
+ADv15_noskew_root = 'noSkewWakeCorr';
 WTP_wSkew    = '..\WT_Perf\skewWakeCorr.out';
 WTP_woutSkew = '..\WT_Perf\noSkewWakeCorr.out';
 WTP_coupledSkew = '..\WT_Perf\coupledCorr.out';
@@ -40,6 +42,9 @@ psi_FAST = (0:steps_per_rev_FAST-1)*360/steps_per_rev_FAST;
 [ ~, WTPcoupled_Fx, WTPcoupled_Fy ] = Read_WTP_Results(WTP_coupledSkew);
 [ r_over_R_EXP, c_exp, EXP_Fx_mean, EXP_Fy_mean, EXP_Fx, EXP_Fy ]  = Read_Experimental_Results(UAEdir, windSpeeds, yawAngles, azimuth);
 
+[ ~, ADv15noskew_Fx  , ADv15noskew_Fy   ] = Read_ADv15_Results(ADv15_noskew_root, AD_v15dir   );
+[ ~, ADv15skew_Fx  , ADv15skew_Fy   ] = Read_ADv15_Results(ADv15_skew_root, AD_v15dir   );
+
 if (azimuth == 90 )
 [ r_over_R_cc , CoupledFx, CoupledFy  ]  = Read_Coupled90_Results();
 Read_WTP_Results(WTP_woutSkew);
@@ -58,8 +63,8 @@ if (azimuth == 90 && bitand(plotMask, 1) )
     plotWindSpeedInds = [1,2,3];
     numPlotYaw        = 1;
     plotYawInds       = [1];
-    PlotData2(1, azimuth,numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy,WTPcoupled_Fx, WTPcoupled_Fy);
-    PlotData2(2, azimuth,numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy,WTPcoupled_Fx, WTPcoupled_Fy);
+    PlotData2(1, azimuth,numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, ADv15noskew_Fx, ADv15noskew_Fy, ADv15skew_Fx, ADv15skew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy,WTPcoupled_Fx, WTPcoupled_Fy);
+    PlotData2(2, azimuth,numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, ADv15noskew_Fx, ADv15noskew_Fy, ADv15skew_Fx, ADv15skew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy,WTPcoupled_Fx, WTPcoupled_Fy);
 
 end
 
@@ -70,7 +75,7 @@ if bitand(plotMask, 2 )
     numPlotYaw        = 6;
     plotYawInds       = (1:6);
     %PlotType          = 2;
-    PlotData(2, azimuth,numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy, WTPcoupled_Fx, WTPcoupled_Fy);
+    PlotData(2, azimuth,numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, ADv15noskew_Fx, ADv15noskew_Fy, ADv15skew_Fx, ADv15skew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy, WTPcoupled_Fx, WTPcoupled_Fy);
 end
 
 if bitand(plotMask, 4)
@@ -436,7 +441,7 @@ function PlotAzimuth(plotType, iYaw, iWindSpeed, numWindSpeeds, numYaw, r_over_R
 %FAST_F2(1)
 %FAST_F((2-1)*steps_per_rev_FAST+(2-1)*numWindSpeeds*steps_per_rev_FAST+1,[4,12,20])
 end
-function PlotOneDirResults(doLegend, dir, yawAngle, azimuth, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPdata, WTPdataNoSkew, FASTdata, EXPdata, CoupledData, WTPdataCoupledSkew)
+function PlotOneDirResults(doLegend, dir, yawAngle, azimuth, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPdata, WTPdataNoSkew, ADv15data, ADv15datadataNoSkew, FASTdata, EXPdata, CoupledData, WTPdataCoupledSkew)
 
     f1 = figure; %('Position',[1 1 scrsz(3) scrsz(4)]);
     set(f1,'Color',[1,1,1]);
@@ -447,6 +452,11 @@ function PlotOneDirResults(doLegend, dir, yawAngle, azimuth, r_over_R_FAST, r_ov
     plot(r_over_R_FAST, WTPdata,'r','LineWidth',2);
     plot(r_over_R_FAST, WTPdataCoupledSkew,'g','LineWidth',2);
     plot(r_over_R_cc, CoupledData,     'm'  , 'LineWidth'      ,2);
+
+    plot(r_over_R_FAST, ADv15datadataNoSkew,'c','LineWidth',1);
+    plot(r_over_R_FAST, ADv15data,'r','LineWidth',1);
+    
+    
     plot(r_over_R_FAST, FASTdata     , 'k'  , 'LineWidth'      ,2); 
     plot(rmat , EXPdata      , 'bo' , 'MarkerFaceColor', 'b','MarkerSize',4);
 
@@ -485,7 +495,7 @@ function PlotOneDirResults(doLegend, dir, yawAngle, azimuth, r_over_R_FAST, r_ov
        % title(['Yaw = ' num2str(yawAngles(i))]);
    % set(ax,'Position',[.13 .17 .75 .8])
     if (doLegend == 1)
-        l =legend('v15 Uncoupled','v15 Pitt/Peters','v15 Coupled','ccblade','v14','UAE');
+        l =legend('v15 Uncoupled','v15 Pitt/Peters','v15 Coupled','ccblade', 'ADv15 Uncoupled', 'ADv15 Pitt/Peters', 'v14', 'UAE');
         if (dir == 1)
             set(l,'location','northwest','FontSize',16,'Fontname','Times');
         else
@@ -515,7 +525,7 @@ function PlotOneDirResults(doLegend, dir, yawAngle, azimuth, r_over_R_FAST, r_ov
 end
 
 
-function PlotData(PlotType, azimuth, numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy, WTPcoupled_Fx, WTPcoupled_Fy)
+function PlotData(PlotType, azimuth, numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, ADv15noskew_Fx, ADv15noskew_Fy, ADv15skew_Fx, ADv15skew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy, WTPcoupled_Fx, WTPcoupled_Fy)
 switch azimuth
     case 0.0
         offset = 1;
@@ -566,6 +576,8 @@ for jj=1:numPlotWindSpeeds
         WTPdata  = WTPskew_Fx(WTPstep, 1:nFASTNodes);
         WTPdataNoSkew = WTPnoskew_Fx(WTPstep, 1:nFASTNodes);
         WTPdataCoupledSkew = WTPcoupled_Fx(WTPstep, 1:nFASTNodes);
+        ADv15data  = ADv15skew_Fx(WTPstep, 1:nFASTNodes);
+        ADv15datadataNoSkew = ADv15noskew_Fx(WTPstep, 1:nFASTNodes);
         FASTstep = (j-1)*steps_per_rev_FAST+(i-1)*numWindSpeeds*steps_per_rev_FAST+offsetFAST;
         FASTdata = FAST_Fx(FASTstep,:);
         CoupledData = CoupledFx(i,:);
@@ -577,17 +589,19 @@ for jj=1:numPlotWindSpeeds
             doLegend = 0;
         end
         
-        PlotOneDirResults(doLegend, 1, yawAngles(i),azimuth, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPdata, WTPdataNoSkew, FASTdata, EXPdata, CoupledData, WTPdataCoupledSkew);
+        PlotOneDirResults(doLegend, 1, yawAngles(i),azimuth, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPdata, WTPdataNoSkew, ADv15data, ADv15datadataNoSkew, FASTdata, EXPdata, CoupledData, WTPdataCoupledSkew);
         
         
         WTPdata  = -WTPskew_Fy(WTPstep, 1:nFASTNodes);
         WTPdataNoSkew  = -WTPnoskew_Fy(WTPstep, 1:nFASTNodes);
         WTPdataCoupledSkew  = -WTPcoupled_Fy(WTPstep, 1:nFASTNodes);
+        ADv15data  = -ADv15skew_Fy(WTPstep, 1:nFASTNodes);
+        ADv15datadataNoSkew = -ADv15noskew_Fy(WTPstep, 1:nFASTNodes);
         FASTdata = FAST_Fy(FASTstep,:);
         EXPdata  = EXP_Fy{EXPstep,:};
         CoupledData = CoupledFy(i,:);
-        PlotOneDirResults(doLegend, 2, yawAngles(i),azimuth, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPdata, WTPdataNoSkew, FASTdata, EXPdata, CoupledData, WTPdataCoupledSkew);
-       
+        PlotOneDirResults(doLegend, 2, yawAngles(i),azimuth, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPdata, WTPdataNoSkew, ADv15data, ADv15datadataNoSkew, FASTdata, EXPdata, CoupledData, WTPdataCoupledSkew);
+        
                         %   FAST_Fy((2-1)*steps_per_rev_FAST+(2-1)*numWindSpeeds*steps_per_rev_FAST+1,[4,12,20])
         %plot(r_over_R,dataCCblade(:,1,numYaw*(j-1)+i)','r--','LineWidth',2); 
         %plot(r_over_R,dataCCblade(:,2,numYaw*(j-1)+i)','k--','LineWidth',2); 
@@ -604,7 +618,7 @@ end
 
 end
 
-function PlotData2(PlotType, azimuth, numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy, WTPcoupled_Fx, WTPcoupled_Fy)
+function PlotData2(PlotType, azimuth, numPlotWindSpeeds, plotWindSpeedInds, numPlotYaw, plotYawInds, nFASTNodes, numWindSpeeds, numYaw, windSpeeds, yawAngles, steps_per_rev, steps_per_rev_FAST, r_over_R_FAST, r_over_R_EXP, r_over_R_cc, WTPnoskew_Fx, WTPnoskew_Fy, WTPskew_Fx, WTPskew_Fy, ADv15noskew_Fx, ADv15noskew_Fy, ADv15skew_Fx, ADv15skew_Fy, FAST_Fx, FAST_Fy,EXP_Fx,EXP_Fy, CoupledFx, CoupledFy, WTPcoupled_Fx, WTPcoupled_Fy)
     switch azimuth
         case 0.0
             offset = 1;
@@ -659,6 +673,10 @@ function PlotData2(PlotType, azimuth, numPlotWindSpeeds, plotWindSpeedInds, numP
                 WTPdata  = WTPskew_Fx(WTPstep, 1:nFASTNodes);
                 WTPdataNoSkew = WTPnoskew_Fx(WTPstep, 1:nFASTNodes);
                 WTPdataCoupled = WTPcoupled_Fx(WTPstep, 1:nFASTNodes);
+                
+                ADv15data  = ADv15skew_Fx(WTPstep, 1:nFASTNodes);
+                ADv15dataNoSkew = ADv15noskew_Fx(WTPstep, 1:nFASTNodes);
+                
                 FASTdata = FAST_Fx(FASTstep,:);
                 EXPdata  = EXP_Fx{EXPstep,:};
                 rmat = repmat(r_over_R_EXP,size(EXPdata,1),1);
@@ -667,6 +685,8 @@ function PlotData2(PlotType, azimuth, numPlotWindSpeeds, plotWindSpeedInds, numP
                 WTPdata        = -WTPskew_Fy(WTPstep, 1:nFASTNodes);
                 WTPdataNoSkew  = -WTPnoskew_Fy(WTPstep, 1:nFASTNodes);
                 WTPdataCoupled  = -WTPcoupled_Fy(WTPstep, 1:nFASTNodes);
+                ADv15data  = -ADv15skew_Fy(WTPstep, 1:nFASTNodes);
+                ADv15dataNoSkew = -ADv15noskew_Fy(WTPstep, 1:nFASTNodes);
                 FASTdata = FAST_Fy(FASTstep,:);
                 EXPdata  = EXP_Fy{EXPstep,:};
                 rmat = repmat(r_over_R_EXP,size(EXPdata,1),1);
@@ -690,6 +710,9 @@ function PlotData2(PlotType, azimuth, numPlotWindSpeeds, plotWindSpeedInds, numP
             plot(r_over_R_FAST, WTPdata,'r','LineWidth',2);
             plot(r_over_R_FAST, WTPdataCoupled,'g','LineWidth',2);
             
+            plot(r_over_R_FAST, ADv15dataNoSkew, 'c', 'LineWidth'      ,1);
+            plot(r_over_R_FAST, ADv15data,'r','LineWidth',1);
+            
             %plot(r_over_R_cc, CoupledData,     'm'  , 'LineWidth'      ,2);
             plot(r_over_R_FAST, FASTdata     , 'k'  , 'LineWidth'      ,2); 
             plot(rmat , EXPdata      , 'bo' , 'MarkerFaceColor', 'b','MarkerSize',4);
@@ -709,7 +732,9 @@ function PlotData2(PlotType, azimuth, numPlotWindSpeeds, plotWindSpeedInds, numP
                % title(['Yaw = ' num2str(yawAngles(i))]);
            % set(ax,'Position',[.13 .17 .75 .8])
             if (doLegend == 1)
-                l =legend('v15 Uncoupled','v15 Pitt/Peters','v15 Coupled','v14','UAE');
+              %  l =legend('v15 Uncoupled','v15 Pitt/Peters','v15 Coupled','ADv15 Uncoupled','v14','UAE');
+              %  l =legend('v15 Uncoupled','v15 Pitt/Peters','v15 Coupled','ADv15 Pitt/Peters','v14','UAE');
+                l =legend('v15 Uncoupled','v15 Pitt/Peters','v15 Coupled','ADv15 Uncoupled','ADv15 Pitt/Peters','v14','UAE');
                 set(l,'location','northwest','FontSize',16,'Fontname','Times');
                 legend('boxoff');
             end
@@ -907,6 +932,39 @@ WTP_Fx  = ExtractData(WTPChanName, WTPChannels, 'Fx');
 WTP_Fy  = ExtractData(WTPChanName, WTPChannels, 'Fy');
 
 
+end
+
+function [ ADv15_AOA, ADv15_Fx  , ADv15_Fy   ] = Read_ADv15_Results( ADv15_root, AD_v15dir   )
+
+% Read the WT_Perf data first
+HeaderRows    = 8;
+NameLine      = 7;
+UnitsLine     = 8;
+delim         = '';
+
+AD_Results_File = [AD_v15dir filesep ADv15_root '.1.out'];
+[ADChannels, ADChanName, ~, ~] = ReadFASTtext(AD_Results_File, delim, HeaderRows, NameLine, UnitsLine );
+ADv15_AOA = ExtractData(ADChanName, ADChannels, 'AOA');
+ADv15_Fx  = ExtractData(ADChanName, ADChannels, 'Fx');
+ADv15_Fy  = ExtractData(ADChanName, ADChannels, 'Fy');
+
+for ii = 2:18
+   AD_Results_File = [AD_v15dir filesep ADv15_root '.' int2str(ii) '.out'];
+   [ADChannels, ADChanName, ~, ~] = ReadFASTtext(AD_Results_File, delim, HeaderRows, NameLine, UnitsLine );
+   temp_AOA = ExtractData(ADChanName, ADChannels, 'AOA');
+   temp_Fx  = ExtractData(ADChanName, ADChannels, 'Fx');
+   temp_Fy  = ExtractData(ADChanName, ADChannels, 'Fy');
+
+   ADv15_AOA = [ADv15_AOA ; temp_AOA];
+   ADv15_Fx  = [ADv15_Fx  ; temp_Fx];
+   ADv15_Fy  = [ADv15_Fy  ; temp_Fy];
+
+end
+   % Extract the data from the file which in
+   columns = [2:25, 27:44];
+   ADv15_AOA = ADv15_AOA(:,columns);
+   ADv15_Fx = ADv15_Fx(:,columns);
+   ADv15_Fy = ADv15_Fy(:,columns);
 end
 
 function data = Get_ccblade_data(file, NumIC)
