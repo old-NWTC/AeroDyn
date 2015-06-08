@@ -53,8 +53,8 @@ IMPLICIT NONE
 ! =========  UA_InitOutputType  =======
   TYPE, PUBLIC :: UA_InitOutputType
     TYPE(ProgDesc)  :: Version      ! Version structure [-]
-    CHARACTER(10) , DIMENSION(:), ALLOCATABLE  :: WriteOutputHdr      ! The is the list of all HD-related output channel header strings (includes all sub-module channels) [-]
-    CHARACTER(10) , DIMENSION(:), ALLOCATABLE  :: WriteOutputUnt      ! The is the list of all HD-related output channel unit strings (includes all sub-module channels) [-]
+    CHARACTER(15) , DIMENSION(:), ALLOCATABLE  :: WriteOutputHdr      ! The is the list of all HD-related output channel header strings (includes all sub-module channels) [-]
+    CHARACTER(15) , DIMENSION(:), ALLOCATABLE  :: WriteOutputUnt      ! The is the list of all HD-related output channel unit strings (includes all sub-module channels) [-]
   END TYPE UA_InitOutputType
 ! =======================
 ! =========  UA_ContinuousStateType  =======
