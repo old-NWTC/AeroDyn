@@ -40,13 +40,24 @@ LDFLAGS = -O2 -m$(BITS) -fbacktrace -g -fno-inline
 ifeq ($(OS),Windows_NT)
    RegistryProgram   = C:/Users/bjonkman/Documents/DATA/DesignCodes/simulators/FAST/SVNdirectory/branches/BJonkman/bin/Registry_win32.exe
    LDFLAGS          := $(LDFLAGS) -llapack -lblas -LC:/LAPACK/win32
+   LAPACK_LINK :=
 
 else
 
-      RegistryProgram   = /Users/aplatt/software-development/windsvn/FAST/branches/FAST_Registry/registry.exe
-			# Mac flag requirement
-	# Mac needs some additional flags prepended for linking to get lapack working, hence the funny notation here.
-		LDFLAGS := -framework Accelerate $(LDFLAGS)
+   RegistryProgram   = /Users/aplatt/software-development/windsvn/FAST/branches/FAST_Registry/registry.exe
+
+   UNAME := $(shell uname -s)
+
+   ifeq ($(UNAME), Darwin)
+         # Mac needs some additional flags prepended for linking to get lapack working:
+      LDFLAGS     := -framework Accelerate $(LDFLAGS)
+      LAPACK_LINK :=
+   else
+        # ifeq ($(UNAME), Linux)
+        # bjj verify this: # I've been told that the lapack linking needs to occur at the end of the line (after all the object files) on linux:
+      LAPACK_LINK  = -llapack -lblas
+   endif
+
 
 endif
 
@@ -257,7 +268,7 @@ $(INTER_DIR):
 
 $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT): $(ALL_OBJS) | $(INTER_DIR)
 	$(FC) $(LDFLAGS) -I $(INTER_DIR) -o $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT) \
-	$(foreach src, $(ALL_OBJS), $(addprefix $(INTER_DIR)/,$(src)))
+	$(foreach src, $(ALL_OBJS), $(addprefix $(INTER_DIR)/,$(src))) $(LAPACK_LINK)
 
 
    # Cleanup afterwards.
