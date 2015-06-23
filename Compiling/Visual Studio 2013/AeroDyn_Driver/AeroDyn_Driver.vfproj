@@ -35,7 +35,8 @@
 			<FileConfiguration Name="Release|Win32">
 				<Tool Name="VFCustomBuildTool" CommandLine="CALL RunRegistry.bat AeroDyn" Description="Running Registry for AeroDyn" Outputs="..\..\..\Source\dependencies\AeroDyn\AeroDyn_Types.f90"/></FileConfiguration></File>
 		<File RelativePath="..\..\..\Source\dependencies\AeroDyn\AeroDyn_Types.f90"/></Filter>
-		<File RelativePath="..\..\..\Source\dependencies\AeroDyn\AeroDyn.f90"/></Filter>
+		<File RelativePath="..\..\..\Source\dependencies\AeroDyn\AeroDyn.f90"/>
+		<File RelativePath="..\..\..\Source\dependencies\AeroDyn\AeroDyn_IO.f90"/></Filter>
 		<Filter Name="AeroDyn_Driver">
 		<Filter Name="RegistryFiles">
 		<File RelativePath="..\..\..\Source\AeroDyn_Driver_Registry.txt">

@@ -145,6 +145,7 @@ BEMT_SOURCES =             \
 
 AD_SOURCES =               \
 	AeroDyn_Types.f90       \
+	AeroDyn_IO.f90       \
 	AeroDyn.f90
 
 DRIVER_SOURCES =           \
@@ -184,7 +185,7 @@ default: $(INTER_DIR) $(ALL_OBJS) $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT)
    # Making .o or .obj files from .f90 files
 %$(OBJ_EXT): %.f90
 	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
-	
+
    # Making .o or .obj files from .c files
 %$(OBJ_EXT): %.c
 	$(FC) -I $(INTER_DIR) $(CFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) -B $(INTER_DIR)
@@ -250,7 +251,8 @@ BEMT$(OBJ_EXT):                     NWTC_Library$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)
                                                             mod_root1dim$(OBJ_EXT) fmin_fcn$(OBJ_EXT) nwtc_bemt_minpack$(OBJ_EXT)
 
 AeroDyn_Types$(OBJ_EXT):            NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  $(AD_DIR)/AeroDyn_Types.f90
-AeroDyn$(OBJ_EXT):                  NWTC_Library$(OBJ_EXT)  AeroDyn_Types$(OBJ_EXT)  AirfoilInfo$(OBJ_EXT)  BEMT$(OBJ_EXT)
+AeroDyn_IO$(OBJ_EXT):               NWTC_Library$(OBJ_EXT)  AeroDyn_Types$(OBJ_EXT)
+AeroDyn$(OBJ_EXT):                  NWTC_Library$(OBJ_EXT)  AeroDyn_IO$(OBJ_EXT)  AirfoilInfo$(OBJ_EXT)  BEMT$(OBJ_EXT)
 
 
 AeroDyn_Driver_Types$(OBJ_EXT):     NWTC_Library$(OBJ_EXT)  $(Driver_DIR)/AeroDyn_Driver_Types.f90
