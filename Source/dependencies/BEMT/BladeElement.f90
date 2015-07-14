@@ -109,7 +109,7 @@ module BladeElement
             !
          s1 = size(AFInfo%Table(1)%Coefs,2)
    
-         IntAFCoefs(1:s1) = CubicSplineInterpM( 1.0*real( AOA*R2D ) &
+         IntAFCoefs(1:s1) = CubicSplineInterpM( 1.0_ReKi*real( AOA*R2D, ReKi ) &
                                               , AFInfo%Table(1)%Alpha &
                                               , AFInfo%Table(1)%Coefs &
                                               , AFInfo%Table(1)%SplineCoefs &
