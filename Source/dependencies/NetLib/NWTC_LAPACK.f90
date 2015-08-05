@@ -4,8 +4,8 @@
 ! This code provides a wrapper for the LAPACK routines currently used at the NWTC (mainly codes in the FAST framework).
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2015-05-07 13:27:33 -0600 (Thu, 07 May 2015) $
-! (File) Revision #: $Rev: 301 $
+! File last committed: $Date: 2015-06-24 00:53:52 -0600 (Wed, 24 Jun 2015) $
+! (File) Revision #: $Rev: 318 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/branches/NetLib/NWTC_source/NWTC_LAPACK.f90 $
 !**********************************************************************************************************************************
 MODULE NWTC_LAPACK
@@ -214,7 +214,7 @@ CONTAINS
       REAL(R8Ki)      ,intent(in   ) :: A( :, : )         ! Matrix A
       REAL(R8Ki)      ,intent(in   ) :: B( :, : )         ! Matrix B
       REAL(R8Ki)      ,intent(inout) :: C( :, : )         ! Matrix C: Before entry, C must contain the matrix C, except when beta is zero, in which case C need not
-                                                          ! case C need not be set on entry. On exit, the array C is overwritten by the m by n matrix ( alpha*op( A )*op( B ) + beta*C ).
+                                                          ! be set on entry. On exit, the array C is overwritten by the m by n matrix ( alpha*op( A )*op( B ) + beta*C ).
 
       INTEGER(IntKi),  intent(  out) :: ErrStat           ! Error level
       CHARACTER(*),    intent(  out) :: ErrMsg            ! Message describing error

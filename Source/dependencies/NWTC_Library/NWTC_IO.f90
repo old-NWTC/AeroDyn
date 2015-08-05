@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2015-06-17 22:05:08 -0600 (Wed, 17 Jun 2015) $
-! (File) Revision #: $Rev: 315 $
+! File last committed: $Date: 2015-07-23 14:54:19 -0600 (Thu, 23 Jul 2015) $
+! (File) Revision #: $Rev: 321 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/NWTC_IO.f90 $
 !**********************************************************************************************************************************
 MODULE NWTC_IO
@@ -35,7 +35,7 @@ MODULE NWTC_IO
 !=======================================================================
 
    TYPE(ProgDesc), PARAMETER    :: NWTC_Ver = &                               ! The name, version, and date of the NWTC Subroutine Library.
-                                    ProgDesc( 'NWTC Subroutine Library', 'v2.06.02a-bjj', '17-Jun-2015')
+                                    ProgDesc( 'NWTC Subroutine Library', 'v2.06.02a-bjj', '24-Jul-2015')
 
    TYPE, PUBLIC                 :: FNlist_Type                                ! This type stores a linked list of file names.
       CHARACTER(1024)                        :: FileName                      ! A file name.
@@ -203,6 +203,12 @@ MODULE NWTC_IO
       MODULE PROCEDURE WrMatrix2R8     ! Two dimension matrix of R8Ki
    END INTERFACE
 
+      ! Create interface for writing matrix and array values (useful for debugging)
+   INTERFACE WrNumAryFileNR
+      MODULE PROCEDURE WrReAryFileNR
+      MODULE PROCEDURE WrDbAryFileNR
+   END INTERFACE
+   
 
 CONTAINS
 
@@ -2625,9 +2631,7 @@ CONTAINS
       OPEN( Un, FILE=TRIM( InFile ), STATUS='OLD', FORM='FORMATTED', IOSTAT=IOS, ACTION='READ' )
 
       IF ( IOS /= 0 )  THEN
-
-         CALL SetErrStat( ErrID_Fatal, 'Cannot open file "'//TRIM( InFile )//&
-              '". Another program like MS Excel may have locked it for writing.', ErrStat,ErrMsg,RoutineName)
+         CALL SetErrStat( ErrID_Fatal, 'Cannot open file "'//TRIM( InFile )//'".', ErrStat,ErrMsg,RoutineName)
       END IF
 
    END IF
@@ -3534,7 +3538,7 @@ CONTAINS
 
       INTEGER, INTENT(IN)                    :: AryLen                        ! The length of the array to parse.
 
-      REAL(SiKi), INTENT(OUT)                :: SiAry       (AryLen)          ! The single-precision REAL array to receive the input values.
+      REAL(ReKi), INTENT(OUT)                :: SiAry       (AryLen)          ! The single-precision REAL array to receive the input values.
 
       INTEGER(IntKi), INTENT(OUT)            :: ErrStat                       ! The error status.
       INTEGER(IntKi), INTENT(INOUT)          :: LineNum                       ! The number of the line to parse.
@@ -3619,7 +3623,7 @@ CONTAINS
 
          ! Arguments declarations.
 
-      REAL(SiKi), INTENT(OUT)                :: SiVar                         ! The single-precision REAL variable to receive the input value.
+      REAL(ReKi), INTENT(OUT)                :: SiVar                         ! The single-precision REAL variable to receive the input value.
 
       INTEGER(IntKi), INTENT(OUT)            :: ErrStat                       ! The error status.
       INTEGER(IntKi), INTENT(INOUT)          :: LineNum                       ! The number of the line to parse.
@@ -6618,6 +6622,49 @@ SUBROUTINE ReadLine ( UnIn, CommChars, Line, LineLen, IOStat )
 
    RETURN
    END SUBROUTINE WrReAryFileNR
+!=======================================================================
+   SUBROUTINE WrDbAryFileNR ( Unit, Ary, Fmt, ErrStat, ErrMsg  )
+
+
+      ! This routine writes out a real array to the file connected to Unit without following it with a new line.
+
+
+      ! Argument declarations.
+
+   INTEGER,      INTENT(IN)     :: Unit                                         ! I/O unit for input file.
+   REAL(DbKi),   INTENT(IN)     :: Ary (:)                                      ! Array to be written without a newline at the end.
+   CHARACTER(*), INTENT(IN)     :: Fmt                                          ! Fmt of one element to be written.
+
+   INTEGER(IntKi), INTENT(OUT)  :: ErrStat                                      ! Error status
+   CHARACTER(*),   INTENT(OUT)  :: ErrMsg                                       ! Error message associated with ErrStat
+
+      ! Local variables:
+   CHARACTER(50)                :: Fmt2                                         ! Fmt of entire array to be written (will be copied).
+
+
+
+   IF ( SIZE(Ary) == 0 ) THEN
+      ErrStat = ErrID_None
+      ErrMsg  = ''
+      RETURN
+   END IF
+   
+
+   WRITE(Fmt2,*) SIZE(Ary)
+   Fmt2 = '('//TRIM(Fmt2)//'('//TRIM(Fmt)//'))'
+
+   WRITE (Unit,Fmt2,ADVANCE='NO',IOSTAT=ErrStat)  Ary
+   IF ( ErrStat /= 0 ) THEN
+      ErrStat = ErrID_Fatal
+      ErrMsg = 'WrDbAryFileNR:Error '//TRIM(Num2LStr(ErrStat))//' occurred while writing to file using this format: '//TRIM(Fmt2)
+   ELSE
+      ErrStat = ErrID_None
+      ErrMsg  = ''
+   END IF
+
+
+   RETURN
+   END SUBROUTINE WrDbAryFileNR
 !=======================================================================
    RECURSIVE SUBROUTINE WrScr ( InStr )
 
