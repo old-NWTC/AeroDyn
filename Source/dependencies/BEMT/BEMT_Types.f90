@@ -57,6 +57,7 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: zLocal      ! Distance to blade node, measured along the blade [m]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zTip      ! Distance to blade tip, measured along the blade [m]
     INTEGER(IntKi)  :: UAMod      ! Model for the dynamic stall equations [1 = Leishman/Beddoes, 2 = Gonzalez, 3 = Minnema] [-]
+    REAL(ReKi)  :: UACutout      ! Angle-of-attach beyond which unsteady aerodynamics are disabled [(deg)]
     LOGICAL  :: UA_Flag      ! logical flag indicating whether to use UnsteadyAero [-]
     LOGICAL  :: Flookup      ! Use table lookup for f' and f''  [-]
     REAL(ReKi)  :: a_s      ! speed of sound [m/s]
@@ -116,6 +117,7 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: zHub      ! Distance to hub for each blade [m]
     TYPE(UA_ParameterType)  :: UA      ! parameters for UnsteadyAero [-]
     LOGICAL  :: UA_Flag      ! logical flag indicating whether to use UnsteadyAero [-]
+    REAL(ReKi)  :: UACutout      ! Angle-of-attach beyond which unsteady aerodynamics are disabled [(deg)]
   END TYPE BEMT_ParameterType
 ! =======================
 ! =========  BEMT_InputType  =======
@@ -244,6 +246,7 @@ IF (ALLOCATED(SrcInitInputData%zTip)) THEN
     DstInitInputData%zTip = SrcInitInputData%zTip
 ENDIF
     DstInitInputData%UAMod = SrcInitInputData%UAMod
+    DstInitInputData%UACutout = SrcInitInputData%UACutout
     DstInitInputData%UA_Flag = SrcInitInputData%UA_Flag
     DstInitInputData%Flookup = SrcInitInputData%Flookup
     DstInitInputData%a_s = SrcInitInputData%a_s
@@ -350,6 +353,7 @@ ENDIF
       Re_BufSz   = Re_BufSz   + SIZE(InData%zTip)  ! zTip
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! UAMod
+      Re_BufSz   = Re_BufSz   + 1  ! UACutout
       Int_BufSz  = Int_BufSz  + 1  ! UA_Flag
       Int_BufSz  = Int_BufSz  + 1  ! Flookup
       Re_BufSz   = Re_BufSz   + 1  ! a_s
@@ -484,6 +488,8 @@ ENDIF
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%UAMod
       Int_Xferred   = Int_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%UACutout
+      Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%UA_Flag , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%Flookup , IntKiBuf(1), 1)
@@ -680,6 +686,8 @@ ENDIF
   END IF
       OutData%UAMod = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
+      OutData%UACutout = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
       OutData%UA_Flag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
       OutData%Flookup = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
@@ -1968,6 +1976,7 @@ ENDIF
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
     DstParamData%UA_Flag = SrcParamData%UA_Flag
+    DstParamData%UACutout = SrcParamData%UACutout
  END SUBROUTINE BEMT_CopyParam
 
  SUBROUTINE BEMT_DestroyParam( ParamData, ErrStat, ErrMsg )
@@ -2091,6 +2100,7 @@ ENDIF
          DEALLOCATE(Int_Buf)
       END IF
       Int_BufSz  = Int_BufSz  + 1  ! UA_Flag
+      Re_BufSz   = Re_BufSz   + 1  ! UACutout
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -2255,6 +2265,8 @@ ENDIF
       ENDIF
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%UA_Flag , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%UACutout
+      Re_Xferred   = Re_Xferred   + 1
  END SUBROUTINE BEMT_PackParam
 
  SUBROUTINE BEMT_UnPackParam( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -2490,6 +2502,8 @@ ENDIF
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
       OutData%UA_Flag = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
+      OutData%UACutout = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
  END SUBROUTINE BEMT_UnPackParam
 
  SUBROUTINE BEMT_CopyInput( SrcInputData, DstInputData, CtrlCode, ErrStat, ErrMsg )
