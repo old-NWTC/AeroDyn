@@ -91,7 +91,7 @@ module BladeElement
       
       ErrStat = ErrID_None
       ErrMsg  = ''
-   
+      IntAFCoefs = 0.0_ReKi ! initialize in case we only don't have 4 columns in the airfoil data (i.e., so cm is zero if not in the file)
       
       if (UA_Flag) then
          u_UA%alpha = AOA   
