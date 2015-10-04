@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2015-05-09 16:21:07 -0600 (Sat, 09 May 2015) $
-! (File) Revision #: $Rev: 306 $
+! File last committed: $Date: 2015-08-26 12:35:45 -0600 (Wed, 26 Aug 2015) $
+! (File) Revision #: $Rev: 329 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/SysGnuWin.f90 $
 !**********************************************************************************************************************************
 MODULE SysSubs
@@ -462,6 +462,7 @@ CONTAINS
 
    IF ( NChars > 0 ) THEN
 
+      ! bjj: note that this will produce an error if NChars > 999
       WRITE (Fmt(5:7),'(I3)')  NChars
 
       WRITE (CU,Fmt,ADVANCE='NO')  CR, Str
@@ -495,13 +496,13 @@ CONTAINS
    IF ( LEN_TRIM(Str)  < 1 ) THEN
       WRITE ( CU, '()', IOSTAT=ErrStat )
    ELSE
-      WRITE ( CU,Frm, IOSTAT=ErrStat ) TRIM(Str)
+      WRITE ( CU, Frm, IOSTAT=ErrStat ) TRIM(Str)
    END IF
 
 
    END SUBROUTINE WriteScr ! ( Str )
-!=======================================================================
 
+!=======================================================================
 
 
 !==================================================================================================================================
@@ -532,17 +533,7 @@ SUBROUTINE LoadDynamicLib ( DLL, ErrStat, ErrMsg )
          CHARACTER(KIND=C_CHAR)     :: lpFileName(*)
       END FUNCTION LoadLibrary
 
-      FUNCTION GetProcAddress(hModule, lpProcName) BIND(C, NAME='GetProcAddress')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         !GCC$ ATTRIBUTES STDCALL :: GetProcAddress
-         TYPE(C_FUNPTR)             :: GetProcAddress
-         INTEGER(C_INTPTR_T),VALUE  :: hModule
-         CHARACTER(KIND=C_CHAR)     :: lpProcName(*)
-      END FUNCTION GetProcAddress
-
    END INTERFACE
-
 
 
    ErrStat = ErrID_None
@@ -563,17 +554,72 @@ SUBROUTINE LoadDynamicLib ( DLL, ErrStat, ErrMsg )
 
       ! Get the procedure address:
 
-   DLL%ProcAddr = GetProcAddress( DLL%FileAddr, TRIM(DLL%ProcName)//C_NULL_CHAR )  !the "C_NULL_CHAR" converts the Fortran string to a C-type string (i.e., adds //CHAR(0) to the end)
-
-   IF(.NOT. C_ASSOCIATED(DLL%ProcAddr)) THEN
-      ErrStat = ErrID_Fatal
-      ErrMsg  = 'The procedure '//TRIM(DLL%ProcName)//' in file '//TRIM(DLL%FileName)//' could not be loaded.'
-      RETURN
-   END IF
+   CALL LoadDynamicLibProc ( DLL, ErrStat, ErrMsg )
 
 
    RETURN
 END SUBROUTINE LoadDynamicLib
+!==================================================================================================================================
+SUBROUTINE LoadDynamicLibProc ( DLL, ErrStat, ErrMsg )
+
+      ! This SUBROUTINE is used to dynamically load a procedure in a DLL.
+
+      ! Passed Variables:
+
+   TYPE (DLL_Type),           INTENT(INOUT)  :: DLL         ! The DLL to be loaded.
+   INTEGER(IntKi),            INTENT(  OUT)  :: ErrStat     ! Error status of the operation
+   CHARACTER(*),              INTENT(  OUT)  :: ErrMsg      ! Error message if ErrStat /= ErrID_None
+
+
+      ! local variables
+   INTEGER(IntKi)                            :: i
+   
+   INTERFACE  ! Definitions of Windows API routines
+
+      !...........................
+      !bjj: I have been unable to find a solution that works with both IVF and gfortran...
+      !bjj: note that "Intel Fortran does not support use of STDCALL with BIND(C) at this time"
+      !     See this link: http://software.intel.com/en-us/articles/replacing-intel-fortran-attributes-with-c-interoperability-features
+      !bjj: Until this is fixed, Intel uses kernel32.f90 definitions instead of the interface below:
+      !...........................
+
+      FUNCTION GetProcAddress(hModule, lpProcName) BIND(C, NAME='GetProcAddress')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         !GCC$ ATTRIBUTES STDCALL :: GetProcAddress
+         TYPE(C_FUNPTR)             :: GetProcAddress
+         INTEGER(C_INTPTR_T),VALUE  :: hModule
+         CHARACTER(KIND=C_CHAR)     :: lpProcName(*)
+      END FUNCTION GetProcAddress
+
+   END INTERFACE
+
+
+
+   ErrStat = ErrID_None
+   ErrMsg = ''
+   !IF ( DLL%FileAddr == INT(0,C_INTPTR_T) ) RETURN
+
+   
+      ! Get the procedure addresses:
+
+   do i=1,NWTC_MAX_DLL_PROC
+      if ( len_trim( DLL%ProcName(i) ) > 0 ) then
+   
+         DLL%ProcAddr(i) = GetProcAddress( DLL%FileAddr, TRIM(DLL%ProcName(i))//C_NULL_CHAR )  !the "C_NULL_CHAR" converts the Fortran string to a C-type string (i.e., adds //CHAR(0) to the end)
+
+         IF(.NOT. C_ASSOCIATED(DLL%ProcAddr(i))) THEN
+            ErrStat = ErrID_Fatal
+            ErrMsg  = 'The procedure '//TRIM(DLL%ProcName(i))//' in file '//TRIM(DLL%FileName)//' could not be loaded.'
+            RETURN
+         END IF
+         
+      end if
+   end do
+         
+
+   RETURN
+END SUBROUTINE LoadDynamicLibProc
 !==================================================================================================================================
 SUBROUTINE FreeDynamicLib ( DLL, ErrStat, ErrMsg )
 
@@ -603,6 +649,7 @@ SUBROUTINE FreeDynamicLib ( DLL, ErrStat, ErrMsg )
 
 
       ! Free the DLL:
+   IF ( DLL%FileAddr == INT(0,C_INTPTR_T) ) RETURN
 
    Success = FreeLibrary( DLL%FileAddr ) !If the function succeeds, the return value is nonzero. If the function fails, the return value is zero.
 
@@ -613,10 +660,12 @@ SUBROUTINE FreeDynamicLib ( DLL, ErrStat, ErrMsg )
    ELSE
       ErrStat = ErrID_None
       ErrMsg = ''
+      DLL%FileAddr = INT(0,C_INTPTR_T)
    END IF
 
    RETURN
 END SUBROUTINE FreeDynamicLib
 !==================================================================================================================================
+
 
 END MODULE SysSubs
