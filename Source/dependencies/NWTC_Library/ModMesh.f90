@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2015-09-30 23:22:00 -0600 (Wed, 30 Sep 2015) $
-! (File) Revision #: $Rev: 338 $
+! File last committed: $Date: 2015-10-05 20:11:24 -0600 (Mon, 05 Oct 2015) $
+! (File) Revision #: $Rev: 344 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/ModMesh.f90 $
 !**********************************************************************************************************************************
 MODULE ModMesh
@@ -932,7 +932,7 @@ CONTAINS
         IF ( Mesh%FieldMask(MASKID_FORCE) ) Re_BufSz = Re_BufSz + Mesh%Nnodes * 3
         IF ( Mesh%FieldMask(MASKID_MOMENT) ) Re_BufSz = Re_BufSz + Mesh%Nnodes * 3
         !IF ( Mesh%FieldMask(MASKID_ORIENTATION) ) Re_BufSz = Re_BufSz + Mesh%Nnodes * 9
-        IF ( Mesh%FieldMask(MASKID_TRANSLATIONDISP) ) Re_BufSz = Re_BufSz + Mesh%Nnodes * 3
+        !IF ( Mesh%FieldMask(MASKID_TRANSLATIONDISP) ) Re_BufSz = Re_BufSz + Mesh%Nnodes * 3
         IF ( Mesh%FieldMask(MASKID_ROTATIONVEL) ) Re_BufSz = Re_BufSz + Mesh%Nnodes * 3
         IF ( Mesh%FieldMask(MASKID_TRANSLATIONVEL) ) Re_BufSz = Re_BufSz + Mesh%Nnodes * 3
         IF ( Mesh%FieldMask(MASKID_ROTATIONACC) ) Re_BufSz = Re_BufSz + Mesh%Nnodes * 3
@@ -947,6 +947,7 @@ CONTAINS
      IF (Mesh%Initialized) THEN
         Db_BufSz = Db_BufSz + Mesh%Nnodes * 9 ! RefOrientation
         IF ( Mesh%FieldMask(MASKID_ORIENTATION) ) Db_BufSz = Db_BufSz + Mesh%Nnodes * 9
+        IF ( Mesh%FieldMask(MASKID_TRANSLATIONDISP) ) Db_BufSz = Db_BufSz + Mesh%Nnodes * 3
      END IF 
      
      !.........................................
@@ -1048,7 +1049,7 @@ CONTAINS
          ENDIF
          IF ( Mesh%FieldMask(MASKID_TRANSLATIONDISP) ) THEN ! TranslationDisp
             DO i = 1, Mesh%Nnodes
-               ReKiBuf(Re_Xferred:Re_Xferred+2) = Mesh%TranslationDisp(:,i); Re_Xferred = Re_Xferred + 3
+               DbKiBuf(Db_Xferred:Db_Xferred+2) = Mesh%TranslationDisp(:,i); Db_Xferred = Db_Xferred + 3
             ENDDO
          ENDIF
          IF ( Mesh%FieldMask(MASKID_ROTATIONVEL) ) THEN ! RotationVel
@@ -1366,19 +1367,44 @@ CONTAINS
 
       IF (.NOT. SrcMesh%Initialized) RETURN !bjj: maybe we should first CALL MeshDestroy(DestMesh,ErrStat, ErrMess)
 
-      IF ( CtrlCode .EQ. MESH_NEWCOPY .OR. CtrlCode .EQ. MESH_SIBLING ) THEN
-
-         IF ( CtrlCode .EQ. MESH_NEWCOPY ) THEN
-            CALL MeshCreate( DestMesh, IOS=SrcMesh%IOS, Nnodes=SrcMesh%Nnodes, ErrStat=ErrStat, ErrMess=ErrMess &
-                            ,Force=SrcMesh%FieldMask(MASKID_FORCE)                                              &
-                            ,Moment=SrcMesh%FieldMask(MASKID_MOMENT)                                            &
-                            ,Orientation=SrcMesh%FieldMask(MASKID_ORIENTATION)                                  &
-                            ,TranslationDisp=SrcMesh%FieldMask(MASKID_TRANSLATIONDISP)                          &
-                            ,TranslationVel=SrcMesh%FieldMask(MASKID_TRANSLATIONVEL)                            &
-                            ,RotationVel=SrcMesh%FieldMask(MASKID_ROTATIONVEL)                                  &
-                            ,TranslationAcc=SrcMesh%FieldMask(MASKID_TRANSLATIONACC)                            &
-                            ,RotationAcc=SrcMesh%FieldMask(MASKID_ROTATIONACC)                                  &
-                            ,nScalars=SrcMesh%nScalars                                                          )
+      IF ( CtrlCode .EQ. MESH_NEWCOPY .OR. CtrlCode .EQ. MESH_SIBLING .OR. CtrlCode .EQ. MESH_COUSIN ) THEN
+         
+         IF (CtrlCode .EQ. MESH_NEWCOPY) THEN
+            IOS_l              = SrcMesh%IOS 
+            Force_l            = SrcMesh%FieldMask(MASKID_FORCE)                     
+            Moment_l           = SrcMesh%FieldMask(MASKID_MOMENT)                   
+            Orientation_l      = SrcMesh%FieldMask(MASKID_ORIENTATION)         
+            TranslationDisp_l  = SrcMesh%FieldMask(MASKID_TRANSLATIONDISP) 
+            TranslationVel_l   = SrcMesh%FieldMask(MASKID_TRANSLATIONVEL)   
+            RotationVel_l      = SrcMesh%FieldMask(MASKID_ROTATIONVEL)         
+            TranslationAcc_l   = SrcMesh%FieldMask(MASKID_TRANSLATIONACC)   
+            RotationAcc_l      = SrcMesh%FieldMask(MASKID_ROTATIONACC)         
+            nScalars_l         = SrcMesh%nScalars          
+         ELSE ! Sibling or cousin
+            IOS_l          = SrcMesh%IOS ; IF ( PRESENT(IOS) )                         IOS_l = IOS
+            Force_l            = .FALSE. ; IF ( PRESENT(Force) )                     Force_l = Force
+            Moment_l           = .FALSE. ; IF ( PRESENT(Moment) )                   Moment_l = Moment
+            Orientation_l      = .FALSE. ; IF ( PRESENT(Orientation) )         Orientation_l = Orientation
+            TranslationDisp_l  = .FALSE. ; IF ( PRESENT(TranslationDisp) ) TranslationDisp_l = TranslationDisp
+            TranslationVel_l   = .FALSE. ; IF ( PRESENT(TranslationVel) )   TranslationVel_l = TranslationVel
+            RotationVel_l      = .FALSE. ; IF ( PRESENT(RotationVel) )         RotationVel_l = RotationVel
+            TranslationAcc_l   = .FALSE. ; IF ( PRESENT(TranslationAcc) )   TranslationAcc_l = TranslationAcc
+            RotationAcc_l      = .FALSE. ; IF ( PRESENT(RotationAcc) )         RotationAcc_l = RotationAcc
+            nScalars_l         = 0       ; IF ( PRESENT(nScalars) )               nScalars_l = nScalars
+         END IF
+            
+         IF ( CtrlCode .EQ. MESH_NEWCOPY .OR. CtrlCode .EQ. MESH_COUSIN ) THEN
+                                    
+            CALL MeshCreate( DestMesh, IOS=IOS_l, Nnodes=SrcMesh%Nnodes, ErrStat=ErrStat, ErrMess=ErrMess &
+                            ,Force=Force_l                                                                &
+                            ,Moment=Moment_l                                                              &
+                            ,Orientation=Orientation_l                                                    &
+                            ,TranslationDisp=TranslationDisp_l                                            &
+                            ,TranslationVel=TranslationVel_l                                              &
+                            ,RotationVel=RotationVel_l                                                    &
+                            ,TranslationAcc=TranslationAcc_l                                              &
+                            ,RotationAcc=RotationAcc_l                                                    &
+                            ,nScalars=nScalars_l                                                          )
 
             IF (ErrStat >= AbortErrLev) RETURN
 
@@ -1458,16 +1484,6 @@ CONTAINS
                RETURN !early return
             END IF
 
-            IOS_l          = SrcMesh%IOS ; IF ( PRESENT(IOS) )                         IOS_l = IOS
-            Force_l            = .FALSE. ; IF ( PRESENT(Force) )                     Force_l = Force
-            Moment_l           = .FALSE. ; IF ( PRESENT(Moment) )                   Moment_l = Moment
-            Orientation_l      = .FALSE. ; IF ( PRESENT(Orientation) )         Orientation_l = Orientation
-            TranslationDisp_l  = .FALSE. ; IF ( PRESENT(TranslationDisp) ) TranslationDisp_l = TranslationDisp
-            TranslationVel_l   = .FALSE. ; IF ( PRESENT(TranslationVel) )   TranslationVel_l = TranslationVel
-            RotationVel_l      = .FALSE. ; IF ( PRESENT(RotationVel) )         RotationVel_l = RotationVel
-            TranslationAcc_l   = .FALSE. ; IF ( PRESENT(TranslationAcc) )   TranslationAcc_l = TranslationAcc
-            RotationAcc_l      = .FALSE. ; IF ( PRESENT(RotationAcc) )         RotationAcc_l = RotationAcc
-            nScalars_l         = 0       ; IF ( PRESENT(nScalars) )               nScalars_l = nScalars
             CALL MeshCreate( DestMesh, IOS=IOS_l, Nnodes=SrcMesh%Nnodes, ErrStat=ErrStat, ErrMess=ErrMess   &
                             ,Force=Force_l                                                                  &
                             ,Moment=Moment_l                                                                &

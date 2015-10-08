@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2015-05-09 16:21:07 -0600 (Sat, 09 May 2015) $
-! (File) Revision #: $Rev: 306 $
+! File last committed: $Date: 2015-08-25 13:01:05 -0600 (Tue, 25 Aug 2015) $
+! (File) Revision #: $Rev: 326 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/SysIVF_Labview.f90 $
 !**********************************************************************************************************************************
 MODULE SysSubs
@@ -85,7 +85,7 @@ MODULE SysSubs
    CHARACTER(*),  PARAMETER      :: OS_Desc     = 'Intel Visual Fortran for Windows/LabVIEW' ! Description of the language/OS
    CHARACTER( 1), PARAMETER      :: PathSep     = '\'                               ! The path separator.
    CHARACTER( 1), PARAMETER      :: SwChar      = '/'                               ! The switch character for command-line options.
-   CHARACTER(11), PARAMETER      :: UnfForm     = 'UNFORMATTED'                     ! The string to specify unformatted I/O files.
+   CHARACTER(11), PARAMETER      :: UnfForm     = 'BINARY'                          ! The string to specify unformatted I/O files. (used in OpenUOutFile and OpenUInpFile [see TurbSim's .bin files])
 
 CONTAINS
 
@@ -500,6 +500,26 @@ SUBROUTINE LoadDynamicLib ( DLL, ErrStat, ErrMsg )
 
    RETURN
 END SUBROUTINE LoadDynamicLib
+!==================================================================================================================================
+SUBROUTINE LoadDynamicLibProc ( DLL, ErrStat, ErrMsg )
+
+      ! This SUBROUTINE is used to dynamically load a DLL.
+
+      ! Passed Variables:
+
+   TYPE (DLL_Type),           INTENT(INOUT)  :: DLL         ! The DLL to be loaded.
+   INTEGER(IntKi),            INTENT(  OUT)  :: ErrStat     ! Error status of the operation
+   CHARACTER(*),              INTENT(  OUT)  :: ErrMsg      ! Error message if ErrStat /= ErrID_None
+
+
+
+   ErrStat = ErrID_Fatal
+   ErrMsg = ' LoadDynamicLibProc: Not implemented for '//TRIM(OS_Desc)
+
+
+
+   RETURN
+END SUBROUTINE LoadDynamicLibProc
 !==================================================================================================================================
 SUBROUTINE FreeDynamicLib ( DLL, ErrStat, ErrMsg )
 

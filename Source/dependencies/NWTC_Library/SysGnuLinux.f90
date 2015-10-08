@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2015-05-09 16:21:07 -0600 (Sat, 09 May 2015) $
-! (File) Revision #: $Rev: 306 $
+! File last committed: $Date: 2015-08-26 12:35:45 -0600 (Wed, 26 Aug 2015) $
+! (File) Revision #: $Rev: 329 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/SysGnuLinux.f90 $
 !**********************************************************************************************************************************
 MODULE SysSubs
@@ -462,6 +462,7 @@ CONTAINS
 
    IF ( NChars > 0 ) THEN
 
+      ! bjj: note that this will produce an error if NChars > 999
       WRITE (Fmt(5:7),'(I3)')  NChars
 
       WRITE (CU,Fmt,ADVANCE='NO')  CR, Str
@@ -495,7 +496,7 @@ CONTAINS
    IF ( LEN_TRIM(Str)  < 1 ) THEN
       WRITE ( CU, '()', IOSTAT=ErrStat )
    ELSE
-      WRITE ( CU,Frm, IOSTAT=ErrStat ) TRIM(Str)
+      WRITE ( CU, Frm, IOSTAT=ErrStat ) TRIM(Str)
    END IF
 
    IF ( ErrStat /= 0 ) &
@@ -516,6 +517,8 @@ SUBROUTINE LoadDynamicLib ( DLL, ErrStat, ErrMsg )
    INTEGER(IntKi),            INTENT(  OUT)  :: ErrStat     ! Error status of the operation
    CHARACTER(*),              INTENT(  OUT)  :: ErrMsg      ! Error message if ErrStat /= ErrID_None
 
+#ifdef USE_DLL_INTERFACE         
+
 !bjj: these are values I found on the web; I have no idea if they actually work...
 !bjj: hopefully we can find them pre-defined in a header somewhere
    INTEGER(C_INT), PARAMETER :: RTLD_LAZY=1            ! "Perform lazy binding. Only resolve symbols as the code that references them is executed. If the symbol is never referenced, then it is never resolved. (Lazy binding is only performed for function references; references to variables are always immediately bound when the library is loaded.) "
@@ -524,8 +527,7 @@ SUBROUTINE LoadDynamicLib ( DLL, ErrStat, ErrMsg )
    INTEGER(C_INT), PARAMETER :: RTLD_LOCAL=0           ! "This is the converse of RTLD_GLOBAL, and the default if neither flag is specified. Symbols defined in this library are not made available to resolve references in subsequently loaded libraries."
 
 
-#ifdef USE_DLL_INTERFACE           
-!bjj: note that this is not tested:
+
    INTERFACE !linux API routines
       !bjj see http://linux.die.net/man/3/dlopen
       !    and https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man3/dlopen.3.html
@@ -537,18 +539,6 @@ SUBROUTINE LoadDynamicLib ( DLL, ErrStat, ErrMsg )
          TYPE(C_PTR)                   :: dlOpen
          CHARACTER(C_CHAR), INTENT(IN) :: filename(*)
          INTEGER(C_INT), VALUE         :: mode
-      END FUNCTION
-
-      !bjj see http://linux.die.net/man/3/dlsym
-      !    and https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man3/dlsym.3.html
-      
-      FUNCTION dlSym(handle,name) BIND(C,NAME="dlsym")
-      ! void *dlsym(void *handle, const char *name);
-         USE ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_FUNPTR)                :: dlSym ! A function pointer
-         TYPE(C_PTR), VALUE            :: handle
-         CHARACTER(C_CHAR), INTENT(IN) :: name(*)
       END FUNCTION
 
    END INTERFACE
@@ -573,13 +563,7 @@ SUBROUTINE LoadDynamicLib ( DLL, ErrStat, ErrMsg )
 
       ! Get the procedure address:
 
-   DLL%ProcAddr = dlSym( DLL%FileAddrX, TRIM(DLL%ProcName)//C_NULL_CHAR )  !the "C_NULL_CHAR" converts the Fortran string to a C-type string (i.e., adds //CHAR(0) to the end)
-
-   IF(.NOT. C_ASSOCIATED(DLL%ProcAddr)) THEN
-      ErrStat = ErrID_Fatal
-      ErrMsg  = 'The procedure '//TRIM(DLL%ProcName)//' in file '//TRIM(DLL%FileName)//' could not be loaded.'
-      RETURN
-   END IF
+   CALL LoadDynamicLibProc ( DLL, ErrStat, ErrMsg )
 #else
 
    ErrStat = ErrID_Fatal
@@ -589,6 +573,69 @@ SUBROUTINE LoadDynamicLib ( DLL, ErrStat, ErrMsg )
    
    RETURN
 END SUBROUTINE LoadDynamicLib
+!==================================================================================================================================
+SUBROUTINE LoadDynamicLibProc ( DLL, ErrStat, ErrMsg )
+
+      ! This SUBROUTINE is used to dynamically load a procedure from a DLL.
+
+      ! Passed Variables:
+
+   TYPE (DLL_Type),           INTENT(INOUT)  :: DLL         ! The DLL to be loaded.
+   INTEGER(IntKi),            INTENT(  OUT)  :: ErrStat     ! Error status of the operation
+   CHARACTER(*),              INTENT(  OUT)  :: ErrMsg      ! Error message if ErrStat /= ErrID_None
+
+      ! local variables
+   INTEGER(IntKi)                            :: i
+
+#ifdef USE_DLL_INTERFACE           
+
+   INTERFACE !linux API routines
+
+      !bjj see http://linux.die.net/man/3/dlsym
+      !    and https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man3/dlsym.3.html
+      
+      FUNCTION dlSym(handle,name) BIND(C,NAME="dlsym")
+      ! void *dlsym(void *handle, const char *name);
+         USE ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_FUNPTR)                :: dlSym ! A function pointer
+         TYPE(C_PTR), VALUE            :: handle
+         CHARACTER(C_CHAR), INTENT(IN) :: name(*)
+      END FUNCTION
+
+   END INTERFACE
+
+
+   ErrStat = ErrID_None
+   ErrMsg = ''
+
+   !IF( .NOT. C_ASSOCIATED(DLL%FileAddrX) ) RETURN
+
+      ! Get the procedure addresses:
+
+   do i=1,NWTC_MAX_DLL_PROC
+      if ( len_trim( DLL%ProcName(i) ) > 0 ) then
+   
+         DLL%ProcAddr(i) = dlSym( DLL%FileAddrX, TRIM(DLL%ProcName(i))//C_NULL_CHAR )  !the "C_NULL_CHAR" converts the Fortran string to a C-type string (i.e., adds //CHAR(0) to the end)
+
+         IF(.NOT. C_ASSOCIATED(DLL%ProcAddr(i))) THEN
+            ErrStat = ErrID_Fatal
+            ErrMsg  = 'The procedure '//TRIM(DLL%ProcName(i))//' in file '//TRIM(DLL%FileName)//' could not be loaded.'
+            RETURN
+         END IF
+         
+      end if
+   end do
+      
+#else
+
+   ErrStat = ErrID_Fatal
+   ErrMsg = ' LoadDynamicLibProc: Not implemented for '//TRIM(OS_Desc)
+      
+#endif
+   
+   RETURN
+END SUBROUTINE LoadDynamicLibProc
 !==================================================================================================================================
 SUBROUTINE FreeDynamicLib ( DLL, ErrStat, ErrMsg )
 
@@ -625,6 +672,7 @@ SUBROUTINE FreeDynamicLib ( DLL, ErrStat, ErrMsg )
 
       ! Close the library:
 
+   IF( .NOT. C_ASSOCIATED(DLL%FileAddrX) ) RETURN
    Success = dlClose( DLL%FileAddrX ) !The function dlclose() returns 0 on success, and nonzero on error.
 
    IF ( Success /= TRUE ) THEN !bjj: note that this is not the same as LOGICAL .TRUE.
@@ -634,6 +682,7 @@ SUBROUTINE FreeDynamicLib ( DLL, ErrStat, ErrMsg )
    ELSE
       ErrStat = ErrID_None
       ErrMsg = ''
+      DLL%FileAddrX = C_NULL_PTR
    END IF
    
 #else

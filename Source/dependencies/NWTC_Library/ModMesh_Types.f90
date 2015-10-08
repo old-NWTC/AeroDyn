@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2015-09-29 19:14:42 -0600 (Tue, 29 Sep 2015) $
-! (File) Revision #: $Rev: 337 $
+! File last committed: $Date: 2015-10-05 20:11:24 -0600 (Mon, 05 Oct 2015) $
+! (File) Revision #: $Rev: 344 $
 ! URL: $HeadURL: https://windsvn.nrel.gov/NWTC_Library/trunk/source/ModMesh_Types.f90 $
 !**********************************************************************************************************************************
 MODULE ModMesh_Types
@@ -77,6 +77,7 @@ MODULE ModMesh_Types
    INTEGER, PUBLIC, PARAMETER :: MESH_SIBLING         = 2
    INTEGER, PUBLIC, PARAMETER :: MESH_UPDATECOPY      = 3
    INTEGER, PUBLIC, PARAMETER :: MESH_UPDATEREFERENCE = 4
+   INTEGER, PUBLIC, PARAMETER :: MESH_COUSIN          = 5
 
    INTEGER, PUBLIC, PARAMETER :: MESH_NEXT  = -2
    INTEGER, PUBLIC, PARAMETER :: MESH_NOMOREELEMS  = -3
@@ -138,7 +139,7 @@ MODULE ModMesh_Types
       REAL(ReKi), ALLOCATABLE :: Force(:,:)              ! Field: Force vectors (3,NNodes)
       REAL(ReKi), ALLOCATABLE :: Moment(:,:)             ! Field: Moment vectors (3,NNodes)
       REAL(R8Ki), ALLOCATABLE :: Orientation(:,:,:)      ! Field: Direction Cosine Matrix (DCM) (3,3,NNodes)
-      REAL(ReKi), ALLOCATABLE :: TranslationDisp(:,:)    ! Field: Translational displacements (3,NNodes)
+      REAL(R8Ki), ALLOCATABLE :: TranslationDisp(:,:)    ! Field: Translational displacements (3,NNodes)
       REAL(ReKi), ALLOCATABLE :: RotationVel(:,:)        ! Field: Rotational velocities (3,NNodes)
       REAL(ReKi), ALLOCATABLE :: TranslationVel(:,:)     ! Field: Translational velocities (3,NNodes)
       REAL(ReKi), ALLOCATABLE :: RotationAcc(:,:)        ! Field: Rotational accelerations (3,NNodes)
