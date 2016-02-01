@@ -3,7 +3,7 @@
 ! WARNING This file is generated automatically by the FAST registry
 ! Do not edit.  Your changes to this file will be lost.
 !
-! FAST Registry (v2.08.01, 21-May-2015)
+! FAST Registry (v2.08.03, 2-Oct-2015)
 !*********************************************************************************************************************************
 ! AeroDyn_Driver_Types
 !.................................................................................................................................
@@ -37,7 +37,7 @@ USE BEMT_Types
 USE AeroDyn_Types
 USE NWTC_Library
 IMPLICIT NONE
-    INTEGER(IntKi), PUBLIC, PARAMETER  :: numInp = 1      ! Usually, order of interpolation for input-output extrap (not used in driver) [-]
+    INTEGER(IntKi), PUBLIC, PARAMETER  :: numInp = 2      ! Usually, order of interpolation for input-output extrap (not used in driver) [-]
 ! =========  Dvr_Case  =======
   TYPE, PUBLIC :: Dvr_Case
     REAL(ReKi)  :: WndSpeed      ! Wind Speed [m/s]

@@ -2,7 +2,6 @@ module nwtc_bemt_minpack
    
    use NWTC_Library
    use AirFoilInfo_Types
-   use BEMTCoupled
    use UnsteadyAero_Types
    
    implicit none
