@@ -62,8 +62,7 @@ else
 endif
 
 
-NETLIB_DIR  := ../Source/dependencies/NetLib \
-               ../Source/dependencies/NetLib/minpack
+NETLIB_DIR  := ../Source/dependencies/NetLib
 NWTC_Lib_DIR = ../Source/dependencies/NWTC_Library
 AFI_DIR      = ../Source/dependencies/Airfoil_Info
 UA_DIR       = ../Source/dependencies/UnsteadyAero
@@ -134,13 +133,9 @@ UA_SOURCES =               \
 
 BEMT_SOURCES =             \
 	BEMT_Types.f90          \
-	BladeElement.f90        \
-	BEMTCoupled.f90         \
 	BEMTUncoupled.f90       \
-	Brent.f90               \
 	fmin_fcn.f90            \
 	mod_root1dim.f90        \
-	nwtc_bemt_minpack.f90   \
 	BEMT.f90
 
 AD_SOURCES =               \
@@ -239,16 +234,11 @@ UnsteadyAero$(OBJ_EXT):             AirfoilInfo$(OBJ_EXT)  UnsteadyAero_Types$(O
 
 
 BEMT_Types$(OBJ_EXT):               NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  $(BEMT_DIR)/BEMT_Types.f90
-BladeElement$(OBJ_EXT):             NWTC_Library$(OBJ_EXT)  UnsteadyAero$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)
-BEMTCoupled$(OBJ_EXT):              NWTC_Library$(OBJ_EXT)  BladeElement$(OBJ_EXT)
-nwtc_bemt_minpack$(OBJ_EXT):        NWTC_Library$(OBJ_EXT)  BEMTCoupled$(OBJ_EXT)    AirfoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
-BEMTUncoupled$(OBJ_EXT):            NWTC_Library$(OBJ_EXT)  BladeElement$(OBJ_EXT)
-Brent$(OBJ_EXT):                    NWTC_Library$(OBJ_EXT)  BEMTUncoupled$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)
+BEMTUncoupled$(OBJ_EXT):            NWTC_Library$(OBJ_EXT)  UnsteadyAero$(OBJ_EXT)   AirfoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
 fmin_fcn$(OBJ_EXT):                 NWTC_Library$(OBJ_EXT)  BEMTUncoupled$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)
 mod_root1dim$(OBJ_EXT):             NWTC_Library$(OBJ_EXT)  fmin_fcn$(OBJ_EXT)
-BEMT$(OBJ_EXT):                     NWTC_Library$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)  BEMTUncoupled$(OBJ_EXT)  BEMTCoupled$(OBJ_EXT)  \
-                                                            Brent$(OBJ_EXT)  UnsteadyAero$(OBJ_EXT)  BladeElement$(OBJ_EXT) \
-                                                            mod_root1dim$(OBJ_EXT) fmin_fcn$(OBJ_EXT) nwtc_bemt_minpack$(OBJ_EXT)
+BEMT$(OBJ_EXT):                     NWTC_Library$(OBJ_EXT)  BEMT_Types$(OBJ_EXT) BEMTUncoupled$(OBJ_EXT) UnsteadyAero$(OBJ_EXT)  \
+                                                            mod_root1dim$(OBJ_EXT) fmin_fcn$(OBJ_EXT)
 
 AeroDyn_Types$(OBJ_EXT):            NWTC_Library$(OBJ_EXT)  AirfoilInfo_Types$(OBJ_EXT)  BEMT_Types$(OBJ_EXT)  UnsteadyAero_Types$(OBJ_EXT)  $(AD_DIR)/AeroDyn_Types.f90
 AeroDyn_IO$(OBJ_EXT):               NWTC_Library$(OBJ_EXT)  AeroDyn_Types$(OBJ_EXT) BladeElement$(OBJ_EXT)

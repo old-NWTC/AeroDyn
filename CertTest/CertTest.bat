@@ -8,14 +8,14 @@ SET OLD_RESULTS=.\Results
 
 @IF EXIST CertTest.out  DEL CertTest.out
 
-echo %pounds% >> CertTest.out
+rem echo %pounds% >> CertTest.out
 echo %pounds%
 
 SET TEST=Test01_UAE
 %PROG_EXE% %TEST%.dvr
 
 rem %COMPARE% %TEST%.IfW.sum          %OLD_RESULTS%\%TEST%.IfW.sum      >> CertTest.out
-echo %pounds% >> CertTest.out
+rem echo %pounds% >> CertTest.out
 echo %pounds%
 
 

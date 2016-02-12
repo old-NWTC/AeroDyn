@@ -10,13 +10,9 @@ Airfoil_Info\AirfoilInfo_Types.f90
 BEMT\BEMT.f90
 BEMT\BEMT_Registry.txt
 BEMT\BEMT_Types.f90
-BEMT\BEMTCoupled.f90
 BEMT\BEMTUncoupled.f90
-BEMT\BladeElement.f90
-BEMT\Brent.f90
 BEMT\fmin_fcn.f90
 BEMT\mod_root1dim.f90
-Netlib\minpack\nwtc_bemt_minpack.f90
 
 UnsteadyAero\UnsteadyAero.f90
 UnsteadyAero\UnsteadyAero_Registry.txt
