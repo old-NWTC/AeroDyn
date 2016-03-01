@@ -108,6 +108,7 @@ IMPLICIT NONE
     LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: BEDSEP      ! logical flag indicating if this is undergoing separated flow [-]
     INTEGER(IntKi)  :: iBladeNode      ! index for the blade node being operated on (within the current blade) [-]
     INTEGER(IntKi)  :: iBlade      ! index for the blade being operated on [-]
+    LOGICAL  :: FirstWarn_M      ! flag so Mach number warning doesn't get repeated forever [-]
   END TYPE UA_OtherStateType
 ! =======================
 ! =========  UA_ParameterType  =======
@@ -3098,6 +3099,7 @@ IF (ALLOCATED(SrcOtherStateData%BEDSEP)) THEN
 ENDIF
     DstOtherStateData%iBladeNode = SrcOtherStateData%iBladeNode
     DstOtherStateData%iBlade = SrcOtherStateData%iBlade
+    DstOtherStateData%FirstWarn_M = SrcOtherStateData%FirstWarn_M
  END SUBROUTINE UA_CopyOtherState
 
  SUBROUTINE UA_DestroyOtherState( OtherStateData, ErrStat, ErrMsg )
@@ -3204,6 +3206,7 @@ ENDIF
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! iBladeNode
       Int_BufSz  = Int_BufSz  + 1  ! iBlade
+      Int_BufSz  = Int_BufSz  + 1  ! FirstWarn_M
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -3346,6 +3349,8 @@ ENDIF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%iBladeNode
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%iBlade
+      Int_Xferred   = Int_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%FirstWarn_M , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
  END SUBROUTINE UA_PackOtherState
 
@@ -3568,6 +3573,8 @@ ENDIF
       OutData%iBladeNode = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%iBlade = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
+      OutData%FirstWarn_M = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
  END SUBROUTINE UA_UnPackOtherState
 
