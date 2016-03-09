@@ -34,10 +34,7 @@ IF /I "%2"=="dev" CALL ..\Set_FAST_paths.bat
 
 SET ModuleName=%1
 
-IF "%ModuleName%"=="BEMT" GOTO BEMT
-IF "%ModuleName%"=="AirfoilInfo" GOTO AFI
-IF "%ModuleName%"=="AeroDyn" GOTO AeroDyn
-IF "%ModuleName%"=="AeroDyn_Driver" GOTO AeroDyn_Driver
+GOTO %ModuleName%
 
 REM ----------------------------------------------------------------------------
 REM ---------------- RUN THE REGISTRY TO AUTO-GENERATE FILES -------------------
@@ -58,7 +55,7 @@ SET CURR_LOC=%AeroDyn_Loc%
 %REGISTRY% "%CURR_LOC%\AeroDyn_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %BEMT_Loc% -I %UnsteadyAero_Loc% -O %CURR_LOC%
 GOTO checkError
 
-:AFI
+:AirfoilInfo
 SET CURR_LOC=%AirfoilInfo_Loc%
 %REGISTRY% "%CURR_LOC%\AirfoilInfo_Registry.txt" -I %NWTC_Lib_Loc% -O %CURR_LOC% -noextrap
 GOTO checkError
