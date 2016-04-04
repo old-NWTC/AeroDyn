@@ -66,6 +66,7 @@ IMPLICIT NONE
     REAL(ReKi)  :: k1_hat      !  [=]
     REAL(ReKi)  :: x_cp_bar      !  [=]
     REAL(ReKi)  :: UACutout      !  [=]
+    REAL(ReKi)  :: filtCutOff      ! low pass filter cut-off frequency for the pitching rate and accelerations [Hz]
   END TYPE AFI_UA_BL_Type
 ! =======================
 ! =========  AFI_Table_Type  =======
@@ -206,6 +207,7 @@ CONTAINS
     DstUA_BL_TypeData%k1_hat = SrcUA_BL_TypeData%k1_hat
     DstUA_BL_TypeData%x_cp_bar = SrcUA_BL_TypeData%x_cp_bar
     DstUA_BL_TypeData%UACutout = SrcUA_BL_TypeData%UACutout
+    DstUA_BL_TypeData%filtCutOff = SrcUA_BL_TypeData%filtCutOff
  END SUBROUTINE AFI_CopyUA_BL_Type
 
  SUBROUTINE AFI_DestroyUA_BL_Type( UA_BL_TypeData, ErrStat, ErrMsg )
@@ -285,6 +287,7 @@ CONTAINS
       Re_BufSz   = Re_BufSz   + 1  ! k1_hat
       Re_BufSz   = Re_BufSz   + 1  ! x_cp_bar
       Re_BufSz   = Re_BufSz   + 1  ! UACutout
+      Re_BufSz   = Re_BufSz   + 1  ! filtCutOff
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -373,6 +376,8 @@ CONTAINS
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%x_cp_bar
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%UACutout
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%filtCutOff
       Re_Xferred   = Re_Xferred   + 1
  END SUBROUTINE AFI_PackUA_BL_Type
 
@@ -473,6 +478,8 @@ CONTAINS
       OutData%x_cp_bar = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%UACutout = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%filtCutOff = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
  END SUBROUTINE AFI_UnPackUA_BL_Type
 
