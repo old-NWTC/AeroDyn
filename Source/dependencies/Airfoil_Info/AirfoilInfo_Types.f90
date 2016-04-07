@@ -9,7 +9,7 @@
 !.................................................................................................................................
 ! This file is part of AirfoilInfo.
 !
-! Copyright (C) 2012-2016 National Renewable Energy Laboratory
+! Copyright (C) 2012-2015 National Renewable Energy Laboratory
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -85,6 +85,7 @@ IMPLICIT NONE
 ! =======================
 ! =========  AFInfoType  =======
   TYPE, PUBLIC :: AFInfoType
+    INTEGER(IntKi)  :: InterpOrd      ! Interpolation order [-]
     REAL(ReKi)  :: NonDimArea      ! The non-dimensional area of the airfoil (area/chord^2) [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: CdAoAknots      ! Spline knots for the angle of attack for Cd [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: CdReKnots      ! Spline knots for the Re for Cd [-]
@@ -1024,6 +1025,7 @@ ENDIF
 ! 
    ErrStat = ErrID_None
    ErrMsg  = ""
+    DstAFInfoTypeData%InterpOrd = SrcAFInfoTypeData%InterpOrd
     DstAFInfoTypeData%NonDimArea = SrcAFInfoTypeData%NonDimArea
 IF (ALLOCATED(SrcAFInfoTypeData%CdAoAknots)) THEN
   i1_l = LBOUND(SrcAFInfoTypeData%CdAoAknots,1)
@@ -1377,6 +1379,7 @@ ENDIF
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
+      Int_BufSz  = Int_BufSz  + 1  ! InterpOrd
       Re_BufSz   = Re_BufSz   + 1  ! NonDimArea
   Int_BufSz   = Int_BufSz   + 1     ! CdAoAknots allocated yes/no
   IF ( ALLOCATED(InData%CdAoAknots) ) THEN
@@ -1529,6 +1532,8 @@ ENDIF
   Db_Xferred  = 1
   Int_Xferred = 1
 
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%InterpOrd
+      Int_Xferred   = Int_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%NonDimArea
       Re_Xferred   = Re_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%CdAoAknots) ) THEN
@@ -1865,6 +1870,8 @@ ENDIF
   Re_Xferred  = 1
   Db_Xferred  = 1
   Int_Xferred  = 1
+      OutData%InterpOrd = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
       OutData%NonDimArea = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! CdAoAknots not allocated
