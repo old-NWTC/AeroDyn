@@ -4,7 +4,7 @@ TRUE             Echo                - Echo the input file data (flag)
 ---------------------- ENVIRONMENTAL CONDITIONS -------------------------------
 340.29           SpdSound            - Speed of sound (m/s)
 ---------------------- UNSTEADYAERO -------------------------------------------
-"./Results/C5h75AM8_s809_a"     OutRootName         - The name which prefixes all UnsteadyAero generated files (quoted string)
+"./Results/C5h75AM8_s809_b"     OutRootName         - The name which prefixes all UnsteadyAero generated files (quoted string)
 24.62784 26.54808         InflowVel           - Inflow velocity (m/s)
 0.75             Re                  - Reynolds number in millions (-)
 1                UAMod               - Unsteady Aero Model Switch: 1- Baseline model (Original Leishman-Beddoes) ; 2 – Gonzalez’s variant (changes in Cn,Cc,Cm); 3- Minemma/Pierce variant (changes in Cc and Cm)
