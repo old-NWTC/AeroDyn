@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2016-07-01 11:19:01 -0600 (Fri, 01 Jul 2016) $
-! (File) Revision #: $Rev: 388 $
+! File last committed: $Date: 2016-07-17 13:29:53 -0600 (Sun, 17 Jul 2016) $
+! (File) Revision #: $Rev: 392 $
 ! URL: $HeadURL: https://windsvn2.nrel.gov/NWTC_Library/trunk/source/NWTC_Base.f90 $
 !**********************************************************************************************************************************
 !> This module stores basic constants and routines that are not system-specific, but may be used in the system-specific routines.
@@ -40,7 +40,7 @@ MODULE NWTC_Base
    INTEGER, PARAMETER            :: ErrMsgLen = 1024                              !< The maximum number of characters in an error message in the FAST framework
    
    INTEGER(IntKi), PARAMETER     :: ChanLen    = 10                               !< The allowable length of channel names (i.e., width of output columns) in the FAST framework
-   INTEGER(IntKi), PARAMETER     :: LinChanLen = 50                               !< The allowable length of row/column names in linearization files
+   INTEGER(IntKi), PARAMETER     :: LinChanLen = 200                              !< The allowable length of row/column names in linearization files
 
    INTEGER(IntKi), PARAMETER     :: NWTC_Verbose = 10                             !< The maximum level of verbosity
    INTEGER(IntKi), PARAMETER     :: NWTC_VerboseLevel = 5                         !< a number in [0, NWTC_Verbose]: 0 = no output; NWTC_Verbose=verbose; 

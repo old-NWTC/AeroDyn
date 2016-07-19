@@ -17,8 +17,8 @@
 ! limitations under the License.
 !
 !**********************************************************************************************************************************
-! File last committed: $Date: 2016-07-01 11:19:01 -0600 (Fri, 01 Jul 2016) $
-! (File) Revision #: $Rev: 388 $
+! File last committed: $Date: 2016-07-11 10:36:47 -0600 (Mon, 11 Jul 2016) $
+! (File) Revision #: $Rev: 390 $
 ! URL: $HeadURL: https://windsvn2.nrel.gov/NWTC_Library/trunk/source/ModMesh.f90 $
 !**********************************************************************************************************************************
 !> The modules ModMesh and ModMesh_Types provide data structures and subroutines for representing and manipulating meshes
@@ -2875,26 +2875,32 @@ SUBROUTINE MeshWrVTK_PointSurface ( RefPoint, M, FileRootName, VTKcount, OutputF
 !! fields are allocated.
    SUBROUTINE PackLoadMesh_Names(M, MeshName, Names, indx_first)
    
-      TYPE(MeshType)                    , INTENT(IN   ) :: M                          !< AD output mesh
+      TYPE(MeshType)                    , INTENT(IN   ) :: M                          !< Load mesh
       CHARACTER(*)                      , INTENT(IN   ) :: MeshName                   !< name of mesh 
-      CHARACTER(LinChanLen)             , INTENT(INOUT) :: Names(:)                   !< name of column of dYdu 
+      CHARACTER(LinChanLen)             , INTENT(INOUT) :: Names(:)                   !< name of row/column of jacobian 
       INTEGER(IntKi)                    , INTENT(INOUT) :: indx_first                 !< index into Names array; gives location of next array position to fill
    
          ! local variables:
       INTEGER(IntKi)                :: i, j
       character(1), parameter       :: Comp(3) = (/'X','Y','Z'/)
+      character(2)                  :: UnitDesc
 
-   
+            
+      UnitDesc = ''
+      if (M%Committed) then
+         if (M%ElemTable(ELEMENT_LINE2)%nelem > 0) UnitDesc = '/m'
+      end if
+                     
       do i=1,M%NNodes
          do j=1,3
-            Names(indx_first) = trim(MeshName)//Comp(j)//' force, node '//trim(num2lstr(i))
+            Names(indx_first) = trim(MeshName)//' '//Comp(j)//' force, node '//trim(num2lstr(i))//', N'//UnitDesc
             indx_first = indx_first + 1
          end do      
       end do
                            
       do i=1,M%NNodes
          do j=1,3
-            Names(indx_first) = trim(MeshName)//Comp(j)//' moment, node '//trim(num2lstr(i))
+            Names(indx_first) = trim(MeshName)//' '//Comp(j)//' moment, node '//trim(num2lstr(i))//', Nm'//UnitDesc
             indx_first = indx_first + 1
          end do      
       end do
@@ -2902,16 +2908,44 @@ SUBROUTINE MeshWrVTK_PointSurface ( RefPoint, M, FileRootName, VTKcount, OutputF
 
    END SUBROUTINE PackLoadMesh_Names
 !...............................................................................................................................
-!> This subroutine returns the names of rows/columns of motion meshes in the Jacobian matrices. It assumes all fields are allocated;
-!! if accelerations are not desired, use the SkipAcc argument. Some fields may be allocated by the ModMesh module and not used in
+!> This subroutine returns the operating point values of the mesh fields. It assumes both force and moment
+!! fields are allocated.
+   SUBROUTINE PackLoadMesh(M, Ary, indx_first)
+   
+      TYPE(MeshType)                    , INTENT(IN   ) :: M                          !< Load mesh
+      REAL(ReKi)                        , INTENT(INOUT) :: Ary(:)                     !< array to pack this mesh into 
+      INTEGER(IntKi)                    , INTENT(INOUT) :: indx_first                 !< index into Ary; gives location of next array position to fill
+   
+         ! local variables:
+      INTEGER(IntKi)                :: i, j
+
+                     
+      do i=1,M%NNodes
+         do j=1,3
+            Ary(indx_first) = M%Force(j,i)
+            indx_first = indx_first + 1
+         end do      
+      end do
+                           
+      do i=1,M%NNodes
+         do j=1,3
+            Ary(indx_first) = M%Moment(j,i)
+            indx_first = indx_first + 1
+         end do      
+      end do
+            
+
+   END SUBROUTINE PackLoadMesh
+!...............................................................................................................................
+!> This subroutine returns the names of rows/columns of motion meshes in the Jacobian matrices. It assumes all fields marked
+!! by FieldMask are allocated; Some fields may be allocated by the ModMesh module and not used in
 !! the linearization procedure, thus I am not using the check if they are allocated to determine if they should be included.
-   SUBROUTINE PackMotionMesh_Names(M, MeshName, Names, indx_first, SkipAcc, FieldMask)
+   SUBROUTINE PackMotionMesh_Names(M, MeshName, Names, indx_first, FieldMask)
    
       TYPE(MeshType)                    , INTENT(IN   ) :: M                          !< Motion mesh
       CHARACTER(*)                      , INTENT(IN   ) :: MeshName                   !< name of mesh 
-      CHARACTER(LinChanLen)             , INTENT(INOUT) :: Names(:)                   !< name of column of dYdu 
+      CHARACTER(LinChanLen)             , INTENT(INOUT) :: Names(:)                   !< name of row/column of jacobian
       INTEGER(IntKi)                    , INTENT(INOUT) :: indx_first                 !< index into Names array; gives location of next array position to fill
-      LOGICAL, OPTIONAL                 , INTENT(IN   ) :: SkipAcc                    !< flag that allows us to skip the acceleration fields; overrides FieldMask(5:6)
       LOGICAL, OPTIONAL                 , INTENT(IN   ) :: FieldMask(FIELDMASK_SIZE)  !< flags to determine if this field is part of the packing
       
       
@@ -2925,17 +2959,12 @@ SUBROUTINE MeshWrVTK_PointSurface ( RefPoint, M, FileRootName, VTKcount, OutputF
       else
          Mask = .true.
       end if
-      
-      if (present(SkipAcc)) then
-         Mask(MASKID_TRANSLATIONACC) = .false.
-         Mask(MASKID_ROTATIONACC) = .false.
-      end if
-      
+            
    
       if (Mask(MASKID_TRANSLATIONDISP)) then
          do i=1,M%NNodes
             do j=1,3
-               Names(indx_first) = trim(MeshName)//Comp(j)//' translation displacement, node '//trim(num2lstr(i))
+               Names(indx_first) = trim(MeshName)//' '//Comp(j)//' translation displacement, node '//trim(num2lstr(i))//', m'
                indx_first = indx_first + 1
             end do      
          end do
@@ -2944,7 +2973,7 @@ SUBROUTINE MeshWrVTK_PointSurface ( RefPoint, M, FileRootName, VTKcount, OutputF
       if (Mask(MASKID_ORIENTATION)) then
          do i=1,M%NNodes
             do j=1,3
-               Names(indx_first) = trim(MeshName)//Comp(j)//' orientation angle, node '//trim(num2lstr(i))
+               Names(indx_first) = trim(MeshName)//' '//Comp(j)//' orientation angle, node '//trim(num2lstr(i))//', rad'
                indx_first = indx_first + 1
             end do      
          end do
@@ -2953,7 +2982,7 @@ SUBROUTINE MeshWrVTK_PointSurface ( RefPoint, M, FileRootName, VTKcount, OutputF
       if (Mask(MASKID_TRANSLATIONVEL)) then
          do i=1,M%NNodes
             do j=1,3
-               Names(indx_first) = trim(MeshName)//Comp(j)//' translation velocity, node '//trim(num2lstr(i))
+               Names(indx_first) = trim(MeshName)//' '//Comp(j)//' translation velocity, node '//trim(num2lstr(i))//', m/s'
                indx_first = indx_first + 1
             end do      
          end do
@@ -2962,7 +2991,7 @@ SUBROUTINE MeshWrVTK_PointSurface ( RefPoint, M, FileRootName, VTKcount, OutputF
       if (Mask(MASKID_ROTATIONVEL)) then
          do i=1,M%NNodes
             do j=1,3
-               Names(indx_first) = trim(MeshName)//Comp(j)//' rotation velocity, node '//trim(num2lstr(i))
+               Names(indx_first) = trim(MeshName)//' '//Comp(j)//' rotation velocity, node '//trim(num2lstr(i))//', rad/s'
                indx_first = indx_first + 1
             end do      
          end do
@@ -2971,7 +3000,7 @@ SUBROUTINE MeshWrVTK_PointSurface ( RefPoint, M, FileRootName, VTKcount, OutputF
       if (Mask(MASKID_TRANSLATIONACC)) then
          do i=1,M%NNodes
             do j=1,3
-               Names(indx_first) = trim(MeshName)//Comp(j)//' translation acceleration, node '//trim(num2lstr(i))
+               Names(indx_first) = trim(MeshName)//' '//Comp(j)//' translation acceleration, node '//trim(num2lstr(i))//', m/s^2'
                indx_first = indx_first + 1
             end do      
          end do
@@ -2980,7 +3009,7 @@ SUBROUTINE MeshWrVTK_PointSurface ( RefPoint, M, FileRootName, VTKcount, OutputF
       if (Mask(MASKID_ROTATIONACC)) then
          do i=1,M%NNodes
             do j=1,3
-               Names(indx_first) = trim(MeshName)//Comp(j)//' rotation acceleration, node '//trim(num2lstr(i))
+               Names(indx_first) = trim(MeshName)//' '//Comp(j)//' rotation acceleration, node '//trim(num2lstr(i))//', rad/s^2'
                indx_first = indx_first + 1
             end do      
          end do
@@ -2988,7 +3017,87 @@ SUBROUTINE MeshWrVTK_PointSurface ( RefPoint, M, FileRootName, VTKcount, OutputF
 
 
    END SUBROUTINE PackMotionMesh_Names
+!> This subroutine returns the operating point values of the mesh fields. It assumes all fields marked
+!! by FieldMask are allocated; Some fields may be allocated by the ModMesh module and not used in
+!! the linearization procedure, thus I am not using the check if they are allocated to determine if they should be included.
+   SUBROUTINE PackMotionMesh(M, Ary, indx_first, FieldMask)
+   
+      TYPE(MeshType)                    , INTENT(IN   ) :: M                          !< Motion mesh
+      REAL(ReKi)                        , INTENT(INOUT) :: Ary(:)                     !< array to pack this mesh into 
+      INTEGER(IntKi)                    , INTENT(INOUT) :: indx_first                 !< index into Ary; gives location of next array position to fill
+      LOGICAL, OPTIONAL                 , INTENT(IN   ) :: FieldMask(FIELDMASK_SIZE)  !< flags to determine if this field is part of the packing
+      
+      
+         ! local variables:
+      INTEGER(IntKi)                :: i, j, k
+      LOGICAL                       :: Mask(FIELDMASK_SIZE)               !< flags to determine if this field is part of the packing
 
+      if (present(FieldMask)) then
+         Mask = FieldMask
+      else
+         Mask = .true.
+      end if
+            
+   
+      if (Mask(MASKID_TRANSLATIONDISP)) then
+         do i=1,M%NNodes
+            do j=1,3
+               Ary(indx_first) = M%TranslationDisp(j,i)
+               indx_first = indx_first + 1
+            end do      
+         end do
+      end if
+      
+      if (Mask(MASKID_ORIENTATION)) then
+         do i=1,M%NNodes
+            do j=1,3
+               do k=1,3 ! note this gives us 9 values instead of 3 for this "operating point"
+                  Ary(indx_first) = M%Orientation(j,k,i)
+                  indx_first = indx_first + 1
+               end do               
+            end do      
+         end do
+      end if
+      
+      if (Mask(MASKID_TRANSLATIONVEL)) then
+         do i=1,M%NNodes
+            do j=1,3
+               Ary(indx_first) = M%TranslationVel(j,i)
+               indx_first = indx_first + 1
+            end do      
+         end do
+      end if
+      
+      if (Mask(MASKID_ROTATIONVEL)) then
+         do i=1,M%NNodes
+            do j=1,3
+               Ary(indx_first) = M%RotationVel(j,i)
+               indx_first = indx_first + 1
+            end do      
+         end do
+      end if
+         
+      if (Mask(MASKID_TRANSLATIONACC)) then
+         do i=1,M%NNodes
+            do j=1,3
+               Ary(indx_first) = M%TranslationAcc(j,i)
+               indx_first = indx_first + 1
+            end do      
+         end do
+      end if
+   
+      if (Mask(MASKID_ROTATIONACC)) then
+         do i=1,M%NNodes
+            do j=1,3
+               Ary(indx_first) = M%RotationAcc(j,i)
+               indx_first = indx_first + 1
+            end do      
+         end do
+      end if
+
+
+   END SUBROUTINE PackMotionMesh
+         
 !...............................................................................................................................
 !> This subroutine calculates a extrapolated (or interpolated) input u_out at time t_out, from previous/future time
 !! values of u (which has values associated with times in t).  Order of the interpolation is 1.
