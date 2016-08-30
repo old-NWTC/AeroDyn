@@ -1,0 +1,27 @@
+------- Noise Module v1.00.* INPUT FILE ------------------------------------------------
+NREL 5.0 MW offshore baseline aerodynamic input properties.
+======  General Options  ============================================================================
+False         Echo               - Echo the input to "<rootname>.AD.ech"?  (flag)
+"default"     DTAero             - Time interval for aerodynamic calculations {or "default"} (s)
+1   IBLUNT            - FLAG TO COMPUTE BLUNTNESS NOISE {}
+1           ILAM          - FLAG TO COMPUTE LBL NOISE(switch) {}
+0   ITIP          - FLAG TO COMPUTE TIP NOISE (switch) {}
+1  ITRIP          - FLAG TO TRIP BOUNDARY LAYER (switch) {}
+1   ITURB          - FLAG TO COMPUTE TBLTE NOISE  (switch) {0=none,}
+0   IInflow          - FLAG TO COMPUTE Turbulent Inflow NOISE (switch) {0=none,}
+True          ROUND            - LOGICAL INDICATING ROUNDED TIP
+1.0       	ALPRAT             TIP LIFT CURVE SLOPE and(Default = 1.0)      
+1   OctBand          - Octave Band to be used (values are either 1 or 3 or 6 )  
+======  Observer Input  ===================================================================
+2   NrObsLoc          - Total Number of  observer locations
+100.0	120.0	ObsX             Observer location in tower-base coordinate X horizontal  (m)
+0.0	10.0	ObsY             Observer location in tower-base coordinate Y Lateral (m)
+2.0	5.0	ObsZ             Observer location in tower-base coordinate Z Vertical (m)
+======  Blade Properties  =====================================================================
+"noiseblade1.dat"    NNBlFile(1)        - Name of file containing distributed aerodynamic properties for Blade #1 (-)
+======  Outputs  ====================================================================================
+False         SumPrint            - Generate a summary file listing input options and interpolated properties to "<rootname>.AD.sum"?  (flag)
+              OutList             - The next line(s) contains a list of output parameters.  See OutListParameters.xlsx for a listing of available output channels, (-)
+"B1N1Alpha, B1N1Cl, B1N1Cd, B1N1Cm"
+END of input file (the word "END" must appear in the first 3 columns of this last OutList line)
+---------------------------------------------------------------------------------------

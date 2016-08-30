@@ -928,19 +928,20 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
                   
                   ! Apply the skewed wake correction to the axial induction and recompute phi and alpha - RRD: where is the new AOA?
                if ( p%skewWakeMod == SkewMod_PittPeters ) then
+                  ! Only correct for skewed wake if we are not at the tip or hub
+                  if (.not. ( ( p%useTipLoss .and. EqualRealNos(p%tipLossConst(i,j),0.0_ReKi) ) .or. ( p%useHubLoss .and. EqualRealNos(p%hubLossConst(i,j),0.0_ReKi) ) ) ) then
+                        ! Correct for skewed wake, by recomputing axInduction
+                        ! NOTE: tanInduction and axInduction may be set to zero by this routine if the local induced velocities are zero.
+                     call ApplySkewedWakeCorrection( u1%Vx(i,j), u1%Vy(i,j), u1%psi(j), u1%chi0, u1%rlocal(i,j)/Rtip, axInduction, tanInduction, chi, ErrStat2, ErrMsg2 ) !replaced phiOut with phitemp  RRD
+                     ! ApplySkewedWakeCorrection doesn't produce errors
+                     !call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
+                     !if (errStat >= AbortErrLev) return 
                   
-                     ! Correct for skewed wake, by recomputing axInduction
-                     ! NOTE: tanInduction and axInduction may be set to zero by this routine if the local induced velocities are zero.
-                  call ApplySkewedWakeCorrection( u1%Vx(i,j), u1%Vy(i,j), u1%psi(j), u1%chi0, u1%rlocal(i,j)/Rtip, axInduction, tanInduction, chi, ErrStat2, ErrMsg2 ) !replaced phiOut with phitemp  RRD
-                  ! ApplySkewedWakeCorrection doesn't produce errors
-                  !call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
-                  !if (errStat >= AbortErrLev) return 
-                  
-                  phitemp = ComputePhiWithInduction( u1%Vx(i,j), u1%Vy(i,j),  axInduction, tanInduction, errStat2, errMsg2 )  
-                  call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
-                     ! angle of attack
-                  u_UA%alpha = phitemp - u1%theta(i,j)
-                  
+                     phitemp = ComputePhiWithInduction( u1%Vx(i,j), u1%Vy(i,j),  axInduction, tanInduction, errStat2, errMsg2 )  
+                     call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
+                        ! angle of attack
+                     u_UA%alpha = phitemp - u1%theta(i,j)
+                  end if
                end if
             
             end if
@@ -1116,13 +1117,17 @@ subroutine BEMT_CalcOutput( t, u, p, x, xd, z, OtherState, AFInfo, y, m, errStat
                
                   ! Apply the skewed wake correction to the axial induction (y%axInduction) and recompute y%phi, y%AOA
                if ( p%skewWakeMod == SkewMod_PittPeters ) then
-                  call ApplySkewedWakeCorrection( Vx, Vy, u%psi(j), u%chi0, u%rlocal(i,j)/Rtip, y%axInduction(i,j), y%tanInduction(i,j), y%chi(i,j), ErrStat2, ErrMsg2 )           
-                  ! ApplySkewedWakeCorrection doesn't set errors
+                  ! Only correct for skewed wake if we are not at the tip or hub
+                  if ( .not. ( ( p%useTipLoss .and. EqualRealNos(p%tipLossConst(i,j),0.0_ReKi) ) .or. ( p%useHubLoss .and. EqualRealNos(p%hubLossConst(i,j),0.0_ReKi) ) ) ) then
+                        
+                     call ApplySkewedWakeCorrection( Vx, Vy, u%psi(j), u%chi0, u%rlocal(i,j)/Rtip, y%axInduction(i,j), y%tanInduction(i,j), y%chi(i,j), ErrStat2, ErrMsg2 )           
+                     ! ApplySkewedWakeCorrection doesn't set errors
                
-                  y%phi(i,j) = ComputePhiWithInduction( u%Vx(i,j), u%Vy(i,j),  y%axInduction(i,j), y%tanInduction(i,j), errStat2, errMsg2 )  
-                  call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
-                     ! angle of attack
-                  y%AOA(i,j) = y%phi(i,j) - theta
+                     y%phi(i,j) = ComputePhiWithInduction( u%Vx(i,j), u%Vy(i,j),  y%axInduction(i,j), y%tanInduction(i,j), errStat2, errMsg2 )  
+                     call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
+                        ! angle of attack
+                     y%AOA(i,j) = y%phi(i,j) - theta
+                  end if
                end if
             end if ! UseFrozenWake
             

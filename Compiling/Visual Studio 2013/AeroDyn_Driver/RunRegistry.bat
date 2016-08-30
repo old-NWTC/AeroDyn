@@ -28,6 +28,7 @@ SET BEMT_Loc=%Source_Loc%\dependencies\BEMT
 SET UnsteadyAero_Loc=%Source_Loc%\dependencies\UnsteadyAero
 SET AeroDyn_Loc=%Source_Loc%\dependencies\AeroDyn
 SET Driver_Loc=%Source_Loc%
+SET AA_Loc=..\..\..\AeroAcoustics\src\AeroAcoustics
 
 
 IF /I "%2"=="dev" CALL ..\Set_FAST_paths.bat
@@ -52,7 +53,7 @@ GOTO checkError
 
 :AeroDyn
 SET CURR_LOC=%AeroDyn_Loc%
-%REGISTRY% "%CURR_LOC%\AeroDyn_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %BEMT_Loc% -I %UnsteadyAero_Loc% -O %CURR_LOC%
+%REGISTRY% "%CURR_LOC%\AeroDyn_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %BEMT_Loc% -I %UnsteadyAero_Loc% -I %AA_Loc% -O %CURR_LOC%
 GOTO checkError
 
 :AirfoilInfo
