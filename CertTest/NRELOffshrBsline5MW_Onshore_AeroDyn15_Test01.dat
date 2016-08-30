@@ -9,6 +9,8 @@ False         Echo               - Echo the input to "<rootname>.AD.ech"?  (flag
 False         TwrShadow          – Calculate tower influence on wind based on downstream tower shadow? (flag)
 True          TwrAero            - Calculate tower aerodynamic loads? (flag)
 False         FrozenWake         - Assume frozen wake during linearization? (flag) [used only when WakeMod=1 and when linearizing]
+True          CompAA
+"NoiseInput.dat"  AA_InputFile
 ======  Environmental Conditions  ===================================================================
       1.225   AirDens            - Air density (kg/m^3)
   1.464E-05   KinVisc            - Kinematic air viscosity (m^2/s)

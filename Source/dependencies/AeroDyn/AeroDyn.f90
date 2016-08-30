@@ -304,8 +304,8 @@ subroutine AD_Init( InitInp, u, p, x, xd, z, OtherState, y, m, Interval, InitOut
 !=======================================================================================
 ! TODO: Fix this
       ! Hardcode some values for now until the File I/O code is added for the AA module.
-   InputFileData%AA_InputFile = 'NoiseInput.dat'
-   p%CompAA = .true.
+!   InputFileData%AA_InputFile = 'NoiseInput.dat'
+ !  p%CompAA = .true.
 !=======================================================================================
    
       
@@ -866,6 +866,7 @@ subroutine SetParameters( InitInp, InputFileData, p, ErrStat, ErrMsg )
       p%FrozenWake = .FALSE.
    end if
    
+   p%CompAA = InputFileData%CompAA
    
  ! p%numBlades        = InitInp%numBlades    ! this was set earlier because it was necessary
    p%NumBlNds         = InputFileData%BladeProps(1)%NumBlNds
