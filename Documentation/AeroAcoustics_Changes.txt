@@ -1,0 +1,36 @@
+Changes from Noise Module to AeroAcoustics Module
+- CMake build scripts are broken
+- Look at the CertTest folder and NRELOffshrBsline5MW_Onshore_Test01.dvr for a typical test case
+
+Noise_Registry.txt becomes AeroAcoustics_Registry.txt
+-----------------------------------------------------
+* added: usefrom     AirfoilInfo_Registry.txt
+* InitInputType, added: AirDens, KinVisc, SpdSound, BlAFID, AFInfo
+* AA_InputFile, deleted: AirDens, KinVisc, SpdSound
+* Changed NN_BladePropsType to AA_BladePropsType
+* Parameters added: BlAFID, AFInfo, AFLECo, AFTECo
+* InputType added: RotLtoG, AeroCent_G
+* InputType deleted: BlTECo, BlLECo
+* Altered the dimensions of p%TEThick, p%TEAngle, p%AerCent, p%BlSpn, p%BlChord, p%AFTeCo, p%AFLeCo
+
+Noise_IO.f90 becomes AeroAcoustics_IO.f90
+-----------------------------------------------------
+* Replace module name Noise with AeroAcoustics
+* Replace shorthand NN_ with AA_
+* changed version number to 1.00.00 and date to 18-Aug-2016
+* TODO: Added placeholder loop over NumBlades for reading all Blade inputs:  THIS NEEDS TO BE FULLY IMPLEMENTED by supporting AABlFile as an array
+* Removed ReadCom() related code for Environmental conditions within the AeroAcoustics input file
+
+Noise.f90 becomes AeroAcoustics.f90
+-----------------------------------------------------
+* Replace module name Noise with AeroAcoustics
+* Replace shorthand NN_ with AA_
+* changed R8Ki to ReKi
+* Added validation of AirDens, KinVisc and SpdSound initialization inputs and removed the validation of the InputFileData versions of these variables
+* Altered the allocation and population of p%TEThick, p%TEAngle, p%AerCent, p%BlSpn, p%BlChord, p%AFTeCo, p%AFLeCo
+* Removed the allocation of u%BlTeCo and u%BlLeCo and replaced with u%RotLtoG and u%AeroCent_G
+* AA_UpdateStates() removed unused utimes(:) argument, changed TEMPSTD to ReKi from R8Ki
+* AA_CalcOutput() : removed nt parameter and made it a local variable.  nt is set using t/ p%DT where we assume t is an integer multiple of p%DT
+* CalcObserve() : Need to update the code for computing RTEObserve and RLEObserve
+* CalcAeroAcousticsOutput() : TODO: Handle degenerate cases of Vrel = 0.0 and BlSpn = 0.00, added 2nd dimension for BlChord and BlSpn
+

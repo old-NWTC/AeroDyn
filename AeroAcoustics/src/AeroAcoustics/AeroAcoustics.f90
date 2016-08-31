@@ -845,6 +845,14 @@ SUBROUTINE CalcObserve(p,m,u,errStat,errMsg)
 	    !RLEObserve(1)=p%Obsx(K)-u%BlLECo(J,I,1)
 	    !RLEObserve(2)=p%Obsy(K)-u%BlLECo(J,I,2)
 	    !RLEObserve(3)=p%Obsz(K)-u%BlLECo(J,I,3)
+          
+       RTEObserve(1)=1.0_ReKi
+	    RTEObserve(2)=1.0_ReKi
+       RTEObserve(3)=1.0_ReKi
+                     
+	    RLEObserve(1)=1.0_ReKi
+	    RLEObserve(2)=1.0_ReKi
+	    RLEObserve(3)=1.0_ReKi
 ! TODO : End rework
 !================================================================
 !!
@@ -942,8 +950,13 @@ SUBROUTINE CalcAeroAcousticsOutput(u,p,m,xd,y,errStat,errMsg,nt)
       DO J = 1, p%NumBlNds
 	    DO K = 1,p%NrObsLoc
      		AlphaNoise= u%AoANoise(J,I) * R2D_D 
-
+         
+! TODO: Handle degenerate case where Vrel = 0.0
+! TODO: Handle degenerate case where BlSpn = 0.0
 		Unoise =  u%Vrel(J,I) 
+if (EqualRealNos(Unoise,0.0_ReKi)) then
+   Unoise = 0.1
+end if
 
 !  inquire(file="test.txt", exist=exist)
 !  if (exist) then
