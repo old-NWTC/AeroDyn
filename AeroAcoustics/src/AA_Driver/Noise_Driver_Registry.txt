@@ -1,0 +1,92 @@
+###################################################################################################################################
+# Registry for Noise 15 Driver in the FAST Modularization Framework
+# This Registry file is used to create Noise_Driver_Types.
+# It also contains copy, destroy, pack, and unpack routines associated with each defined data types.
+# See the NWTC Programmer's Handbook for further information on the format/contents of this file.
+#
+# Entries are of the form
+# <keyword>	<ModuleName/ModName>	<TypeName>	<FieldType>	<FieldName>	<Dims>	<IO>	<DNAME>	<DESCRIP>	<UNITS>
+#
+# Use ^ as a shortcut for the value in the same column from the previous line.
+###################################################################################################################################
+# File last committed $Date$
+# (File) Revision #: $Rev$
+# URL: $HeadURL$
+###################################################################################################################################
+# ...... Include files (definitions from NWTC Library) ............................................................................
+include	Registry_NWTC_Library.txt
+usefrom	Noise_Registry.txt
+
+#
+# ..... Table of cases to run .......................................................................................................
+typedef   Noise_Driver/NN_Dvr     Dvr_Case      ReKi                   WndSpeed         -      -     -   "Wind Speed" "m/s"
+typedef   ^                         ^             ReKi                   ShearExp         -      -     -   "Power Law Wind-Shear Exponent" "-"
+typedef   ^                         ^             ReKi                   RotSpeed         -      -     -   "Rotor Speed" "rad/s"
+typedef   ^                         ^             ReKi                   Pitch            -      -     -   "Pitch angle" "rad"
+typedef   ^                         ^             ReKi                   Yaw              -      -     -   "Yaw angle" "rad"
+typedef   ^                         ^             DbKi                   dT               -      -     -   "time increment" "s"
+typedef   ^                         ^             DbKi                   Tmax             -      -     -   "length of this simulation" "s"
+
+#
+# ..... Data for driver output file .......................................................................................................
+typedef   ^                        Dvr_OutputFile ProgDesc               NN_ver           -      -     -   "Noise version information" -
+typedef   ^                         ^             IntKi                  unOutFile        -      -     -   "unit number for writing output file" "-"
+typedef   ^                         ^             character(1)           delim            -      -     -   "column delimiter" "-"
+typedef   ^                         ^             character(20)          outFmt           -      -     -   "Format specifier" "-"
+typedef   ^                         ^             character(1024)        Root             -      -     -   "Output file rootname" "-"
+typedef   ^                         ^             character(1024)        runTitle         -      -     -   "Description string from input file" "-"
+typedef   ^                         ^             character(ChanLen)     WriteOutputHdr  {:}     -     -   "Channel headers" "-"
+typedef   ^                         ^             character(ChanLen)     WriteOutputUnt  {:}     -     -   "Channel units" "-"
+
+#
+# ..... Noise data .......................................................................................................
+param     ^                         -             INTEGER                numInp           -      2     -   "Usually, order of interpolation for input-output extrap (not used in driver)"
+typedef   ^                         Noise_Data    NN_ContinuousStateType x                -      -     -   "Continuous states"
+typedef   ^                         ^             NN_DiscreteStateType   xd               -      -     -   "Discrete states"
+typedef   ^                         ^             NN_ConstraintStateType z                -      -     -   "Constraint states"
+typedef   ^                         ^             NN_OtherStateType      OtherState       -      -     -   "Other states"
+typedef   ^                         ^             NN_MiscVarType         m                -      -     -   "misc/optimization variables"
+typedef   ^                         ^             NN_ParameterType       p                -      -     -   "Parameters"
+typedef   ^                         ^             NN_InputType           u              {numInp} -     -   "Array of system inputs"
+typedef   ^                         ^             NN_OutputType          y                -      -     -   "System outputs"
+typedef   ^                         ^             DbKi                   InputTime      {numInp} -     -   "Array of times associated with u array"
+
+
+#
+# ..... Data for driver simulation .......................................................................................................
+typedef   ^                        Dvr_SimData   character(1024)         NN_InputFile     -      -     -   "Name of Noise input file" -
+typedef   ^                         ^            IntKi                   numBlades        -      -     -   "number of blades on turbine" "-"
+typedef   ^                         ^            ReKi                    hubRad           -      -     -   "Hub radius" "m"
+typedef   ^                         ^            ReKi                    hubHt            -      -     -   "Hub height" "m"
+typedef   ^                         ^            ReKi                    overhang         -      -     -   "overhang" "m"
+typedef   ^                         ^            ReKi                    ShftTilt         -      -     -   "Shaft tilt angle" "rad"
+typedef   ^                         ^            ReKi                    Precone          -      -     -   "Precone angle (all blades)" "rad"
+typedef   ^                         ^            IntKi                   NumCases         -      -     -   "number of time-marching cases to run" "-"
+typedef   ^                         ^            Dvr_Case                Cases           {:}     -     -   "table of cases to run" "-"
+typedef   ^                         ^            Dvr_OutputFile          OutFileData      -      -     -   "data for driver output file" "-"
+#typedef  ^                         ^            Noise_Data              NN               -      -     -   "data for the Noise module"
+
+typedef	  ^	                    ^	         ReKi	                 BlStaMul	     {:}	    -	-	"Blade Stations Multiplier for Rotation"	-
+typedef   ^	                    ^     	 IntKi	                 NumBlNds	      -   	    -	-	"Number of blade nodes used in the analysis"	-
+typedef	  ^   	                    ^	         ReKi                    BlSpn           {:}	    -	-	"Span at blade node"	m
+typedef	  ^	                    ^	         ReKi	                 BlCrvAC	     {:}	    -	-	"Curve at blade node"	m
+typedef	  ^    	                    ^	         ReKi	                 BlSwpAC	     {:}	    -	-	"Sweep at blade node"	m
+typedef	  ^	                    ^            ReKi	                 BlCrvAng	     {:}	    -	-	"Curve angle at blade node"	radians
+typedef	  ^	                    ^	         ReKi	                 BlTwist	     {:}	    -	-	"Twist at blade node"	radians
+typedef	  ^	                    ^	         ReKi	                 BlChord	     {:}	    -	-	"Chord at blade node"	m
+typedef   ^	                    ^	         IntKi	                 BlAFID	         {:}	    -	-	"ID of Airfoil at blade node"	-
+typedef	  ^	                    ^	         ReKi	                 BlTECo	         {:}{:}{:}	-	-	"Trailing Edge Coordinates - Single Blade"	-
+typedef	  ^	                    ^            ReKi	                 BlLECo	         {:}{:}{:}	-	-	"Leading Edge Coordinates - Single Blade"	-
+typedef	  ^	                    ^	         ReKi	                 BlTECo_in	     {:}{:}	    -	-	"Trailing Edge Coordinates - Single Blade"	-
+typedef	  ^	                    ^            ReKi	                 BlLECo_in	     {:}{:}	    -	-	"Leading Edge Coordinates - Single Blade"	-
+
+typedef	  ^	                    ^	         ReKi	                 HubPosition	        {3}   	-	-	"X-Y-Z reference position of hub"	m
+typedef	  ^	                    ^	         R8Ki	                 HubOrientation	        {3}{3}	-	-	"DCM reference orientation of hub"	-
+typedef	  ^	                    ^	         ReKi	                 BladeRootPosition	    {:}{:}	-	-	"X-Y-Z reference position of each blade root (3 x NumBlades)"	m
+typedef	  ^	                    ^	         R8Ki	                 BladeRootOrientation	{:}{:}{:}	-	-	"DCM reference orientation of blade roots (3x3 x NumBlades)"	-
+typedef	  ^	                    ^	         MeshType	         HubMotion	        -	    -	-	"motion on the hub"	-
+typedef	  ^	                    ^	         MeshType	         BladeRootMotion	{:}	    -	-	"motion on each blade root"	-
+typedef	  ^	                    ^	         MeshType	         BladeMotion   	    {:}	    -	-	"motion on each blade"	-
+typedef	  ^	                    ^	         ReKi	                 InflowOnBlade	    {:}{:}{:} -  -			"U,V,W at nodes on each blade (note if we change the requireo change)"	m/s
+
+

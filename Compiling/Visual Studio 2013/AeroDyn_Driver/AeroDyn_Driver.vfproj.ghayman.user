@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioUserFile ProjectCreator="Intel Fortran" Keyword="Console Application" Version="11.0" ProjectIdGuid="{97CEFEB9-1DCB-470E-A231-E1DA2F21A9CE}">
+	<Configurations>
+		<Configuration Name="Debug|Win32" CommandArguments="NRELOffshrBsline5MW_Onshore_Test01.dvr" WorkingDirectory="C:\Dev\NWTC Github\AeroDyn\CertTest"/>
+		<Configuration Name="Release|Win32"/></Configurations></VisualStudioUserFile>

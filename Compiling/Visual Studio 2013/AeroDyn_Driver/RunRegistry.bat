@@ -25,6 +25,7 @@ SET Source_Loc=..\..\..\Source
 SET NWTC_Lib_Loc=%Source_Loc%\dependencies\NWTC_Library
 SET AirfoilInfo_Loc=%Source_Loc%\dependencies\Airfoil_Info
 SET BEMT_Loc=%Source_Loc%\dependencies\BEMT
+SET DBEMT_Loc=%Source_Loc%\dependencies\DBEMT
 SET UnsteadyAero_Loc=%Source_Loc%\dependencies\UnsteadyAero
 SET AeroDyn_Loc=%Source_Loc%\dependencies\AeroDyn
 SET Driver_Loc=%Source_Loc%
@@ -47,12 +48,17 @@ GOTO checkError
 
 :BEMT
 SET CURR_LOC=%BEMT_Loc%
-%REGISTRY% "%CURR_LOC%\BEMT_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %UnsteadyAero_Loc% -O %CURR_LOC%
+%REGISTRY% "%CURR_LOC%\BEMT_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %UnsteadyAero_Loc% -I %DBEMT_Loc% -O %CURR_LOC%
+GOTO checkError
+
+:DBEMT
+SET CURR_LOC=%DBEMT_Loc%
+%REGISTRY% "%CURR_LOC%\DBEMT_Registry.txt" -I %NWTC_Lib_Loc% -O %CURR_LOC%
 GOTO checkError
 
 :AeroDyn
 SET CURR_LOC=%AeroDyn_Loc%
-%REGISTRY% "%CURR_LOC%\AeroDyn_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %BEMT_Loc% -I %UnsteadyAero_Loc% -O %CURR_LOC%
+%REGISTRY% "%CURR_LOC%\AeroDyn_Registry.txt" -I %NWTC_Lib_Loc% -I %AirfoilInfo_Loc% -I %BEMT_Loc% -I %DBEMT_Loc% -I %UnsteadyAero_Loc% -O %CURR_LOC%
 GOTO checkError
 
 :AirfoilInfo
@@ -62,7 +68,7 @@ GOTO checkError
 
 :AeroDyn_Driver
 SET CURR_LOC=%Driver_Loc%
-%REGISTRY% "%CURR_LOC%\AeroDyn_Driver_Registry.txt" -I %NWTC_Lib_Loc% -I %AeroDyn_Loc% -I %AirfoilInfo_Loc% -I %BEMT_Loc% -I %UnsteadyAero_Loc% -O %CURR_LOC% -noextrap
+%REGISTRY% "%CURR_LOC%\AeroDyn_Driver_Registry.txt" -I %NWTC_Lib_Loc% -I %AeroDyn_Loc% -I %AirfoilInfo_Loc% -I %BEMT_Loc% -I %DBEMT_Loc% -I %UnsteadyAero_Loc% -O %CURR_LOC% -noextrap
 GOTO checkError
 
 

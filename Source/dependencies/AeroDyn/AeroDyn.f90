@@ -348,7 +348,7 @@ subroutine AD_Init( InitInp, u, p, x, xd, z, OtherState, y, m, Interval, InitOut
          call Cleanup()
          return
       end if
-         
+  
    call BEMT_CopyInput( m%BEMT_u(1), m%BEMT_u(2), MESH_NEWCOPY, ErrStat2, ErrMsg2 )
       call SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName ) 
          
@@ -868,6 +868,8 @@ subroutine SetParameters( InitInp, InputFileData, p, ErrStat, ErrMsg )
    p%KinVisc          = InputFileData%KinVisc
    p%SpdSound         = InputFileData%SpdSound
    
+   
+   
   !p%AFI     ! set in call to AFI_Init() [called early because it wants to use the same echo file as AD]
   !p%BEMT    ! set in call to BEMT_Init()
       
@@ -1233,6 +1235,7 @@ subroutine SetInputsForBEMT(p, u, m, indx, errStat, errMsg)
    x_hat_disk = u%HubMotion%Orientation(1,:,1) !actually also x_hat_hub      
    
    m%V_dot_x  = dot_product( m%V_diskAvg, x_hat_disk )
+   m%BEMT%Un_disk  = m%V_dot_x
    tmp    = m%V_dot_x * x_hat_disk - m%V_diskAvg
    tmp_sz = TwoNorm(tmp)
    if ( EqualRealNos( tmp_sz, 0.0_ReKi ) ) then
@@ -1684,6 +1687,9 @@ SUBROUTINE Init_BEMTmodule( InputFileData, u_AD, u, p, x, xd, z, OtherState, y, 
                                                  
    integer(intKi)                                :: j              ! node index
    integer(intKi)                                :: k              ! blade index
+   real(ReKi)                                    :: tmp(3), tmp_sz_y, tmp_sz
+   real(ReKi)                                    :: y_hat_disk(3)
+   real(ReKi)                                    :: z_hat_disk(3)
    integer(IntKi)                                :: ErrStat2
    character(ErrMsgLen)                          :: ErrMsg2
    character(*), parameter                       :: RoutineName = 'Init_BEMTmodule'
@@ -1716,6 +1722,7 @@ SUBROUTINE Init_BEMTmodule( InputFileData, u_AD, u, p, x, xd, z, OtherState, y, 
    call AllocAry(InitInp%AFindx,InitInp%numBladeNodes,InitInp%numBlades,'AFindx',ErrStat2,ErrMsg2); call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName)   
    call AllocAry(InitInp%zHub,                        InitInp%numBlades,'zHub',  ErrStat2,ErrMsg2); call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName)
    call AllocAry(InitInp%zLocal,InitInp%numBladeNodes,InitInp%numBlades,'zLocal',ErrStat2,ErrMsg2); call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName)   
+   call AllocAry(InitInp%rLocal,InitInp%numBladeNodes,InitInp%numBlades,'rLocal',ErrStat2,ErrMsg2); call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName)   
    call AllocAry(InitInp%zTip,                        InitInp%numBlades,'zTip',  ErrStat2,ErrMsg2); call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName)
       
    
@@ -1738,6 +1745,17 @@ SUBROUTINE Init_BEMTmodule( InputFileData, u_AD, u, p, x, xd, z, OtherState, y, 
       
       InitInp%zTip(k) = InitInp%zLocal(p%NumBlNds,k)
       
+      y_hat_disk = u_AD%HubMotion%Orientation(2,:,1)
+      z_hat_disk = u_AD%HubMotion%Orientation(3,:,1)
+      
+      do j=1,p%NumBlNds
+               ! displaced position of the jth node in the kth blade relative to the hub:
+         tmp =  u_AD%BladeMotion(k)%Position(:,j)  - u_AD%HubMotion%Position(:,1) 
+            ! local radius (normalized distance from rotor centerline)
+         tmp_sz_y = dot_product( tmp, y_hat_disk )**2
+         tmp_sz   = dot_product( tmp, z_hat_disk )**2
+         InitInp%rLocal(j,k) = sqrt( tmp_sz + tmp_sz_y )
+      end do !j=nodes   
    end do !k=blades
    
                
@@ -1748,11 +1766,12 @@ SUBROUTINE Init_BEMTmodule( InputFileData, u_AD, u, p, x, xd, z, OtherState, y, 
      end do
   end do
    
-   InitInp%UA_Flag  = InputFileData%AFAeroMod == AFAeroMod_BL_unsteady
-   InitInp%UAMod    = InputFileData%UAMod
-   InitInp%Flookup  = InputFileData%Flookup
-   InitInp%a_s      = InputFileData%SpdSound
-   
+   InitInp%UA_Flag    = InputFileData%AFAeroMod == AFAeroMod_BL_unsteady
+   InitInp%UAMod      = InputFileData%UAMod
+   InitInp%Flookup    = InputFileData%Flookup
+   InitInp%a_s        = InputFileData%SpdSound
+   InitInp%DBEMT_Mod  = InputFileData%DBEMT_Mod
+   InitInp%tau1_const = InputFileData%tau1_const
    if (ErrStat >= AbortErrLev) then
       call cleanup()
       return

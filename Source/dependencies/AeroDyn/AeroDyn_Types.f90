@@ -3,7 +3,7 @@
 ! WARNING This file is generated automatically by the FAST registry.
 ! Do not edit.  Your changes to this file will be lost.
 !
-! FAST Registry (v3.02.00, 7-Jul-2016)
+! FAST Registry (v3.02.00, 23-Jul-2016)
 !*********************************************************************************************************************************
 ! AeroDyn_Types
 !.................................................................................................................................
@@ -33,6 +33,7 @@ MODULE AeroDyn_Types
 !---------------------------------------------------------------------------------------------------------------------------------
 USE AirfoilInfo_Types
 USE UnsteadyAero_Types
+USE DBEMT_Types
 USE BEMT_Types
 USE NWTC_Library
 IMPLICIT NONE
@@ -122,6 +123,8 @@ IMPLICIT NONE
     INTEGER(IntKi) , DIMENSION(1:9)  :: TwOutNd      !< Tower nodes whose values will be output [-]
     INTEGER(IntKi)  :: NumOuts      !< Number of parameters in the output list (number of outputs requested) [-]
     CHARACTER(ChanLen) , DIMENSION(:), ALLOCATABLE  :: OutList      !< List of user-requested output channels [-]
+    REAL(ReKi)  :: tau1_const      !< time constant for DBEMT [ignored if DBEMT_Mod = 0 or 2] [s]
+    INTEGER(IntKi)  :: DBEMT_Mod      !< Type of dynamic BEMT (DBEMT) model {0=none, 1=constant tau1, 2=time-dependent tau1} [-]
   END TYPE AD_InputFile
 ! =======================
 ! =========  AD_ContinuousStateType  =======
@@ -2253,6 +2256,8 @@ IF (ALLOCATED(SrcInputFileData%OutList)) THEN
   END IF
     DstInputFileData%OutList = SrcInputFileData%OutList
 ENDIF
+    DstInputFileData%tau1_const = SrcInputFileData%tau1_const
+    DstInputFileData%DBEMT_Mod = SrcInputFileData%DBEMT_Mod
  END SUBROUTINE AD_CopyInputFile
 
  SUBROUTINE AD_DestroyInputFile( InputFileData, ErrStat, ErrMsg )
@@ -2405,6 +2410,8 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*1  ! OutList upper/lower bounds for each dimension
       Int_BufSz  = Int_BufSz  + SIZE(InData%OutList)*LEN(InData%OutList)  ! OutList
   END IF
+      Re_BufSz   = Re_BufSz   + 1  ! tau1_const
+      Int_BufSz  = Int_BufSz  + 1  ! DBEMT_Mod
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -2614,6 +2621,10 @@ ENDIF
         END DO ! I
     END DO !i1
   END IF
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%tau1_const
+      Re_Xferred   = Re_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%DBEMT_Mod
+      Int_Xferred   = Int_Xferred   + 1
  END SUBROUTINE AD_PackInputFile
 
  SUBROUTINE AD_UnPackInputFile( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -2914,6 +2925,10 @@ ENDIF
     END DO !i1
     DEALLOCATE(mask1)
   END IF
+      OutData%tau1_const = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%DBEMT_Mod = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
  END SUBROUTINE AD_UnPackInputFile
 
  SUBROUTINE AD_CopyContState( SrcContStateData, DstContStateData, CtrlCode, ErrStat, ErrMsg )

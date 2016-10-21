@@ -99,6 +99,8 @@ typedef	^	AD_InputFile	IntKi	NTwOuts	-	-	-	"Number of tower node outputs [0 - 9]
 typedef	^	AD_InputFile	IntKi	TwOutNd	{9}	-	-	"Tower nodes whose values will be output"	-
 typedef	^	AD_InputFile	IntKi	NumOuts	-	-	-	"Number of parameters in the output list (number of outputs requested)"	-
 typedef	^	AD_InputFile	CHARACTER(ChanLen)	OutList	{:}	-	-	"List of user-requested output channels"	-
+typedef	^	AD_InputFile	ReKi	tau1_const	-	-	-	"time constant for DBEMT [ignored if DBEMT_Mod = 0 or 2]"	s
+typedef	^	AD_InputFile	IntKi	DBEMT_Mod	-	-	-	"Type of dynamic BEMT (DBEMT) model {0=none, 1=constant tau1, 2=time-dependent tau1}"	-
 
 # ..... States ....................................................................................................................
 # Define continuous (differentiable) states here:

@@ -1908,6 +1908,15 @@ SUBROUTINE ReadPrimaryFile( InputFile, InputFileData, ADBlFile, OutFileRoot, UnE
    CALL ReadVar( UnIn, InputFile, InputFileData%FrozenWake, "FrozenWake", "Assume frozen wake during linearization? (flag)", ErrStat2, ErrMsg2, UnEc)
       CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
       
+      ! DBEMT_Mod - Type of dynamic BEMT (DBEMT) model {0=none, 1=constant tau1, 2=time-dependent tau1} (-):
+   CALL ReadVar( UnIn, InputFile, InputFileData%DBEMT_Mod, "DBEMT_Mod", "Type of dynamic BEMT (DBEMT) model {0=none, 1=constant tau1, 2=time-dependent tau1} (-)", ErrStat2, ErrMsg2, UnEc)
+      CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
+   
+      ! tau1_const - time constant for DBEMT [ignored if DBEMT_Mod = 0 or 2] (s):
+   CALL ReadVar( UnIn, InputFile, InputFileData%tau1_const, "tau1_const", "time constant for DBEMT [ignored if DBEMT_Mod = 0 or 2] (s)", ErrStat2, ErrMsg2, UnEc)
+      CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
+      
+      
       ! Return on error at end of section
    IF ( ErrStat >= AbortErrLev ) THEN
       CALL Cleanup()

@@ -7,14 +7,16 @@ False         Echo               - Echo the input to "<rootname>.AD.ech"?  (flag
           2   AFAeroMod          - Type of blade airfoil aerodynamics model (switch) {1=steady model, 2=Beddoes-Leishman unsteady model}
           0   TwrPotent          - Type tower influence on wind based on potential flow around the tower (switch) {0=none, 1=baseline potential flow, 2=potential flow with Bak correction}
 False         TwrShadow          – Calculate tower influence on wind based on downstream tower shadow? (flag)
-True          TwrAero            - Calculate tower aerodynamic loads? (flag)
+false True          TwrAero            - Calculate tower aerodynamic loads? (flag)
 False         FrozenWake         - Assume frozen wake during linearization? (flag) [used only when WakeMod=1 and when linearizing]
+1             DBEMT_Mod
+100           tau1_const
 ======  Environmental Conditions  ===================================================================
       1.225   AirDens            - Air density (kg/m^3)
   1.464E-05   KinVisc            - Kinematic air viscosity (m^2/s)
         335   SpdSound           - Speed of sound (m/s)
 ======  Blade-Element/Momentum Theory Options  ====================================================== [used only when WakeMod=1]
-          1   SkewMod            - Type of skewed-wake correction model (switch) {1=uncoupled, 2=Pitt/Peters, 3=coupled} [used only when WakeMod=1]
+          2   SkewMod            - Type of skewed-wake correction model (switch) {1=uncoupled, 2=Pitt/Peters, 3=coupled} [used only when WakeMod=1]
 True          TipLoss            - Use the Prandtl tip-loss model? (flag) [used only when WakeMod=1]
 True          HubLoss            - Use the Prandtl hub-loss model? (flag) [used only when WakeMod=1]
 true          TanInd             - Include tangential induction in BEMT calculations? (flag) [used only when WakeMod=1]
@@ -68,10 +70,10 @@ False         SumPrint            - Generate a summary file listing input option
           0   NTwOuts             - Number of tower node outputs [0 - 9]  (-)
           1,          2,          3,          4,          5    TwOutNd             - Tower nodes whose values will be output  (-)
                    OutList             - The next line(s) contains a list of output parameters.  See OutListParameters.xlsx for a listing of available output channels, (-)
-"B1N1Alpha, B1N1Cl, B1N1Cd, B1N1Cm"  
-"B1N2Alpha, B1N2Cl, B1N2Cd, B1N2Cm"  
-"B1N3Alpha, B1N3Cl, B1N3Cd, B1N3Cm"  
-"B1N4Alpha, B1N4Cl, B1N4Cd, B1N4Cm"  
-"B1N5Alpha, B1N5Cl, B1N5Cd, B1N5Cm"  
+"B1N1Alpha, B1N1Cl, B1N1Cd, B1N1Cm, B1N1AxInd, B1N1TnInd"  
+"B1N2Alpha, B1N2Cl, B1N2Cd, B1N2Cm, B1N2AxInd, B1N2TnInd"  
+"B1N3Alpha, B1N3Cl, B1N3Cd, B1N3Cm, B1N3AxInd, B1N3TnInd"  
+"B1N4Alpha, B1N4Cl, B1N4Cd, B1N4Cm, B1N4AxInd, B1N4TnInd"  
+"B1N5Alpha, B1N5Cl, B1N5Cd, B1N5Cm, B1N5AxInd, B1N5TnInd"  
 END of input file (the word "END" must appear in the first 3 columns of this last OutList line)
 ---------------------------------------------------------------------------------------

@@ -1,0 +1,30 @@
+Special Cases for BEMT
+
+
+BEMT_UnCoupledSolve
+   If Vx = 0 ->  phiStar = 0 ->  a=0 and a'=0   ! NOTE: Eqn 6.35 and 6.36 of Hansen (Aerodynamics of Wind Turbines) says for phi=0 a=1 a' = -1
+     else If Vy = 0 -> phiStar = pi / 2 ! Likewise eqn 6.36 says a'=-1;
+
+BEMTU_InductionWithResidual
+   if Vx = 0 or Vy = 0 -> a=0 a'=0  ! Based on the above this needs to agree.  Seems like the special case should only include Vx=0 and not bail for Vy=0
+   
+ApplySkewedWakeCorrection
+   y = (1-a )*Vx
+   x = (1+ap)*Vy
+   if y = 0 or x = 0 -> a=0, a'=0
+   
+inductionfactors
+*   (tiploss and tiplossConst = 0) or (hubloss and hubLossConst = 0 ) -> a=1, a'=-1
+   
+*   if phi = 0 -> a=0, a'=0
+  
+*   if kp =1 -> a = 0, a'=0
+   
+UA_Updatestates
+
+   if u%u = 0  -> Throw error!
+   
+   
+   
+   
+   
