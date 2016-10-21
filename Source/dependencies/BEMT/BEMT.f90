@@ -490,7 +490,7 @@ subroutine BEMT_Init( InitInp, u, p, x, xd, z, OtherState, AFInfo, y, misc, Inte
 ! The initial states and initial guess for the input are defined.
 !..................................................................................................................................
 
-   type(BEMT_InitInputType),       intent(in   )  :: InitInp     ! Input data for initialization routine, needs to be inout because there is a copy of some data in InitInp in BEMT_SetParameters()
+   type(BEMT_InitInputType),       intent(inout)  :: InitInp     ! Input data for initialization routine, needs to be inout because there is a copy of some data in InitInp in BEMT_SetParameters()
    type(BEMT_InputType),           intent(  out)  :: u           ! An initial guess for the input; input mesh must be defined
    type(BEMT_ParameterType),       intent(  out)  :: p           ! Parameters
    type(BEMT_ContinuousStateType), intent(  out)  :: x           ! Initial continuous states
@@ -903,9 +903,9 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
       
    integer(IntKi)                                    :: i,j
    type(UA_InputType)                                :: u_UA
-   real(ReKi)                                        :: chi, Re, Vrel, fzero, phitemp
-   real(ReKi), allocatable                           :: Rtip1(:)
-   real(ReKi)                                        :: R_disk, dbemt_vind(2)
+   real(ReKi)                                        :: chi, Re, Vrel, fzero, phitemp, phiDBEMT, axInduction, tanInduction
+   real(ReKi)                                        :: Rtip
+   real(ReKi)                                        :: R_disk, dbemt_vind(2), VxSqrd, u2VxSqrd
    type(DBEMT_InputType)                             :: DBEMT_u(2)
    character(ErrMsgLen)                              :: errMsg2     ! temporary Error message if ErrStat /= ErrID_None
    integer(IntKi)                                    :: errStat2    ! temporary Error status of the operation
@@ -917,22 +917,24 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
    ErrMsg = ""
         
    
-   if ( p%useInduction ) then
-      allocate( Rtip1(p%numBlades), STAT = errStat)
+   if ( p%useInduction  ) then ! ADv14 only uses induction when the velocity normal to the disk is > 0.1 m/s
+      
 
       do j = 1,p%numBlades
             
             ! Locate the maximum rlocal value for this time step and this blade.  This is passed to the solve as Rtip      
-            Rtip1(j) = 0.0_ReKi
+            
             R_disk   = 0.0_ReKi
             do i = 1,p%numBladeNodes
-               Rtip1(j) = max( Rtip1(j), u1%rlocal(i,j) ) 
+               
                R_disk   = max( R_disk  , u1%rlocal(i,j) )
+               VxSqrd= u1%Vx(i,j)*u1%Vx(i,j)
                
                if ( .not. (m%nodeInitialized(i,j)) ) then
             
+                     ! Need to initialize a version of the inflow angle state (z%phi) so that the UA update has a reasonable starting point.
                      ! Solve this without any skewed wake correction and without UA
-                  if (p%useInduction) then
+                  if (p%useInduction .and. (VxSqrd > 0.1) ) then
                      ! COMPUTE:  z%phi(i,j)     
                      call BEMT_UnCoupledSolve(z%phi(i,j), p%numBlades, p%airDens, p%kinVisc, AFInfo(p%AFIndx(i,j)), u1%rlocal(i,j), p%chord(i,j), u1%theta(i,j),  &
                                  u1%Vx(i,j), u1%Vy(i,j), p%useTanInd, p%useAIDrag, p%useTIDrag, p%useHubLoss, p%useTipLoss, p%hubLossConst(i,j), p%tipLossConst(i,j), &
@@ -947,49 +949,59 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
                         if (errStat >= AbortErrLev) return 
                   end if
                   
-                     m%nodeInitialized(i,j) = .true.
+                  m%nodeInitialized(i,j) = .true.
                end if
             
-         
-               if (p%DBEMT_Mod > 0 ) then
-                  
-                  ! We are going to generate all the axial  (and tangential) inductions for each blade element so that we can
-                  ! compute a disk-averaged axial induction.  Since we perform this work here, we will avoid duplicating the
-                  ! work in the next set of do loops over the blade elements.
-                  
-                  call BEMTU_Wind( 0.0_ReKi, 0.0_ReKi, u1%Vx(i,j), u1%Vy(i,j), p%chord(i,j), p%airDens, p%kinVisc, Vrel, Re )
-               
-                     ! Need to get the induction factors for these conditions without skewed wake correction and without UA
-                     ! COMPUTE: axInduction, tanInduction  
-                  u_UA%alpha = z%phi(i,j) - u1%theta(i,j)
-                  fzero = BEMTU_InductionWithResidual(z%phi(i,j), u_UA%alpha, Re, p%numBlades, u1%rlocal(i,j), p%chord(i,j), AFInfo(p%AFIndx(i,j)), &
-                              u1%Vx(i,j), u1%Vy(i,j), p%useTanInd, p%useAIDrag, p%useTIDrag, p%useHubLoss, p%useTipLoss, p%hubLossConst(i,j), p%tipLossConst(i,j), &
-                              m%axInduction(i,j), m%tanInduction(i,j), ErrStat2, ErrMsg2)
-                  call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
-                     if (errStat >= AbortErrLev) return 
-                  
-                     ! We need to generate a disk-averaged axial induction for this timestep
-                  DBEMT_u(1)%AxInd_disk = DBEMT_u(1)%AxInd_disk + m%axInduction(i,j)
-              !    DBEMT_u(1)%vind_s(1)  =  -u1%Vx(i,j)*m%axInduction(i,j)
-              !    DBEMT_u(1)%vind_s(2)  =   u1%Vy(i,j)*m%tanInduction(i,j)
-               end if
+      ! TODO: if we implement the other DBEMT model, then we need this code
+              ! if (p%DBEMT_Mod > 0 ) then
+              !    
+              !    ! We are going to generate all the axial  (and tangential) inductions for each blade element so that we can
+              !    ! compute a disk-averaged axial induction.  Since we perform this work here, we will avoid duplicating the
+              !    ! work in the next set of do loops over the blade elements.
+              !    
+              !    call BEMTU_Wind( 0.0_ReKi, 0.0_ReKi, u1%Vx(i,j), u1%Vy(i,j), p%chord(i,j), p%airDens, p%kinVisc, Vrel, Re )
+              ! 
+              !       ! Need to get the induction factors for these conditions without skewed wake correction and without UA
+              !       ! COMPUTE: axInduction, tanInduction  
+              !    u_UA%alpha = z%phi(i,j) - u1%theta(i,j)
+              !    fzero = BEMTU_InductionWithResidual(z%phi(i,j), u_UA%alpha, Re, p%numBlades, u1%rlocal(i,j), p%chord(i,j), AFInfo(p%AFIndx(i,j)), &
+              !                u1%Vx(i,j), u1%Vy(i,j), p%useTanInd, p%useAIDrag, p%useTIDrag, p%useHubLoss, p%useTipLoss, p%hubLossConst(i,j), p%tipLossConst(i,j), &
+              !                axInduction, tanInduction, ErrStat2, ErrMsg2)
+              !    call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
+              !       if (errStat >= AbortErrLev) return 
+              !    
+              !       ! We need to generate a disk-averaged axial induction for this timestep
+              !    DBEMT_u(1)%AxInd_disk = DBEMT_u(1)%AxInd_disk + axInduction
+              !!    DBEMT_u(1)%vind_s(1)  =  -u1%Vx(i,j)*axInduction
+              !!    DBEMT_u(1)%vind_s(2)  =   u1%Vy(i,j)*tanInduction
+              ! end if
                
             end do
 
       end do
-      if (p%DBEMT_Mod > 1 ) then
-         DBEMT_u(1)%R_disk     = R_disk
-         DBEMT_u(1)%Un_disk    = m%Un_disk
-         DBEMT_u(1)%AxInd_disk = DBEMT_u(1)%AxInd_disk / (p%numBladeNodes*p%numBlades)
-        
-      end if
+   
+   ! TODO: if we implement the other DBEMT model, then we need this code
+      !if (p%DBEMT_Mod > 1 ) then
+      !   DBEMT_u(1)%R_disk     = R_disk
+      !   DBEMT_u(1)%Un_disk    = m%Un_disk
+      !   DBEMT_u(1)%AxInd_disk = DBEMT_u(1)%AxInd_disk / (p%numBladeNodes*p%numBlades)
+      !  
+      !end if
+      
    end if
    
    do j = 1,p%numBlades  
- 
+      
+         ! Locate the maximum rlocal value for this time step and this blade.  This is passed to the solve as Rtip      
+      Rtip = 0.0_ReKi
+      do i = 1,p%numBladeNodes
+         Rtip = max( Rtip, u1%rlocal(i,j) )
+      end do
+      
       do i = 1,p%numBladeNodes 
 
          NodeTxt = '(node '//trim(num2lstr(i))//', blade '//trim(num2lstr(j))//')'
+         VxSqrd = u1%Vx(i,j) * u1%Vx(i,j)
          
             ! We only update the UnsteadyAero states if we have unsteady aero turned on for this node      
          if (OtherState%UA_Flag(i,j) .and. n > 0) then
@@ -1000,11 +1012,11 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
             
                ! Initialize these variables
             u_UA%alpha   = z%phi(i,j) - u1%theta(i,j)
-            m%axInduction(i,j)  = 0.0_ReKi
-            m%tanInduction(i,j) = 0.0_ReKi
+            axInduction  = 0.0_ReKi
+            tanInduction = 0.0_ReKi
             
             
-            if ( p%useInduction ) then
+            if ( p%useInduction .and. (VxSqrd > 0.1) ) then ! ADv14 only uses induction when the velocity normal to the disk is > 0.1 m/s
                if (p%DBEMT_Mod == 0 ) then
                      ! Compute Re based on zero inductions (axInduction, tanInduction), this would needed for the airfoil lookups 
                      !    which occur within BEMTU_InductionWithResidual if we had implemented airfoil tables which are dependent on Reynold's number: Currently unused, 4-Nov-2015
@@ -1014,13 +1026,13 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
                      ! COMPUTE: axInduction, tanInduction   
                   fzero = BEMTU_InductionWithResidual(z%phi(i,j), u_UA%alpha, Re, p%numBlades, u1%rlocal(i,j), p%chord(i,j), AFInfo(p%AFIndx(i,j)), &
                               u1%Vx(i,j), u1%Vy(i,j), p%useTanInd, p%useAIDrag, p%useTIDrag, p%useHubLoss, p%useTipLoss, p%hubLossConst(i,j), p%tipLossConst(i,j), &
-                              m%axInduction(i,j), m%tanInduction(i,j), ErrStat2, ErrMsg2)
+                              axInduction, tanInduction, ErrStat2, ErrMsg2)
                   call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
                      if (errStat >= AbortErrLev) return 
                   
                else
                   
-                     ! NOTE: Since we are using DBEMT, we already computed the unfiltered m%axInduction(i,j), and m%tanInduction(i,j) quantities in the do loops above this.
+                     ! NOTE: Since we are using DBEMT, we already computed the unfiltered axInduction, and tanInduction quantities in the do loops above this.
                   
                      ! If we are using DBEMT, then we will obtain the time-filtered versions of axInduction, tanInduction
                      ! Since the outputs of DBEMT are the state variables x%vind, we will simply access them here instead of calling a 
@@ -1029,15 +1041,15 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
                   
                   call DBEMT_CalcOutput( i, j, t, DBEMT_u(1), dbemt_vind, p%DBEMT, x%DBEMT, m%DBEMT, errStat, errMsg )
                   if ( EqualRealnos(u1%Vx(i,j), 0.0_ReKi) ) then
-                     m%axInduction(i,j)   = 0.0_ReKi
+                     axInduction   = 0.0_ReKi
                   else
-                     m%axInduction(i,j)   = -dbemt_vind(1)/u1%Vx(i,j)
+                     axInduction   = -dbemt_vind(1)/u1%Vx(i,j)
                   end if
                   
                   if ( EqualRealnos(u1%Vy(i,j), 0.0_ReKi) ) then
-                     m%tanInduction(i,j)   = 0.0_ReKi
+                     tanInduction   = 0.0_ReKi
                   else
-                     m%tanInduction(i,j)   = dbemt_vind(2)/u1%Vy(i,j)
+                     tanInduction   = dbemt_vind(2)/u1%Vy(i,j)
                   end if                 
                   
                end if   
@@ -1047,12 +1059,12 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
                   
                      ! Correct for skewed wake, by recomputing axInduction
                      ! NOTE: tanInduction and axInduction may be set to zero by this routine if the local induced velocities are zero.
-                  call ApplySkewedWakeCorrection( u1%Vx(i,j), u1%Vy(i,j), u1%psi(j), u1%chi0, u1%rlocal(i,j)/Rtip1(j), m%axInduction(i,j), m%tanInduction(i,j), chi, ErrStat2, ErrMsg2 ) !replaced phiOut with phitemp  RRD
+                  call ApplySkewedWakeCorrection( u1%Vx(i,j), u1%Vy(i,j), u1%psi(j), u1%chi0, u1%rlocal(i,j)/Rtip, axInduction, tanInduction, chi, ErrStat2, ErrMsg2 ) !replaced phiOut with phitemp  RRD
                   ! ApplySkewedWakeCorrection doesn't produce errors
                   !call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
                   !if (errStat >= AbortErrLev) return 
                   
-                  phitemp = ComputePhiWithInduction( u1%Vx(i,j), u1%Vy(i,j),  m%axInduction(i,j), m%tanInduction(i,j), errStat2, errMsg2 )  
+                  phitemp = ComputePhiWithInduction( u1%Vx(i,j), u1%Vy(i,j),  axInduction, tanInduction, errStat2, errMsg2 )  
                   call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
                      ! angle of attack
                   u_UA%alpha = phitemp - u1%theta(i,j)
@@ -1064,7 +1076,7 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
             
                ! Need to compute local velocity including both axial and tangential induction
                ! COMPUTE: u_UA%U, u_UA%Re
-            call BEMTU_Wind( m%axInduction(i,j), m%tanInduction(i,j), u1%Vx(i,j), u1%Vy(i,j), p%chord(i,j), p%airDens, p%kinVisc, u_UA%U, u_UA%Re) !replaced phiOut with phitemp  RRD
+            call BEMTU_Wind( axInduction, tanInduction, u1%Vx(i,j), u1%Vy(i,j), p%chord(i,j), p%airDens, p%kinVisc, u_UA%U, u_UA%Re) !replaced phiOut with phitemp  RRD
 
             if ( abs(u_UA%alpha) >= AFInfo(p%AFIndx(i,j))%Table(1)%UA_BL%UACutout*D2R ) then  ! Is the angle of attack larger than the UA cut-out for this airfoil?
                OtherState%UA_Flag(i,j) = .FALSE.
@@ -1083,10 +1095,11 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
          end if      ! if (OtherState%UA_Flag(i,j)) then
                
             ! Now we need to update the inflow angle state, z%phi, independent of UnsteadyAero
-         if ( p%useInduction ) then
+         if ( p%useInduction .and. (VxSqrd > 0.1) ) then ! ADv14 only uses induction when the velocity normal to the disk is > 0.1 m/s
                ! Solve this without any skewed wake correction and without UA
             ! call BEMT_UnCoupledSolve2(i, j, u, p, z, Rtip, AFInfo, phiOut, axIndOut, tanIndOut, errStat, errMsg)
-               ! COMPUTE:  z%phi(i,j)     
+               ! COMPUTE:  z%phi(i,j)   
+            phiDBEMT = z%phi(i,j)  ! need this for the u(i) inputs to DBEMT, z%phi(i,j) after the UnCoupledSolve with provide the u(i+1) inputs for DBEMT
             call BEMT_UnCoupledSolve(z%phi(i,j), p%numBlades, p%airDens, p%kinVisc, AFInfo(p%AFIndx(i,j)), u2%rlocal(i,j), p%chord(i,j), u2%theta(i,j),  &
                         u2%Vx(i,j), u2%Vy(i,j), p%useTanInd, p%useAIDrag, p%useTIDrag, p%useHubLoss, p%useTipLoss, p%hubLossConst(i,j), p%tipLossConst(i,j), &
                         p%maxIndIterations, p%aTol,  &
@@ -1095,8 +1108,11 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
                   if (errStat >= AbortErrLev) return 
                   
             if ( p%DBEMT_Mod > 0 ) then
+               
                   ! Generate DBEMT inputs
-               u_UA%alpha = z%phi(i,j) - u1%theta(i,j)
+                  ! DO NOT use skewed wake corrected inductions for DBEMT inputs!
+               
+               ! u_UA%alpha = z%phi(i,j) - u1%theta(i,j)
                
                ! We are going to generate all the axial  (and tangential) inductions for each blade element so that we can
                   ! compute a disk-averaged axial induction.  Since we perform this work here, we will avoid duplicating the
@@ -1106,30 +1122,30 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
                
                      ! Need to get the induction factors for these conditions without skewed wake correction and without UA
                      ! COMPUTE: axInduction, tanInduction  
-                  u_UA%alpha = z%phi(i,j) - u1%theta(i,j)
-                  fzero = BEMTU_InductionWithResidual(z%phi(i,j), u_UA%alpha, Re, p%numBlades, u1%rlocal(i,j), p%chord(i,j), AFInfo(p%AFIndx(i,j)), &
+                  u_UA%alpha = phiDBEMT - u1%theta(i,j)
+                  fzero = BEMTU_InductionWithResidual(phiDBEMT, u_UA%alpha, Re, p%numBlades, u1%rlocal(i,j), p%chord(i,j), AFInfo(p%AFIndx(i,j)), &
                               u1%Vx(i,j), u1%Vy(i,j), p%useTanInd, p%useAIDrag, p%useTIDrag, p%useHubLoss, p%useTipLoss, p%hubLossConst(i,j), p%tipLossConst(i,j), &
-                              m%axInduction(i,j), m%tanInduction(i,j), ErrStat2, ErrMsg2)
+                              axInduction, tanInduction, ErrStat2, ErrMsg2)
                   call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
                      if (errStat >= AbortErrLev) return 
                   
                      ! We need to generate a disk-averaged axial induction for this timestep
                   
-                  DBEMT_u(1)%vind_s(1)  =  -u1%Vx(i,j)*m%axInduction(i,j)
-                  DBEMT_u(1)%vind_s(2)  =   u1%Vy(i,j)*m%tanInduction(i,j)
+                  DBEMT_u(1)%vind_s(1)  =  -u1%Vx(i,j)*axInduction
+                  DBEMT_u(1)%vind_s(2)  =   u1%Vy(i,j)*tanInduction
                   
                   u_UA%alpha = z%phi(i,j) - u2%theta(i,j)
                   
                fzero = BEMTU_InductionWithResidual(z%phi(i,j), u_UA%alpha, Re, p%numBlades, u2%rlocal(i,j), p%chord(i,j), AFInfo(p%AFIndx(i,j)), &
                            u2%Vx(i,j), u2%Vy(i,j), p%useTanInd, p%useAIDrag, p%useTIDrag, p%useHubLoss, p%useTipLoss, p%hubLossConst(i,j), p%tipLossConst(i,j), &
-                           m%axInduction(i,j), m%tanInduction(i,j), ErrStat2, ErrMsg2)
+                           axInduction, tanInduction, ErrStat2, ErrMsg2)
                call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
                   if (errStat >= AbortErrLev) return 
                  
-               DBEMT_u(2)%vind_s(1)  =  -u2%Vx(i,j)*m%axInduction(i,j)
-               DBEMT_u(2)%vind_s(2)  =  u2%Vy(i,j)*m%tanInduction(i,j)
+               DBEMT_u(2)%vind_s(1)  =  -u2%Vx(i,j)*axInduction
+               DBEMT_u(2)%vind_s(2)  =  u2%Vy(i,j)*tanInduction
                DBEMT_u(1)%spanRatio  =  u1%rlocal(i,j)/R_disk
-               
+              ! print *, u2%Vx(i,j), u2%Vy(i,j)
                
                
                
@@ -1148,6 +1164,7 @@ subroutine BEMT_UpdateStates( t, n, u1, u2,  p, x, xd, z, OtherState, AFInfo, m,
    end do      
    
 end subroutine BEMT_UpdateStates
+
 
 
 !----------------------------------------------------------------------------------------------------------------------------------
@@ -1202,7 +1219,7 @@ subroutine BEMT_CalcOutput( t, u, p, x, xd, z, OtherState, AFInfo, y, m, errStat
 
    logical, parameter             :: UpdateValues  = .TRUE.                          ! determines if the OtherState values need to be updated
    type(BEMT_ContinuousStateType) :: dxdt                                            ! Continuous state derivs at t
-   real(ReKi)                     :: Vrel
+   real(ReKi)                     :: Vrel, VxSqrd
          ! Initialize some output values
    errStat = ErrID_None
    errMsg  = ""
@@ -1217,8 +1234,7 @@ subroutine BEMT_CalcOutput( t, u, p, x, xd, z, OtherState, AFInfo, y, m, errStat
    !   associated with the accelerations one by one:
    !...............................................................................................................................
 
-   chi0 = u%chi0
-  
+   chi0 = u%chi0  
    
    do j = 1,p%numBlades ! Loop through all blades
       
@@ -1236,24 +1252,21 @@ subroutine BEMT_CalcOutput( t, u, p, x, xd, z, OtherState, AFInfo, y, m, errStat
             !  local velocities and twist angle
          Vx    = u%Vx(i,j)
          Vy    = u%Vy(i,j)
+         VxSqrd= u%Vx(i,j)*u%Vx(i,j)
          theta = u%theta(i,j)
-         
-         
+                 
             ! Set the active blade element for UnsteadyAero
          m%UA%iBladeNode = i
          m%UA%iBlade     = j
-         
-            ! Copy the current state to the outputs structure
+                  
          if (m%nodeInitialized(i,j)) then
+               ! Copy the current state to the outputs structure
             y%phi(i,j) = z%phi(i,j)     
          else
-               ! Solve this without any skewed wake correction and without UA
-           
-               ! COMPUTE:  z%phi(i,j)     
-            
-                  
-            if (p%useInduction) then
-                     ! COMPUTE:  z%phi(i,j)     
+
+               ! COMPUTE:  y%phi(i,j) since it is uninitialized. Solve this without any skewed wake correction and without UA              
+            if ( p%useInduction .and. (VxSqrd > 0.1) ) then ! ADv14 only uses induction when the velocity normal to the disk is > 0.1 m/s
+                     ! COMPUTE:  y%phi(i,j)     
                call BEMT_UnCoupledSolve(z%phi(i,j), p%numBlades, p%airDens, p%kinVisc, AFInfo(p%AFIndx(i,j)), u%rlocal(i,j), p%chord(i,j), u%theta(i,j),  &
                         u%Vx(i,j), u%Vy(i,j), p%useTanInd, p%useAIDrag, p%useTIDrag, p%useHubLoss, p%useTipLoss, p%hubLossConst(i,j), p%tipLossConst(i,j), &
                         p%maxIndIterations, p%aTol,  &
@@ -1276,9 +1289,10 @@ subroutine BEMT_CalcOutput( t, u, p, x, xd, z, OtherState, AFInfo, y, m, errStat
          y%tanInduction(i,j) = 0.0_ReKi             
          y%chi(i,j) = chi0   ! with no induction, chi = chi0
             
-         if ( p%useInduction ) then
+         if ( p%useInduction .and. (VxSqrd > 0.1) ) then ! ADv14 only uses induction when the velocity normal to the disk is > 0.1 m/s
             
             if (m%UseFrozenWake) then
+! TODO: GJH: Not sure how this interacts with DBEMT? 10/20/2016
                y%axInduction(i,j)  = -m%AxInd_op(i,j) / u%Vx(i,j)               
                y%tanInduction(i,j) =  m%TnInd_op(i,j) / u%Vy(i,j)
                y%phi(i,j) = ComputePhiWithInduction( u%Vx(i,j), u%Vy(i,j),  y%axInduction(i,j), y%tanInduction(i,j), errStat2, errMsg2 )  
@@ -1287,7 +1301,7 @@ subroutine BEMT_CalcOutput( t, u, p, x, xd, z, OtherState, AFInfo, y, m, errStat
             else
                                              
                r = u%rlocal(i,j)
-               ! Compute Re based on zero inductions (axInduction, tanInduction), this would needed for the airfoil lookups 
+                  ! Compute Re based on zero inductions (axInduction, tanInduction), this would needed for the airfoil lookups 
                   !    which occur within BEMTU_InductionWithResidual if we had implemented airfoil tables which are dependent on Reynold's number: Currently unused, 4-Nov-2015
                call BEMTU_Wind( 0.0_ReKi, 0.0_ReKi, Vx, Vy, p%chord(i,j), p%airDens, p%kinVisc, Vrel, Re )
             
@@ -1302,8 +1316,8 @@ subroutine BEMT_CalcOutput( t, u, p, x, xd, z, OtherState, AFInfo, y, m, errStat
                      ! If we are using DBEMT, then we will obtain the time-filtered versions of y%axInduction(i,j), y%tanInduction(i,j)
                      ! Since the outputs of DBEMT are the state variables x%vind, we will simply access them here instead of calling a 
                      ! DBEMT_CalcOutput routine.
-                  DBEMT_u%vind_s(1)  =  -u%Vx(i,j)*y%axInduction(i,j)
-                  DBEMT_u%vind_s(2)  =   u%Vy(i,j)*y%tanInduction(i,j)
+                  DBEMT_u%vind_s(1)  =  -Vx*y%axInduction(i,j)
+                  DBEMT_u%vind_s(2)  =   Vy*y%tanInduction(i,j)
                   call DBEMT_CalcOutput( i, j, t, DBEMT_u, dbemt_vind, p%DBEMT, x%DBEMT, m%DBEMT, errStat, errMsg )
                   if ( EqualRealnos(Vx, 0.0_ReKi) ) then
                      y%axInduction(i,j)   = 0.0_ReKi
@@ -1316,7 +1330,9 @@ subroutine BEMT_CalcOutput( t, u, p, x, xd, z, OtherState, AFInfo, y, m, errStat
                   else
                      y%tanInduction(i,j)   = dbemt_vind(2)/Vy
                   end if                 
-                  
+                  y%phi(i,j) = ComputePhiWithInduction( Vx, Vy,  y%axInduction(i,j), y%tanInduction(i,j), errStat2, errMsg2 )  
+                     call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
+                  y%AOA(i,j) = y%phi(i,j) - theta               
                else
                   
                    
@@ -1325,9 +1341,9 @@ subroutine BEMT_CalcOutput( t, u, p, x, xd, z, OtherState, AFInfo, y, m, errStat
                   ! Apply the skewed wake correction to the axial induction (y%axInduction) and recompute y%phi, y%AOA
                if ( p%skewWakeMod == SkewMod_PittPeters ) then
                   call ApplySkewedWakeCorrection( Vx, Vy, u%psi(j), u%chi0, u%rlocal(i,j)/Rtip, y%axInduction(i,j), y%tanInduction(i,j), y%chi(i,j), ErrStat2, ErrMsg2 )           
-                  ! ApplySkewedWakeCorrection doesn't set errors
-               
-                  y%phi(i,j) = ComputePhiWithInduction( u%Vx(i,j), u%Vy(i,j),  y%axInduction(i,j), y%tanInduction(i,j), errStat2, errMsg2 )  
+                  ! ApplySkewedWakeCorrection doesn't set error
+                  
+                  y%phi(i,j) = ComputePhiWithInduction( Vx, Vy, y%axInduction(i,j), y%tanInduction(i,j), errStat2, errMsg2 )  
                   call SetErrStat(ErrStat2,ErrMsg2,ErrStat,ErrMsg,RoutineName//trim(NodeTxt))
                      ! angle of attack
                   y%AOA(i,j) = y%phi(i,j) - theta

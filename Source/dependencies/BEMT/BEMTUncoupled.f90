@@ -123,6 +123,7 @@ subroutine ComputeSteadyAirfoilCoefs( AOA, Re, AFInfo, &
    
 
    real                            :: IntAFCoefs(4)                ! The interpolated airfoil coefficients.
+   real(ReKi)                      :: AoADeg
    integer                         :: s1      
       
    ErrStat = ErrID_None
@@ -137,8 +138,8 @@ subroutine ComputeSteadyAirfoilCoefs( AOA, Re, AFInfo, &
       ! for changes in other variables (Re, Mach #, etc) then then we would need to interpolate across tables.
       !
    s1 = size(AFInfo%Table(1)%Coefs,2)
-   
-   IntAFCoefs(1:s1) = CubicSplineInterpM( 1.0_ReKi*real( AOA*R2D, ReKi ) &
+   AoADeg = mod(1.0_ReKi*real( AOA*R2D, ReKi ) + 180.0_ReKi, 360.0_ReKi) - 180.0_ReKi
+   IntAFCoefs(1:s1) = CubicSplineInterpM( AoADeg &
                                           , AFInfo%Table(1)%Alpha &
                                           , AFInfo%Table(1)%Coefs &
                                           , AFInfo%Table(1)%SplineCoefs &
@@ -245,8 +246,13 @@ real(ReKi) function BEMTU_InductionWithResidual(phi, AOA, Re, numBlades, rlocal,
    axInduction  = 0.0_ReKi  ! axInductionIN
    tanInduction = 0.0_ReKi  ! tanInductionIN
    
+   if ( EqualRealNos(Vx, 0.0_ReKi) ) then
+      axInduction  =  1.0_ReKi  ! axInductionIN
+      tanInduction = -1.0_ReKi  ! tanInductionIN
+      return
+   end if
          
-   if (( .NOT. EqualRealNos(Vx, 0.0_ReKi) ) .AND. ( .NOT. EqualRealNos(Vy, 0.0_ReKi) ) ) then 
+  ! if (( .NOT. EqualRealNos(Vx, 0.0_ReKi) ) .AND. ( .NOT. EqualRealNos(Vy, 0.0_ReKi) ) ) then 
       
       call ComputeSteadyAirfoilCoefs( AOA, Re, AFInfo, Cl, Cd, Cm, errStat2, errMsg2 )       
          call SetErrStat( errStat2, errMsg2, errStat, errMsg, RoutineName ) 
@@ -262,8 +268,10 @@ real(ReKi) function BEMTU_InductionWithResidual(phi, AOA, Re, numBlades, rlocal,
          call SetErrStat( errStat2, errMsg2, errStat, errMsg, RoutineName ) 
          if (ErrStat >= AbortErrLev) return
       BEMTU_InductionWithResidual = fzero  ! the residual
-      
-   end if
+ !  else
+ !     axInduction  = 0.0_ReKi  ! axInductionIN
+ !     tanInduction = 0.0_ReKi  ! tanInductionIN
+ !  end if
       
    
 end function BEMTU_InductionWithResidual
@@ -334,9 +342,9 @@ subroutine ApplySkewedWakeCorrection( Vx, Vy, azimuth, chi0, tipRatio, a, ap, ch
    ! Skewed wake correction
    
    saz = sin(azimuth)
-   chi = chi0
+   !chi = chi0
    
-   if ( abs(saz) > 0.005_ReKi ) then
+ !  if ( abs(saz) > 0.005_ReKi ) then
       chi = (0.6_ReKi*a + 1.0_ReKi)*chi0
       
    !if (chi0 < 40.0*d2r .and. chi > 0.0 ) then
@@ -355,9 +363,9 @@ subroutine ApplySkewedWakeCorrection( Vx, Vy, azimuth, chi0, tipRatio, a, ap, ch
       !
       !end if
          
-   else
-      chi = chi0
-   end if
+  ! else
+  !    chi = chi0
+ !  end if
       
    
       ! check that this doesn't produce an error in ComputePhiWithInduction, which just calculates atan2(y,x)
@@ -367,11 +375,11 @@ subroutine ApplySkewedWakeCorrection( Vx, Vy, azimuth, chi0, tipRatio, a, ap, ch
    x = (1+ap)*Vy
    
    !if ( EqualRealNos(y, 0.0_ReKi) .AND. EqualRealNos(x, 0.0_ReKi) ) then
-   if ( EqualRealNos(y, 0.0_ReKi) .OR. EqualRealNos(x, 0.0_ReKi) ) then
-      ! NOTE that we've already checked that Vx and Vy are not zero
-      a     = 0.0_ReKi
-      ap    = 0.0_ReKi
-   end if
+   !!if ( EqualRealNos(y, 0.0_ReKi) .OR. EqualRealNos(x, 0.0_ReKi) ) then
+   !   ! NOTE that we've already checked that Vx and Vy are not zero
+   !   a     = 0.0_ReKi
+   !   ap    = 0.0_ReKi
+   !end if
    
 end subroutine ApplySkewedWakeCorrection
                               
@@ -421,19 +429,23 @@ subroutine inductionFactors(r ,  chord, phi, cn, ct, B, &
    errStat = ErrID_None
    errMsg  = ""
    
+      ! Default in case we are not using wakerotation
+   ap = 0.0_ReKi
+   kp = 0.0_ReKi
+   
       ! We are simply going to bail if we are using tiploss and tipLossConst = 0 or using hubloss and hubLossConst=0, regardless of phi!
    if ( ( tiploss .and. EqualRealNos(tipLossConst,0.0_ReKi) ) .or. ( hubloss .and. EqualRealNos(hubLossConst,0.0_ReKi) ) ) then
       fzero =  0.0_ReKi
-      a     =  1.0_ReKi
-      ap    =  -1.0_ReKi
+      a     =  1.0_ReKi     
+      if (wakerotation) ap    =  -1.0_ReKi
       return      
    end if
    
    
    if ( EqualRealNos(phi, 0.0_ReKi) ) then
       fzero =  0.0_ReKi
-      a     =  0.0_ReKi
-      ap    =  0.0_ReKi
+      a     =  1.0_ReKi
+      if (wakerotation) ap    =  -1.0_ReKi
       return
    end if
     
@@ -491,7 +503,7 @@ subroutine inductionFactors(r ,  chord, phi, cn, ct, B, &
 
       end if
 
-   else  ! propeller brake region (a and ap not directly used but update anyway) !bjj: huh? when k is slightly larger than 1, a is definitely getting used (and causing issues)...
+   else  ! propeller brake region (a and ap not directly used in the RESIDUAL equation ) !bjj: huh? when k is slightly larger than 1, a is definitely getting used (and causing issues)...
 
       if (k > 1.0_ReKi .and. .not. EqualRealNos(k, 1.0_ReKi) ) then
       !if (sigma_pcn > Fsphi) then
@@ -507,37 +519,37 @@ subroutine inductionFactors(r ,  chord, phi, cn, ct, B, &
    end if
 
     
+   if (wakerotation) then
+       ! compute tangential induction factor
+      if ( EqualRealNos(cphi,0.0_ReKi ) ) then ! We don't want NaN here
+         ap = -1.0_ReKi
+         kp = 0.0_ReKi   ! But as ap approaches -1, kp approaches -Inf, but in the residual equations below, cphi being 0 will make the terms with kp be zero if kp is NOT Inf or -Inf!
+      else
+      !   kp = HUGE(kp)
+      !else
+         kp = sigma_p*ct/4.0_ReKi/F/sphi/cphi
+      !end if
    
-    ! compute tangential induction factor
-   if ( cphi==0.0_ReKi ) then ! We don't want NaN here
-      kp = HUGE(kp)
-   else
-      kp = sigma_p*ct/4.0_ReKi/F/sphi/cphi
-   end if
+            ! Per conversation with Rick, we should only trigger this if phi = 0 , so we will return predefined values as if phi=0.0
+         if (EqualRealNos(kp, 1.0_ReKi)) then
+            fzero =  0.0_ReKi
+            a     =  1.0_ReKi
+            ap    =  -1.0_ReKi
+            return
+         end if
    
-      ! Per conversation with Rick, we should only trigger this if phi = 0 , so we will return predefined values as if phi=0.0
-   if (EqualRealNos(kp, 1.0_ReKi)) then
-      fzero =  0.0_ReKi
-      a     =  0.0_ReKi
-      ap    =  0.0_ReKi
-      return
-   end if
-   
-   ap = kp/(1.0_ReKi-kp)
-   ! tangential induction is blowing up, so we're putting a band-aid here. GJH, JMJ, BJJ 1-Sep-2015
-   if ( abs(ap) > 10.0_ReKi ) then
-      ap = sign( 10.0_ReKi, ap )
-   end if
+         ap = kp/(1.0_ReKi-kp)
+         ! tangential induction is blowing up, so we're putting a band-aid here. GJH, JMJ, BJJ 1-Sep-2015
+         if ( abs(ap) > 10.0_ReKi ) then
+            ap = sign( 10.0_ReKi, ap )
+         end if
       
    
-!bjj: 3-jun-2015: TODO: was able to trigger divide-by-zero here using ccBlade_UAE.dvr without tiploss or hubloss
-    
-   if (.not. wakerotation) then
-      ap = 0.0_ReKi
-      kp = 0.0_ReKi
-   end if
-
-    
+      !bjj: 3-jun-2015: TODO: was able to trigger divide-by-zero here using ccBlade_UAE.dvr without tiploss or hubloss
+      
+      end if
+   
+   end if 
     
     ! error function
    lambda_r = Vy/Vx

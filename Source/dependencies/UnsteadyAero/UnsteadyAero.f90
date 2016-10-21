@@ -83,6 +83,7 @@ subroutine GetSteadyOutputs(AFInfo, AOA, Cl, Cd, Cm, Cd0, ErrStat, ErrMsg)
    character(*),     intent(  out) :: ErrMsg                ! Error message if ErrStat /= ErrID_None
    
    real                            :: IntAFCoefs(4)         ! The interpolated airfoil coefficients.
+   real(ReKi)                      :: AoADeg
    integer                         :: s1                    ! Number of columns in the AFInfo structure
 
    
@@ -103,7 +104,8 @@ subroutine GetSteadyOutputs(AFInfo, AOA, Cl, Cd, Cm, Cd0, ErrStat, ErrMsg)
    !   return
    !end if
    Cd0 =   AFInfo%Table(1)%UA_BL%Cd0
-   IntAFCoefs(1:s1) = CubicSplineInterpM( real( AOA*180.0_ReKi/PI, ReKi ) &
+   AoADeg = mod(1.0_ReKi*real( AOA*R2D, ReKi ) + 180.0_ReKi, 360.0_ReKi) - 180.0_ReKi
+   IntAFCoefs(1:s1) = CubicSplineInterpM( AoADeg &
                                              , AFInfo%Table(1)%Alpha &
                                              , AFInfo%Table(1)%Coefs &
                                              , AFInfo%Table(1)%SplineCoefs &
