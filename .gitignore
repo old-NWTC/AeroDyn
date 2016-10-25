@@ -57,6 +57,7 @@ BuildLog.htm
 *.jar
 *.rar
 
+
 # NWTC web developer
 Archive/*
 /ArcFiles.txt
@@ -64,3 +65,5 @@ Archive/*
 /ArcWin.txt
 /Archive.bat
 /Compiling/VisualStudio/Debug/*
+*Registry_tmp.*
+
