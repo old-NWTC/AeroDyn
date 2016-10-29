@@ -3,7 +3,7 @@
 ! WARNING This file is generated automatically by the FAST registry.
 ! Do not edit.  Your changes to this file will be lost.
 !
-! FAST Registry (v3.02.00, 22-Jun-2016)
+! FAST Registry (v3.02.00, 23-Jul-2016)
 !*********************************************************************************************************************************
 ! UnsteadyAero_Types
 !.................................................................................................................................
@@ -50,8 +50,8 @@ IMPLICIT NONE
 ! =========  UA_InitOutputType  =======
   TYPE, PUBLIC :: UA_InitOutputType
     TYPE(ProgDesc)  :: Version      !< Version structure [-]
-    CHARACTER(15) , DIMENSION(:), ALLOCATABLE  :: WriteOutputHdr      !< The is the list of all HD-related output channel header strings (includes all sub-module channels) [-]
-    CHARACTER(15) , DIMENSION(:), ALLOCATABLE  :: WriteOutputUnt      !< The is the list of all HD-related output channel unit strings (includes all sub-module channels) [-]
+    CHARACTER(ChanLen) , DIMENSION(:), ALLOCATABLE  :: WriteOutputHdr      !< The is the list of all UA-related output channel header strings (includes all sub-module channels) [-]
+    CHARACTER(ChanLen) , DIMENSION(:), ALLOCATABLE  :: WriteOutputUnt      !< The is the list of all UA-related output channel unit strings (includes all sub-module channels) [-]
   END TYPE UA_InitOutputType
 ! =======================
 ! =========  UA_ContinuousStateType  =======
@@ -128,7 +128,7 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: OutSwtch      !< Output requested channels to: [1=Unsteady.out 2=GlueCode.out  3=both files] [-]
     CHARACTER(20)  :: OutFmt      !< Output format for numerical results [-]
     CHARACTER(20)  :: OutSFmt      !< Output format for header strings [-]
-    CHARACTER(10)  :: Delim      !< Delimiter string for outputs, defaults to tab-delimiters [-]
+    CHARACTER(1)  :: Delim      !< Delimiter string for outputs, defaults to tab-delimiters [-]
     INTEGER(IntKi)  :: UnOutFile      !< File unit for the UnsteadyAero outputs [-]
   END TYPE UA_ParameterType
 ! =======================

@@ -3,7 +3,7 @@
 ! WARNING This file is generated automatically by the FAST registry.
 ! Do not edit.  Your changes to this file will be lost.
 !
-! FAST Registry (v3.02.00, 22-Jun-2016)
+! FAST Registry (v3.02.00, 23-Jul-2016)
 !*********************************************************************************************************************************
 ! BEMT_Types
 !.................................................................................................................................
@@ -86,6 +86,8 @@ IMPLICIT NONE
   TYPE, PUBLIC :: BEMT_OtherStateType
     TYPE(UA_OtherStateType)  :: UA      !< other states for UnsteadyAero [-]
     LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: UA_Flag      !< logical flag indicating whether to use UnsteadyAero [-]
+    LOGICAL , DIMENSION(:,:), ALLOCATABLE  :: ValidPhi      !< set to indicate when there is no valid Phi for this node at this time (temporarially turn off induction when this is false) [-]
+    LOGICAL  :: nodesInitialized      !< the node states have been initialized properly [-]
   END TYPE BEMT_OtherStateType
 ! =======================
 ! =========  BEMT_MiscVarType  =======
@@ -139,16 +141,16 @@ IMPLICIT NONE
   TYPE, PUBLIC :: BEMT_OutputType
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Vrel      !< Total local relative velocity [m/s]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: phi      !< angle between the plane of rotation and the direction of the local wind [rad]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: axInduction      !< Distributed viscous drag loads [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: tanInduction      !< Distributed inertial loads [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Re      !< Distributed inertial loads [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: AOA      !< Distributed inertial loads [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: axInduction      !< axial induction [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: tanInduction      !< tangential induction [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Re      !< Reynold's number [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: AOA      !< angle of attack [rad]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cx      !< normal force coefficient (normal to the plane, not chord) of the jth node in the kth blade [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cy      !< tangential force coefficient (tangential to the plane, not chord) of the jth node in the kth blade [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cm      !< pitching moment coefficient of the jth node in the kth blade [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cl      !< Distributed inertial loads [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cd      !< Distributed inertial loads [-]
-    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chi      !< Distributed inertial loads [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cl      !< lift coefficient [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Cd      !< drag coefficient [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: chi      !< wake skew angle [rad]
   END TYPE BEMT_OutputType
 ! =======================
 CONTAINS
@@ -1480,6 +1482,21 @@ IF (ALLOCATED(SrcOtherStateData%UA_Flag)) THEN
   END IF
     DstOtherStateData%UA_Flag = SrcOtherStateData%UA_Flag
 ENDIF
+IF (ALLOCATED(SrcOtherStateData%ValidPhi)) THEN
+  i1_l = LBOUND(SrcOtherStateData%ValidPhi,1)
+  i1_u = UBOUND(SrcOtherStateData%ValidPhi,1)
+  i2_l = LBOUND(SrcOtherStateData%ValidPhi,2)
+  i2_u = UBOUND(SrcOtherStateData%ValidPhi,2)
+  IF (.NOT. ALLOCATED(DstOtherStateData%ValidPhi)) THEN 
+    ALLOCATE(DstOtherStateData%ValidPhi(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%ValidPhi.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstOtherStateData%ValidPhi = SrcOtherStateData%ValidPhi
+ENDIF
+    DstOtherStateData%nodesInitialized = SrcOtherStateData%nodesInitialized
  END SUBROUTINE BEMT_CopyOtherState
 
  SUBROUTINE BEMT_DestroyOtherState( OtherStateData, ErrStat, ErrMsg )
@@ -1494,6 +1511,9 @@ ENDIF
   CALL UA_DestroyOtherState( OtherStateData%UA, ErrStat, ErrMsg )
 IF (ALLOCATED(OtherStateData%UA_Flag)) THEN
   DEALLOCATE(OtherStateData%UA_Flag)
+ENDIF
+IF (ALLOCATED(OtherStateData%ValidPhi)) THEN
+  DEALLOCATE(OtherStateData%ValidPhi)
 ENDIF
  END SUBROUTINE BEMT_DestroyOtherState
 
@@ -1555,6 +1575,12 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! UA_Flag upper/lower bounds for each dimension
       Int_BufSz  = Int_BufSz  + SIZE(InData%UA_Flag)  ! UA_Flag
   END IF
+  Int_BufSz   = Int_BufSz   + 1     ! ValidPhi allocated yes/no
+  IF ( ALLOCATED(InData%ValidPhi) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! ValidPhi upper/lower bounds for each dimension
+      Int_BufSz  = Int_BufSz  + SIZE(InData%ValidPhi)  ! ValidPhi
+  END IF
+      Int_BufSz  = Int_BufSz  + 1  ! nodesInitialized
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -1626,6 +1652,24 @@ ENDIF
       IF (SIZE(InData%UA_Flag)>0) IntKiBuf ( Int_Xferred:Int_Xferred+SIZE(InData%UA_Flag)-1 ) = TRANSFER(PACK( InData%UA_Flag ,.TRUE.), IntKiBuf(1), SIZE(InData%UA_Flag))
       Int_Xferred   = Int_Xferred   + SIZE(InData%UA_Flag)
   END IF
+  IF ( .NOT. ALLOCATED(InData%ValidPhi) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%ValidPhi,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%ValidPhi,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%ValidPhi,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%ValidPhi,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%ValidPhi)>0) IntKiBuf ( Int_Xferred:Int_Xferred+SIZE(InData%ValidPhi)-1 ) = TRANSFER(PACK( InData%ValidPhi ,.TRUE.), IntKiBuf(1), SIZE(InData%ValidPhi))
+      Int_Xferred   = Int_Xferred   + SIZE(InData%ValidPhi)
+  END IF
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%nodesInitialized , IntKiBuf(1), 1)
+      Int_Xferred   = Int_Xferred   + 1
  END SUBROUTINE BEMT_PackOtherState
 
  SUBROUTINE BEMT_UnPackOtherState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -1728,6 +1772,34 @@ ENDIF
       Int_Xferred   = Int_Xferred   + SIZE(OutData%UA_Flag)
     DEALLOCATE(mask2)
   END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! ValidPhi not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%ValidPhi)) DEALLOCATE(OutData%ValidPhi)
+    ALLOCATE(OutData%ValidPhi(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%ValidPhi.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%ValidPhi)>0) OutData%ValidPhi = UNPACK( TRANSFER( IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(OutData%ValidPhi))-1 ), OutData%ValidPhi), mask2,.TRUE.)
+      Int_Xferred   = Int_Xferred   + SIZE(OutData%ValidPhi)
+    DEALLOCATE(mask2)
+  END IF
+      OutData%nodesInitialized = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
+      Int_Xferred   = Int_Xferred + 1
  END SUBROUTINE BEMT_UnPackOtherState
 
  SUBROUTINE BEMT_CopyMisc( SrcMiscData, DstMiscData, CtrlCode, ErrStat, ErrMsg )
