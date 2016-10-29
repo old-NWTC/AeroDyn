@@ -67,3 +67,4 @@ Archive/*
 /Compiling/VisualStudio/Debug/*
 *Registry_tmp.*
 
+/Compiling/Visual Studio 2013/DBEMT_Test/Debug/*
