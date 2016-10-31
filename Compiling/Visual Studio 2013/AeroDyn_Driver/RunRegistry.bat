@@ -22,7 +22,7 @@ REM ----------------------------------------------------------------------------
 SET Registry=..\..\..\bin\Registry_win32.exe
 SET Source_Loc=..\..\..\Source
 
-SET NWTC_Lib_Loc=%Source_Loc%\dependencies\NWTC_Library
+SET NWTC_Lib_Loc=..\..\..\subs\NWTC_Library\source
 SET AirfoilInfo_Loc=%Source_Loc%\dependencies\Airfoil_Info
 SET BEMT_Loc=%Source_Loc%\dependencies\BEMT
 SET UnsteadyAero_Loc=%Source_Loc%\dependencies\UnsteadyAero

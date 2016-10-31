@@ -4,7 +4,7 @@
 		<Platform Name="Win32"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" OutputDirectory="..\..\..\bin">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="FPE_TRAP_ENABLED" StandardWarnings="standardWarningsF03" DisableSpecificDiagnostics="5268" WarnDeclarations="true" WarnUnalignedData="false" WarnUncalled="true" WarnInterfaces="true" InitLocalVarToNAN="true" FloatingPointExceptionHandling="fpe0" FloatingPointStackCheck="true" Traceback="true" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug" UseMkl="mklSequential"/>
+				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/fpe-all:0" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="FPE_TRAP_ENABLED" StandardWarnings="standardWarningsF03" DisableSpecificDiagnostics="5268" WarnDeclarations="true" WarnUnalignedData="false" WarnUncalled="true" WarnInterfaces="true" InitLocalVarToNAN="true" FloatingPointExceptionHandling="fpe0" FloatingPointStackCheck="true" Traceback="true" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug" UseMkl="mklSequential"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateManifest="false" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -79,26 +79,26 @@
 		<Filter Name="NWTC_Library">
 		<Filter Name="NetLib">
 		<Filter Name="FitPack">
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\dierckx_fitpack.f">
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\NetLib\Dierckx_FitPack\dierckx_fitpack.f">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" StandardWarnings="standardWarningsNone"/></FileConfiguration>
 			<FileConfiguration Name="Release|Win32">
 				<Tool Name="VFFortranCompilerTool" StandardWarnings="standardWarningsNone"/></FileConfiguration></File>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\NWTC_FitPack.f90"/></Filter>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\NetLib\Dierckx_FitPack\NWTC_FitPack.f90"/></Filter>
 		<Filter Name="MinPack"/>
-		<File RelativePath="..\..\..\Source\dependencies\NetLib\NWTC_LAPACK.f90"/></Filter>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\ModMesh.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\ModMesh_Mapping.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\ModMesh_Types.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\NWTC_Base.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\NWTC_IO.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\NWTC_Library.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\NWTC_Library_Types.f90">
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\NetLib\lapack\NWTC_LAPACK.f90"/></Filter>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\ModMesh.f90"/>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\ModMesh_Mapping.f90"/>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\ModMesh_Types.f90"/>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\NWTC_Base.f90"/>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\NWTC_IO.f90"/>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\NWTC_Library.f90"/>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\NWTC_Library_Types.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" WarnUnusedVariables="false"/></FileConfiguration></File>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\NWTC_Num.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\SingPrec.f90"/>
-		<File RelativePath="..\..\..\Source\dependencies\NWTC_Library\SysIVF.f90"/></Filter>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\NWTC_Num.f90"/>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\SingPrec.f90"/>
+		<File RelativePath="..\..\..\subs\NWTC_Library\source\SysIVF.f90"/></Filter>
 		<Filter Name="UnsteadyAero">
 		<Filter Name="RegistryFiles">
 		<File RelativePath="..\..\..\Source\dependencies\UnsteadyAero\UnsteadyAero_Registry.txt">

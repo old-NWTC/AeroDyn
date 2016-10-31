@@ -48,9 +48,9 @@ else
 
 endif
 
-
-NETLIB_DIR   = ../Source/dependencies/NetLib
-NWTC_Lib_DIR = ../Source/dependencies/NWTC_Library
+NWTC_Lib_DIR = ../subs/NWTC_Library/source
+NETLIB_DIR  := $(NWTC_Lib_DIR)/NetLib/Dierckx_FitPack \
+               $(NWTC_Lib_DIR)/NetLib/lapack
 AFI_DIR      = ../Source/dependencies/Airfoil_Info
 UA_DIR       = ../Source/dependencies/UnsteadyAero
 Driver_DIR   = ../Source/drivers
