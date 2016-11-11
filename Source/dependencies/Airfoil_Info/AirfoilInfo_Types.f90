@@ -71,7 +71,7 @@ IMPLICIT NONE
 ! =======================
 ! =========  AFI_Table_Type  =======
   TYPE, PUBLIC :: AFI_Table_Type
-    REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: Alpha      !< Angle-of-attack vector that matches the Coefs matrix [-]
+    REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: Alpha      !< Angle-of-attack vector that matches the Coefs matrix [rad]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: Coefs      !< Airfoil coefficients for Cd, Cl,  and maybe Cm and/or Cpmin [-]
     REAL(ReKi) , DIMENSION(:,:,:), ALLOCATABLE  :: SplineCoefs      !< Spline coefficients for Cd, Cl,  and maybe Cm and/or Cpmin [-]
     REAL(ReKi) , DIMENSION(:,:,:,:), ALLOCATABLE  :: BEMT_Spline      !< Spline coefficients for Cd, Cl for the two bounding Re when doing BEM [-]
