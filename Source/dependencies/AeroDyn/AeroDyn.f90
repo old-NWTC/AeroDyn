@@ -1286,6 +1286,8 @@ subroutine SetInputsForBEMT(p, u, m, indx, errStat, errMsg)
       m%AllOuts( BPitch(  k) ) = -theta(3)*R2D ! save this value of pitch for potential output
 #endif
       theta(3) = 0.0_ReKi  
+      m%hub_theta_x_root(k) = theta(1)   ! save this value for FAST.Farm
+      
       orientation = EulerConstruct( theta )
       orientation_nopitch = matmul( orientation, u%HubMotion%Orientation(:,:,1) ) ! withoutPitch_theta_Root(k)
             
