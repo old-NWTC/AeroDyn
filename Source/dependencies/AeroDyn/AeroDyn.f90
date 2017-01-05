@@ -1809,7 +1809,7 @@ SUBROUTINE ADTwr_CalcOutput(p, u, m, y, ErrStat, ErrMsg )
    
    do j=1,p%NumTwrNds
       
-      V_rel = u%InflowOnTower(:,j) - u%TowerMotion%TranslationDisp(:,j) ! relative wind speed at tower node
+      V_rel = u%InflowOnTower(:,j) - u%TowerMotion%TranslationVel(:,j) ! relative wind speed at tower node
    
       tmp   = u%TowerMotion%Orientation(1,:,j)
       VL(1) = dot_product( V_Rel, tmp )            ! relative local x-component of wind speed of the jth node in the tower
