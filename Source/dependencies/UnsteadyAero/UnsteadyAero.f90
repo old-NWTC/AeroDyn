@@ -504,8 +504,8 @@ subroutine ComputeKelvinChain( i, j, u, p, xd, OtherState, misc, AFInfo, Cn_prim
    
    
 
-   k_alpha  = 1.0_ReKi / ( (1.0_ReKi - M) + (C_nalpha/2.0_ReKi) * M**2 * beta_M * (A1*b1 + A2*b2) / 2.0  )                 ! Eqn 1.12a
-   k_q      = 1.0_ReKi / ( (1.0_ReKi - M) + C_nalpha            * M**2 * beta_M * (A1*b1 + A2*b2) / 2.0  )                 ! Eqn 1.12b
+   k_alpha  = 1.0_ReKi / ( (1.0_ReKi - M) + (C_nalpha/2.0_ReKi) * M**2 * beta_M * (A1*b1 + A2*b2) )                 ! Eqn 1.12a
+   k_q      = 1.0_ReKi / ( (1.0_ReKi - M) + C_nalpha            * M**2 * beta_M * (A1*b1 + A2*b2) )                 ! Eqn 1.12b
    T_alpha  = T_I * k_alpha * 0.75                                                 ! Eqn 1.11a -RRD 9/28 added *0.75 that seemed to be missing
    T_q      = T_I * k_q * 0.75                                                     ! Eqn 1.11b -RRD 9/28 added *0.75
       
