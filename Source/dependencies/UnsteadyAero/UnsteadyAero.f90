@@ -616,7 +616,7 @@ subroutine ComputeKelvinChain( i, j, u, p, xd, OtherState, misc, AFInfo, Cn_prim
    
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
 ! This code is taken from ADv14 but doesn't reflect the original intent of the UA theory document
-#ifndef TEST_THEORY
+#ifdef TEST_THEORY
    IF ( alpha_filt_cur * Cn_prime_diff < 0. ) THEN
 
       T_f   = T_f0*1.5
